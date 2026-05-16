@@ -1,0 +1,105 @@
+/* AchievementToast — animated popup notification */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 32px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-lg);
+  padding: var(--sp-md) var(--sp-lg);
+  box-shadow: 0 0 24px rgba(57, 255, 20, 0.15), 0 8px 32px rgba(0, 0, 0, 0.5);
+  max-width: 380px;
+  width: calc(100% - 32px);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.toastExiting {
+  animation: slideOut 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes slideOut {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(-100%); opacity: 0; }
+}
+
+.icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--accent);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.description {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.closeBtn {
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: var(--r-sm);
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover { color: var(--text-primary); }
+
+/* Glow pulse on the border */
+.toast::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--r-lg);
+  border: 2px solid var(--accent);
+  animation: pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}

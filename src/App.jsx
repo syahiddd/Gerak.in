@@ -3,6 +3,7 @@ import { Home, Dumbbell, BarChart3 } from 'lucide-react';
 import DashboardScreen from './screens/DashboardScreen.jsx';
 import WorkoutScreen from './screens/WorkoutScreen.jsx';
 import ProgressScreen from './screens/ProgressScreen.jsx';
+import AchievementToast from './components/AchievementToast.jsx';
 import styles from './App.module.css';
 
 /**
@@ -22,6 +23,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      {/* Global achievement notification popup */}
+      <AchievementToast />
+
       <main className="app-content">
         <Active />
       </main>

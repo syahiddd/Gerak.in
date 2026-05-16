@@ -1,28 +1,28 @@
 import { useState } from 'react';
-import { Flame, Activity, User } from 'lucide-react';
-import ExerciseItem from '../components/ExerciseItem.jsx';
+import ExercisePicker from '../components/ExercisePicker.jsx';
 import LogWorkoutForm from '../components/LogWorkoutForm.jsx';
 import RestTimer from '../components/RestTimer.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import styles from './Screen.module.css';
 
-// Master list of exercises shown in the workout tab.
-// Icons come from lucide-react.
-const EXERCISES = [
-  { id: 'pushups', name: 'Push-ups', target: 'Chest \u2022 Triceps', icon: Flame },
-  { id: 'squats',  name: 'Squats',   target: 'Legs \u2022 Glutes',   icon: Activity },
-  { id: 'planks',  name: 'Planks',   target: 'Core',                 icon: User },
-];
-
+/**
+ * WorkoutScreen (Tab 2)
+ * ─────────────────────
+ * - Searchable exercise picker with 120+ exercises
+ * - Log Workout form (sets × reps)
+ * - Rest timer with presets
+ */
 export default function WorkoutScreen() {
   const { logWorkout } = useApp();
-  const [selectedId, setSelectedId] = useState(EXERCISES[0].id);
+  const [selected, setSelected] = useState(null); // full exercise object
 
-  const selectedExercise =
-    EXERCISES.find((e) => e.id === selectedId) || EXERCISES[0];
+  const handleSelect = (exercise) => {
+    setSelected(exercise);
+  };
 
   const handleSubmit = ({ sets, reps }) => {
-    logWorkout({ exercise: selectedExercise.name, sets, reps });
+    if (!selected) return;
+    logWorkout({ exercise: selected.name, sets, reps });
   };
 
   return (
@@ -32,21 +32,21 @@ export default function WorkoutScreen() {
         <p className={styles.subtitle}>Pick an exercise and log your set.</p>
       </header>
 
-      <div className={styles.list}>
-        {EXERCISES.map((ex) => (
-          <ExerciseItem
-            key={ex.id}
-            exercise={ex}
-            selected={ex.id === selectedId}
-            onClick={() => setSelectedId(ex.id)}
-          />
-        ))}
-      </div>
-
-      <LogWorkoutForm
-        exerciseName={selectedExercise.name}
-        onSubmit={handleSubmit}
+      {/* Searchable exercise picker (120+ exercises) */}
+      <ExercisePicker
+        selectedId={selected?.id || null}
+        onSelect={handleSelect}
       />
+
+      <div className={styles.spacer} />
+
+      {/* Log form — only shown after selecting an exercise */}
+      {selected && (
+        <LogWorkoutForm
+          exerciseName={selected.name}
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <div className={styles.spacer} />
 
