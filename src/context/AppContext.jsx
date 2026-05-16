@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 
 /**
  * AppContext
@@ -7,10 +7,9 @@ import React, { createContext, useContext, useMemo, useState } from 'react';
  *  - loggedWorkouts: list of completed workout entries
  *  - weeklyProgress: which days of the week have a workout (Mon..Sun)
  *
- * To persist across app launches later, swap useState for a hook
- * that reads/writes AsyncStorage.
+ * To persist across reloads later, swap useState for a hook
+ * that reads/writes localStorage.
  */
-
 const AppContext = createContext(null);
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -50,8 +49,7 @@ export function AppProvider({ children }) {
       (sum, w) => sum + w.sets * w.reps,
       0
     );
-    // Rough heuristic: estimate ~3 seconds per rep -> minutes
-    const activeMinutes = Math.round((totalReps * 3) / 60);
+    const activeMinutes = Math.round((totalReps * 3) / 60); // ~3s per rep
     return {
       workoutsCompleted: loggedWorkouts.length,
       activeMinutes,
@@ -59,18 +57,15 @@ export function AppProvider({ children }) {
     };
   }, [loggedWorkouts]);
 
-  const value = {
-    loggedWorkouts,
-    weeklyProgress,
-    summary,
-    logWorkout,
-    DAYS,
-  };
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider
+      value={{ loggedWorkouts, weeklyProgress, summary, logWorkout, DAYS }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
 }
 
-// Convenience hook so screens never import the raw context.
 export const useApp = () => {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used inside <AppProvider>');

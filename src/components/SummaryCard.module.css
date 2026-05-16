@@ -1,0 +1,21 @@
+.wrapper { padding: var(--sp-lg); }
+
+.title { color: var(--text-primary); margin-bottom: var(--sp-md); }
+
+.row { display: flex; align-items: center; }
+
+.stat { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+.statIcon { color: var(--accent); display: flex; }
+
+.statValue { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.divider { width: 1px; height: 48px; background: var(--border); }

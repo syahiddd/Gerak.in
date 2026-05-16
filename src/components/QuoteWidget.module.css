@@ -1,0 +1,15 @@
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: var(--sp-sm);
+}
+
+.quote {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.5;
+}

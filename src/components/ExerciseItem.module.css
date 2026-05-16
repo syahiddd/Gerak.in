@@ -1,0 +1,46 @@
+.row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-md);
+  margin-bottom: var(--sp-sm);
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.row:hover { background: var(--surface-alt); }
+.row:active { transform: scale(0.99); }
+
+.rowSelected {
+  border-color: var(--accent);
+  background: var(--surface-alt);
+}
+
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--sp-md);
+  color: var(--accent);
+}
+
+.iconWrapSelected {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+
+.name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+.target { font-size: 12px; color: var(--text-secondary); }
+
+.radioOn  { color: var(--accent); }
+.radioOff { color: var(--text-muted); }

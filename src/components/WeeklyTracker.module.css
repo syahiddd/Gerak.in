@@ -1,0 +1,65 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--sp-md);
+}
+
+.count { color: var(--accent); font-size: 20px; font-weight: 700; }
+
+.countLabel { color: var(--text-secondary); font-size: 12px; font-weight: 500; }
+
+.daysRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--sp-lg);
+}
+
+.dayCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-xs);
+}
+
+.dayCircle {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg);
+}
+
+.dayCircleDone {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.dayDot {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.dayLabel { color: var(--text-secondary); font-size: 11px; }
+
+.barChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.bar {
+  width: 22px;
+  border-radius: var(--r-sm);
+  transition: height 0.3s ease;
+}
+
+.barDone  { background: var(--accent); }
+.barEmpty { background: var(--surface-alt); }
