@@ -1,0 +1,74 @@
+/* MuscleDiagram — SVG body silhouette with active-muscle highlighting */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: var(--sp-sm) 0;
+}
+
+.svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  display: block;
+}
+
+.compact .svg { max-width: 220px; }
+
+/* Body outline (head, torso, arms, legs) */
+.outline {
+  fill: var(--surface-alt);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+/* Default (inactive) muscle */
+.muscle {
+  fill: #353540;
+  stroke: var(--border);
+  stroke-width: 0.5;
+  transition: fill 0.3s ease, filter 0.3s ease;
+}
+
+/* Active muscle: glow with accent color */
+.muscle.active {
+  fill: var(--accent);
+  stroke: var(--accent);
+  stroke-width: 0.8;
+  filter: drop-shadow(0 0 4px var(--accent));
+  animation: musclePulse 2s ease-in-out infinite;
+}
+
+@keyframes musclePulse {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--accent)); opacity: 0.95; }
+  50%      { filter: drop-shadow(0 0 7px var(--accent)); opacity: 1; }
+}
+
+/* "FRONT" / "BACK" labels */
+.label {
+  fill: var(--text-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+/* Legend chips below the diagram */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--sp-xs);
+}
+
+.legendChip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(57, 255, 20, 0.08);
+  border: 1px solid var(--accent);
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+}

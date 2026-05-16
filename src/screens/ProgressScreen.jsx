@@ -32,6 +32,7 @@ export default function ProgressScreen() {
                   <span className={styles.activityName}>{w.exercise}</span>
                   <span className={styles.activityMeta}>
                     {w.sets} sets &times; {w.reps} reps
+                    {w.weight > 0 && <> &times; <strong style={{ color: 'var(--accent)' }}>{w.weight}kg</strong></>}
                   </span>
                 </div>
                 <time className={styles.activityTime}>

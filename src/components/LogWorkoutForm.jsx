@@ -3,15 +3,20 @@ import Card from './Card.jsx';
 import styles from './LogWorkoutForm.module.css';
 
 /**
- * Sets/Reps logging form.
- * Calls `onSubmit({ sets, reps })` when the user submits.
+ * Log Workout form
+ * ────────────────
+ * Inputs: Sets, Reps, Weight (kg).
+ * Weight is optional — bodyweight exercises can leave it blank or 0.
  *
- * Intentionally dumb: parent owns the selected exercise and decides
- * what to do with the data. Keeps the component reusable.
+ * Calls `onSubmit({ sets, reps, weight })` on submit.
  */
-export default function LogWorkoutForm({ exerciseName, onSubmit }) {
+export default function LogWorkoutForm({ exerciseName, exerciseEquipment, onSubmit }) {
   const [sets, setSets] = useState('');
   const [reps, setReps] = useState('');
+  const [weight, setWeight] = useState('');
+
+  // Bodyweight / cardio exercises can be logged without a weight.
+  const isBodyweight = exerciseEquipment === 'Bodyweight';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,9 +24,10 @@ export default function LogWorkoutForm({ exerciseName, onSubmit }) {
       alert('Please enter both sets and reps.');
       return;
     }
-    onSubmit({ sets, reps });
+    onSubmit({ sets, reps, weight: weight || '0' });
     setSets('');
     setReps('');
+    setWeight('');
   };
 
   return (
@@ -36,23 +42,36 @@ export default function LogWorkoutForm({ exerciseName, onSubmit }) {
           <Field label="Sets" value={sets} onChange={setSets} />
           <Field label="Reps" value={reps} onChange={setReps} />
         </div>
+
+        {/* Weight input (kg). Hint differs for bodyweight exercises. */}
+        <div className={styles.weightRow}>
+          <Field
+            label={`Weight (kg)${isBodyweight ? ' — optional' : ''}`}
+            value={weight}
+            onChange={setWeight}
+            placeholder={isBodyweight ? '0 (bodyweight)' : '0'}
+            allowDecimal
+          />
+        </div>
+
         <button type="submit" className={styles.button}>Log Workout</button>
       </form>
     </Card>
   );
 }
 
-function Field({ label, value, onChange }) {
+function Field({ label, value, onChange, placeholder = '0', allowDecimal = false }) {
   return (
     <label className={styles.field}>
       <span className={styles.label}>{label}</span>
       <input
         type="number"
-        inputMode="numeric"
+        inputMode={allowDecimal ? 'decimal' : 'numeric'}
+        step={allowDecimal ? '0.5' : '1'}
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="0"
+        placeholder={placeholder}
         className={styles.input}
       />
     </label>

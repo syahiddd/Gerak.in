@@ -48,3 +48,29 @@
 .activityMeta { color: var(--text-secondary); font-size: 12px; }
 
 .activityTime { color: var(--text-muted); font-size: 12px; }
+
+
+/* WorkoutScreen — muscle diagram header */
+.muscleHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  margin-bottom: var(--sp-sm);
+}
+
+.muscleHeaderIcon { color: var(--accent); }
+
+.muscleHeaderName {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--surface-alt);
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

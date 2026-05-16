@@ -12,6 +12,11 @@
   margin-bottom: var(--sp-md);
 }
 
+.weightRow {
+  display: flex;
+  margin-bottom: var(--sp-md);
+}
+
 .field { flex: 1; display: flex; flex-direction: column; }
 
 .label {

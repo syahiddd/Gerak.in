@@ -19,6 +19,7 @@ export default function DashboardScreen() {
       <SummaryCard
         activeMinutes={summary.activeMinutes}
         workoutsCompleted={summary.workoutsCompleted}
+        totalTonnage={summary.totalTonnage}
       />
 
       <div className={styles.spacer} />

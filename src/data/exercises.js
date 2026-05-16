@@ -163,3 +163,80 @@ const EXERCISES = [
 export const CATEGORIES = ['All', ...new Set(EXERCISES.map((e) => e.category))];
 
 export default EXERCISES;
+
+
+/**
+ * Muscle group keys (canonical) used by the MuscleDiagram component.
+ * Front view: chest, abs, obliques, shoulders, biceps, forearms, quads, calves
+ * Back view:  traps, rearDelts, triceps, lats, lowerBack, glutes, hamstrings, calves
+ */
+export const MUSCLE_KEYS = [
+  'chest', 'abs', 'obliques',
+  'shoulders', 'rearDelts', 'traps',
+  'biceps', 'triceps', 'forearms',
+  'lats', 'lowerBack',
+  'quads', 'hamstrings', 'glutes', 'calves',
+];
+
+/**
+ * Infer muscle group keys from the human-readable `target` string of an
+ * exercise. We do this instead of tagging all 120+ exercises by hand.
+ *
+ * Rules are processed in order so that more specific keywords (e.g.
+ * "Rear Delts") are matched before generic ones (e.g. "Delts").
+ */
+export function getMusclesForExercise(exercise) {
+  if (!exercise || !exercise.target) return [];
+  const t = exercise.target.toLowerCase();
+  const m = new Set();
+
+  // Shoulders / rear delts (rear delts checked first to avoid double-tag)
+  if (t.includes('rear delt')) {
+    m.add('rearDelts');
+  } else if (t.includes('shoulder') || t.includes('delt')) {
+    m.add('shoulders');
+  }
+
+  // Chest
+  if (t.includes('chest') || t.includes('pec')) m.add('chest');
+
+  // Back / lats / traps / lower back
+  if (t.includes('lat')) m.add('lats');
+  if (t.includes('trap')) m.add('traps');
+  if (t.includes('lower back')) m.add('lowerBack');
+  // Generic "back" -> highlight lats + traps as a default back visualization
+  if (t.includes('back') && !t.includes('lower back')) {
+    m.add('lats');
+    m.add('traps');
+  }
+
+  // Arms
+  if (t.includes('biceps') || t.includes('brachialis')) m.add('biceps');
+  if (t.includes('triceps')) m.add('triceps');
+  if (t.includes('forearm')) m.add('forearms');
+
+  // Core
+  if (t.includes('abs') || t.includes('core')) m.add('abs');
+  if (t.includes('obliques')) m.add('obliques');
+
+  // Legs
+  if (t.includes('quad')) m.add('quads');
+  if (t.includes('hamstring')) m.add('hamstrings');
+  if (t.includes('glute')) m.add('glutes');
+  if (t.includes('calves') || t.includes('calf')) m.add('calves');
+  if (t.includes('adductor')) m.add('quads'); // visual approximation
+  if (t.includes('hip flexor')) m.add('quads');
+
+  // "Full Body" / "Legs" -> light up multiple groups for visual feedback
+  if (t.includes('full body')) {
+    ['chest', 'abs', 'shoulders', 'biceps', 'lats', 'quads', 'glutes'].forEach((k) => m.add(k));
+  }
+  if (t === 'legs' || t.startsWith('legs ') || t.includes('legs •')) {
+    m.add('quads');
+    m.add('hamstrings');
+    m.add('glutes');
+    m.add('calves');
+  }
+
+  return Array.from(m);
+}

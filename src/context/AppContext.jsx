@@ -54,8 +54,20 @@ const ACHIEVEMENT_DEFS = [
   { id: 'volume-50', title: 'Volume Up', description: 'Single entry with 50+ total reps volume.', icon: '📈', condition: (s) => s.bestVolume >= 50 },
   { id: 'volume-100', title: 'High Volume', description: 'Single entry with 100+ reps volume!', icon: '🚀', condition: (s) => s.bestVolume >= 100 },
 
+  // Weight / load PRs (single-rep weight)
+  { id: 'weight-20', title: 'First Plates', description: 'Lifted 20kg in a single set.', icon: '🏋️', condition: (s) => s.heaviestLift >= 20 },
+  { id: 'weight-50', title: '50kg Club', description: 'Lifted 50kg in a single set!', icon: '💪', condition: (s) => s.heaviestLift >= 50 },
+  { id: 'weight-100', title: '100kg Club', description: 'Triple digits! Lifted 100kg.', icon: '🦾', condition: (s) => s.heaviestLift >= 100 },
+  { id: 'weight-150', title: 'Heavy Hitter', description: 'Lifted 150kg in a single set!', icon: '⚡', condition: (s) => s.heaviestLift >= 150 },
+
+  // Total tonnage (cumulative weight × reps × sets across all logs)
+  { id: 'tonnage-1k', title: '1 Ton Lifted', description: 'Total tonnage reached 1,000 kg!', icon: '📦', condition: (s) => s.totalTonnage >= 1000 },
+  { id: 'tonnage-5k', title: '5 Tons Lifted', description: 'Cumulative 5,000 kg moved!', icon: '🚚', condition: (s) => s.totalTonnage >= 5000 },
+  { id: 'tonnage-10k', title: '10 Tons Lifted', description: 'Cumulative 10,000 kg moved!', icon: '🏗️', condition: (s) => s.totalTonnage >= 10000 },
+
   // Progress from previous day
   { id: 'beat-yesterday', title: 'Beat Yesterday', description: 'More reps today than yesterday!', icon: '📊', condition: (s) => s.beatYesterday },
+  { id: 'heavier-than-yesterday', title: 'Going Heavier', description: 'Lifted heavier than yesterday!', icon: '📈', condition: (s) => s.heavierThanYesterday },
 ];
 
 export function AppProvider({ children }) {
@@ -78,6 +90,13 @@ export function AppProvider({ children }) {
     const totalReps = workouts.reduce((sum, w) => sum + w.sets * w.reps, 0);
     const uniqueExercises = new Set(workouts.map((w) => w.exercise)).size;
     const bestVolume = workouts.reduce((max, w) => Math.max(max, w.sets * w.reps), 0);
+
+    // Weight / load metrics
+    const heaviestLift = workouts.reduce((max, w) => Math.max(max, w.weight || 0), 0);
+    const totalTonnage = workouts.reduce(
+      (sum, w) => sum + (w.weight || 0) * w.sets * w.reps,
+      0
+    );
 
     // Streak: count consecutive days (from today backward) with workouts.
     const today = todayIndex();
@@ -102,21 +121,26 @@ export function AppProvider({ children }) {
 
     // Beat yesterday: compare today's total reps vs yesterday's.
     const yesterdayIdx = (today - 1 + 7) % 7;
-    const todayReps = workouts
-      .filter((w) => {
-        const d = new Date(w.timestamp).getDay();
-        return (d === 0 ? 6 : d - 1) === today;
-      })
-      .reduce((sum, w) => sum + w.sets * w.reps, 0);
-    const yesterdayReps = workouts
-      .filter((w) => {
-        const d = new Date(w.timestamp).getDay();
-        return (d === 0 ? 6 : d - 1) === yesterdayIdx;
-      })
-      .reduce((sum, w) => sum + w.sets * w.reps, 0);
+    const dayFilter = (idx) => (w) => {
+      const d = new Date(w.timestamp).getDay();
+      return (d === 0 ? 6 : d - 1) === idx;
+    };
+    const todayWorkouts = workouts.filter(dayFilter(today));
+    const yesterdayWorkouts = workouts.filter(dayFilter(yesterdayIdx));
+
+    const todayReps = todayWorkouts.reduce((sum, w) => sum + w.sets * w.reps, 0);
+    const yesterdayReps = yesterdayWorkouts.reduce((sum, w) => sum + w.sets * w.reps, 0);
     const beatYesterday = yesterdayReps > 0 && todayReps > yesterdayReps;
 
-    return { totalWorkouts, totalReps, uniqueExercises, bestVolume, streak, beatYesterday };
+    // Heavier than yesterday: compare max weight lifted today vs yesterday
+    const todayMaxWeight = todayWorkouts.reduce((m, w) => Math.max(m, w.weight || 0), 0);
+    const yesterdayMaxWeight = yesterdayWorkouts.reduce((m, w) => Math.max(m, w.weight || 0), 0);
+    const heavierThanYesterday = yesterdayMaxWeight > 0 && todayMaxWeight > yesterdayMaxWeight;
+
+    return {
+      totalWorkouts, totalReps, uniqueExercises, bestVolume, streak,
+      beatYesterday, heaviestLift, totalTonnage, heavierThanYesterday,
+    };
   }, []);
 
   /**
@@ -145,12 +169,14 @@ export function AppProvider({ children }) {
   }, [computeStats]);
 
   // Add a workout entry, mark today, and check achievements.
-  const logWorkout = ({ exercise, sets, reps }) => {
+  const logWorkout = ({ exercise, sets, reps, weight = 0, muscles = [] }) => {
     const entry = {
       id: Date.now().toString(),
       exercise,
       sets: Number(sets) || 0,
       reps: Number(reps) || 0,
+      weight: Number(weight) || 0,
+      muscles,
       timestamp: new Date().toISOString(),
     };
 
@@ -179,10 +205,20 @@ export function AppProvider({ children }) {
       0
     );
     const activeMinutes = Math.round((totalReps * 3) / 60); // ~3s per rep
+    const totalTonnage = loggedWorkouts.reduce(
+      (sum, w) => sum + (w.weight || 0) * w.sets * w.reps,
+      0
+    );
+    const heaviestLift = loggedWorkouts.reduce(
+      (max, w) => Math.max(max, w.weight || 0),
+      0
+    );
     return {
       workoutsCompleted: loggedWorkouts.length,
       activeMinutes,
       totalReps,
+      totalTonnage,
+      heaviestLift,
     };
   }, [loggedWorkouts]);
 
