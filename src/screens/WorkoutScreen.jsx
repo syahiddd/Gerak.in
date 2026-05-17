@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Target } from 'lucide-react';
+import { Target, Activity } from 'lucide-react';
 import ExercisePicker from '../components/ExercisePicker.jsx';
 import LogWorkoutForm from '../components/LogWorkoutForm.jsx';
 import RestTimer from '../components/RestTimer.jsx';
 import MuscleDiagram from '../components/MuscleDiagram.jsx';
+import ExerciseAnimation from '../components/ExerciseAnimation.jsx';
 import Card from '../components/Card.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { getMusclesForExercise } from '../data/exercises.js';
@@ -50,10 +51,21 @@ export default function WorkoutScreen() {
         onSelect={handleSelect}
       />
 
-      {/* Muscle target diagram — appears once an exercise is selected */}
+      {/* Muscle target diagram + movement animation — appears once an exercise is selected */}
       {selected && (
         <>
           <div className={styles.spacer} />
+          <Card>
+            <div className={styles.muscleHeader}>
+              <Activity size={18} className={styles.muscleHeaderIcon} />
+              <h3 className="h3">Movement</h3>
+              <span className={styles.muscleHeaderName}>{selected.name}</span>
+            </div>
+            <ExerciseAnimation exercise={selected} />
+          </Card>
+
+          <div className={styles.spacer} />
+
           <Card>
             <div className={styles.muscleHeader}>
               <Target size={18} className={styles.muscleHeaderIcon} />

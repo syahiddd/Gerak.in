@@ -1,0 +1,425 @@
+/* ═══════════════════════════════════════════════════════════════════
+   ExerciseAnimation — CSS-animated stick figure for each movement type
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: var(--sp-md) 0;
+}
+
+.scene {
+  width: 120px;
+  height: 140px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.movementLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+/* ─── Stick figure base ───────────────────────────────────────────── */
+.figure {
+  position: relative;
+  width: 60px;
+  height: 120px;
+}
+
+.head {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.torso {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 40px;
+  background: var(--accent);
+  border-radius: 2px;
+  transform-origin: top center;
+  box-shadow: 0 0 4px var(--accent);
+}
+
+.armLeft, .armRight {
+  position: absolute;
+  top: 22px;
+  width: 4px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 2px;
+  transform-origin: top center;
+  box-shadow: 0 0 3px var(--accent);
+}
+
+.armLeft { left: 12px; transform: rotate(30deg); }
+.armRight { right: 12px; transform: rotate(-30deg); }
+
+.legLeft, .legRight {
+  position: absolute;
+  top: 60px;
+  width: 4px;
+  height: 38px;
+  background: var(--accent);
+  border-radius: 2px;
+  transform-origin: top center;
+  box-shadow: 0 0 3px var(--accent);
+}
+
+.legLeft { left: 22px; transform: rotate(10deg); }
+.legRight { right: 22px; transform: rotate(-10deg); }
+
+.weight {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 6px;
+  background: var(--accent-alt, #00C2FF);
+  border-radius: 3px;
+  box-shadow: 0 0 6px var(--accent-alt, #00C2FF);
+  opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOVEMENT ANIMATIONS
+   Each movement class applies specific keyframe animations to
+   the stick figure parts.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── PUSH (push-ups, bench press) ─────────────────────────────── */
+.push .torso {
+  animation: pushTorso 1.6s ease-in-out infinite;
+}
+.push .armLeft {
+  animation: pushArmL 1.6s ease-in-out infinite;
+}
+.push .armRight {
+  animation: pushArmR 1.6s ease-in-out infinite;
+}
+
+@keyframes pushTorso {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(8deg); }
+}
+@keyframes pushArmL {
+  0%, 100% { transform: rotate(30deg); }
+  50% { transform: rotate(60deg); }
+}
+@keyframes pushArmR {
+  0%, 100% { transform: rotate(-30deg); }
+  50% { transform: rotate(-60deg); }
+}
+
+/* ─── PULL (pull-ups, rows) ────────────────────────────────────── */
+.pull .figure {
+  animation: pullBody 1.8s ease-in-out infinite;
+}
+.pull .armLeft {
+  animation: pullArmL 1.8s ease-in-out infinite;
+}
+.pull .armRight {
+  animation: pullArmR 1.8s ease-in-out infinite;
+}
+
+@keyframes pullBody {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes pullArmL {
+  0%, 100% { transform: rotate(160deg); height: 32px; }
+  50% { transform: rotate(60deg); height: 24px; }
+}
+@keyframes pullArmR {
+  0%, 100% { transform: rotate(-160deg); height: 32px; }
+  50% { transform: rotate(-60deg); height: 24px; }
+}
+
+/* ─── SQUAT ────────────────────────────────────────────────────── */
+.squat .figure {
+  animation: squatBody 1.6s ease-in-out infinite;
+}
+.squat .legLeft {
+  animation: squatLegL 1.6s ease-in-out infinite;
+}
+.squat .legRight {
+  animation: squatLegR 1.6s ease-in-out infinite;
+}
+.squat .torso {
+  animation: squatTorso 1.6s ease-in-out infinite;
+}
+
+@keyframes squatBody {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(16px); }
+}
+@keyframes squatTorso {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(10deg); }
+}
+@keyframes squatLegL {
+  0%, 100% { transform: rotate(10deg); height: 38px; }
+  50% { transform: rotate(45deg); height: 30px; }
+}
+@keyframes squatLegR {
+  0%, 100% { transform: rotate(-10deg); height: 38px; }
+  50% { transform: rotate(-45deg); height: 30px; }
+}
+
+/* ─── DEADLIFT (hip hinge) ─────────────────────────────────────── */
+.deadlift .torso {
+  animation: dlTorso 2s ease-in-out infinite;
+}
+.deadlift .armLeft {
+  animation: dlArmL 2s ease-in-out infinite;
+}
+.deadlift .armRight {
+  animation: dlArmR 2s ease-in-out infinite;
+}
+.deadlift .legLeft, .deadlift .legRight {
+  animation: dlLegs 2s ease-in-out infinite;
+}
+
+@keyframes dlTorso {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(45deg); }
+}
+@keyframes dlArmL {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(0deg); }
+}
+@keyframes dlArmR {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(0deg); }
+}
+@keyframes dlLegs {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(15deg); }
+}
+
+/* ─── PRESS (overhead press, shoulder press) ───────────────────── */
+.press .armLeft {
+  animation: pressArmL 1.4s ease-in-out infinite;
+}
+.press .armRight {
+  animation: pressArmR 1.4s ease-in-out infinite;
+}
+
+@keyframes pressArmL {
+  0%, 100% { transform: rotate(30deg); height: 32px; }
+  50% { transform: rotate(170deg); height: 34px; }
+}
+@keyframes pressArmR {
+  0%, 100% { transform: rotate(-30deg); height: 32px; }
+  50% { transform: rotate(-170deg); height: 34px; }
+}
+
+/* ─── CURL (bicep curls) ───────────────────────────────────────── */
+.curl .armLeft {
+  animation: curlArmL 1.4s ease-in-out infinite;
+}
+.curl .armRight {
+  animation: curlArmR 1.4s ease-in-out infinite;
+}
+
+@keyframes curlArmL {
+  0%, 100% { transform: rotate(0deg); height: 32px; }
+  50% { transform: rotate(120deg); height: 22px; }
+}
+@keyframes curlArmR {
+  0%, 100% { transform: rotate(0deg); height: 32px; }
+  50% { transform: rotate(-120deg); height: 22px; }
+}
+
+/* ─── EXTENSION (tricep pushdown, kickback) ────────────────────── */
+.extension .armLeft {
+  animation: extArmL 1.5s ease-in-out infinite;
+}
+.extension .armRight {
+  animation: extArmR 1.5s ease-in-out infinite;
+}
+.extension .torso {
+  animation: extTorso 1.5s ease-in-out infinite;
+}
+
+@keyframes extArmL {
+  0%, 100% { transform: rotate(90deg); height: 28px; }
+  50% { transform: rotate(10deg); height: 32px; }
+}
+@keyframes extArmR {
+  0%, 100% { transform: rotate(-90deg); height: 28px; }
+  50% { transform: rotate(-10deg); height: 32px; }
+}
+@keyframes extTorso {
+  0%, 100% { transform: translateX(-50%) rotate(15deg); }
+  50% { transform: translateX(-50%) rotate(15deg); }
+}
+
+/* ─── PLANK (isometric hold, slight shake) ─────────────────────── */
+.plank .figure {
+  transform: rotate(80deg) translateY(10px);
+}
+.plank .torso {
+  animation: plankShake 0.5s ease-in-out infinite;
+}
+.plank .armLeft { transform: rotate(-80deg); }
+.plank .armRight { transform: rotate(80deg); left: 40px; right: auto; }
+.plank .legLeft { transform: rotate(-10deg); }
+.plank .legRight { transform: rotate(10deg); }
+
+@keyframes plankShake {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(0.5deg); }
+  75% { transform: translateX(-50%) rotate(-0.5deg); }
+}
+
+/* ─── CRUNCH (sit-up motion) ───────────────────────────────────── */
+.crunch .torso {
+  animation: crunchTorso 1.6s ease-in-out infinite;
+}
+.crunch .legLeft, .crunch .legRight {
+  transform: rotate(60deg);
+}
+.crunch .head {
+  animation: crunchHead 1.6s ease-in-out infinite;
+}
+
+@keyframes crunchTorso {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(35deg); }
+}
+@keyframes crunchHead {
+  0%, 100% { top: 0; }
+  50% { top: 12px; }
+}
+
+/* ─── RAISE (lateral raise, front raise) ───────────────────────── */
+.raise .armLeft {
+  animation: raiseArmL 1.6s ease-in-out infinite;
+}
+.raise .armRight {
+  animation: raiseArmR 1.6s ease-in-out infinite;
+}
+
+@keyframes raiseArmL {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(90deg); }
+}
+@keyframes raiseArmR {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(-90deg); }
+}
+
+/* ─── CALF (calf raise — toe raises) ──────────────────────────── */
+.calf .figure {
+  animation: calfBounce 1s ease-in-out infinite;
+}
+
+@keyframes calfBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ─── SWING (kettlebell swing, clean) ──────────────────────────── */
+.swing .armLeft {
+  animation: swingArmL 1.4s ease-in-out infinite;
+}
+.swing .armRight {
+  animation: swingArmR 1.4s ease-in-out infinite;
+}
+.swing .torso {
+  animation: swingTorso 1.4s ease-in-out infinite;
+}
+.swing .figure {
+  animation: swingBounce 1.4s ease-in-out infinite;
+}
+
+@keyframes swingArmL {
+  0%, 100% { transform: rotate(10deg); }
+  30% { transform: rotate(170deg); }
+  60% { transform: rotate(10deg); }
+}
+@keyframes swingArmR {
+  0%, 100% { transform: rotate(-10deg); }
+  30% { transform: rotate(-170deg); }
+  60% { transform: rotate(-10deg); }
+}
+@keyframes swingTorso {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  20% { transform: translateX(-50%) rotate(20deg); }
+  50% { transform: translateX(-50%) rotate(-5deg); }
+}
+@keyframes swingBounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* ─── CARDIO (jumping motion) ──────────────────────────────────── */
+.cardio .figure {
+  animation: cardioJump 0.8s ease-in-out infinite;
+}
+.cardio .armLeft {
+  animation: cardioArmL 0.8s ease-in-out infinite;
+}
+.cardio .armRight {
+  animation: cardioArmR 0.8s ease-in-out infinite;
+}
+.cardio .legLeft {
+  animation: cardioLegL 0.8s ease-in-out infinite;
+}
+.cardio .legRight {
+  animation: cardioLegR 0.8s ease-in-out infinite;
+}
+
+@keyframes cardioJump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+@keyframes cardioArmL {
+  0%, 100% { transform: rotate(30deg); }
+  50% { transform: rotate(140deg); }
+}
+@keyframes cardioArmR {
+  0%, 100% { transform: rotate(-30deg); }
+  50% { transform: rotate(-140deg); }
+}
+@keyframes cardioLegL {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(30deg); }
+}
+@keyframes cardioLegR {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(-30deg); }
+}
+
+/* ─── HOLD (isometric — slow pulse glow) ───────────────────────── */
+.hold .figure {
+  animation: holdPulse 2s ease-in-out infinite;
+}
+.hold .armLeft { transform: rotate(170deg); }
+.hold .armRight { transform: rotate(-170deg); }
+.hold .legLeft { transform: rotate(0deg); }
+.hold .legRight { transform: rotate(0deg); }
+
+@keyframes holdPulse {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--accent)); opacity: 0.85; }
+  50% { filter: drop-shadow(0 0 10px var(--accent)); opacity: 1; }
+}
