@@ -1,6 +1,6 @@
 node_modules/
-.expo/
-.expo-shared/
+.next/
+out/
 dist/
 web-build/
 *.log
@@ -8,4 +8,6 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 .DS_Store
+*.tsbuildinfo
 .env*
+!.env.example
