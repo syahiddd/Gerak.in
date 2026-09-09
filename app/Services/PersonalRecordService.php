@@ -76,10 +76,14 @@ class PersonalRecordService
         $bestVolume = null;
         $bestOneRm = null;
         $mostReps = null;
+        $bestDuration = null;
+        $longestDistance = null;
 
         foreach ($sets as $set) {
             $w = $set->weight_kg !== null ? (float) $set->weight_kg : null;
             $r = $set->reps !== null ? (int) $set->reps : null;
+            $dur = $set->duration_s !== null ? (int) $set->duration_s : null;
+            $dist = $set->distance_m !== null ? (int) $set->distance_m : null;
 
             if ($w !== null && $w > 0 && ($heaviest === null || $w > $heaviest['value'])) {
                 $heaviest = ['value' => $w, 'reps' => $r, 'detail' => "{$w} kg".($r ? " × {$r}" : '')];
@@ -97,6 +101,13 @@ class PersonalRecordService
             if ($r !== null && ($mostReps === null || $r > $mostReps['value'])) {
                 $mostReps = ['value' => $r, 'reps' => $r, 'detail' => "{$r} reps".($w ? " @ {$w} kg" : '')];
             }
+            // Duration/distance sets never contribute weight-volume; they get their own records.
+            if ($dur !== null && $dur > 0 && ($bestDuration === null || $dur > $bestDuration['value'])) {
+                $bestDuration = ['value' => $dur, 'reps' => null, 'detail' => gmdate('H:i:s', $dur)];
+            }
+            if ($dist !== null && $dist > 0 && ($longestDistance === null || $dist > $longestDistance['value'])) {
+                $longestDistance = ['value' => $dist, 'reps' => null, 'detail' => "{$dist} m"];
+            }
         }
 
         return [
@@ -104,6 +115,8 @@ class PersonalRecordService
             RecordType::BestSetVolume->value => $bestVolume,
             RecordType::BestOneRmEst->value => $bestOneRm,
             RecordType::MostReps->value => $mostReps,
+            RecordType::BestDuration->value => $bestDuration,
+            RecordType::LongestDistance->value => $longestDistance,
         ];
     }
 }

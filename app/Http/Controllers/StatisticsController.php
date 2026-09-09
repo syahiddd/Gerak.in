@@ -17,6 +17,7 @@ class StatisticsController extends Controller
         return Inertia::render('Statistics', [
             'overview' => $stats->overview($user),
             'weekly' => $stats->weeklyVolume($user, 12),
+            'monthly' => $stats->monthlyVolume($user, 12),
             'muscles' => $stats->muscleDistribution($user, 30),
         ]);
     }
