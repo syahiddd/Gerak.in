@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,7 +26,7 @@ class ExerciseController extends Controller
             'q' => ['nullable', 'string', 'max:100'],
             'muscle' => ['nullable', 'integer', 'exists:muscles,id'],
             'equipment' => ['nullable', 'integer', 'exists:equipment,id'],
-            'type' => ['nullable', 'string'],
+            'type' => ['nullable', Rule::enum(ExerciseType::class)],
             'sort' => ['nullable', 'string', 'in:name,recent'],
         ]);
 
@@ -51,7 +52,11 @@ class ExerciseController extends Controller
             $query->where('exercise_type', $validated['type']);
         }
 
-        $query->orderBy('name');
+        if (($validated['sort'] ?? 'name') === 'recent') {
+            $query->latest('exercises.updated_at');
+        } else {
+            $query->orderBy('name');
+        }
         $exercises = $query->paginate(24)->withQueryString();
 
         return Inertia::render('Exercises/Index', [
