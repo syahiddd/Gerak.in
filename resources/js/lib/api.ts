@@ -26,4 +26,16 @@ export const api = {
             workout_exercise_id: workoutExerciseId,
             set_type: setType,
         }),
+    addRoutineExercise: (routineId: number, payload: Record<string, unknown>) =>
+        json<{ exercise: Record<string, unknown> }>(`/routines/${routineId}/exercises`, 'POST', payload),
+    patchRoutineExercise: (routineId: number, exerciseId: number, payload: Record<string, unknown>) =>
+        json<{ exercise: Record<string, unknown> }>(
+            `/routines/${routineId}/exercises/${exerciseId}`,
+            'PATCH',
+            payload,
+        ),
+    deleteRoutineExercise: (routineId: number, exerciseId: number) =>
+        json<{ deleted: boolean }>(`/routines/${routineId}/exercises/${exerciseId}`, 'DELETE'),
+    reorderRoutineExercises: (routineId: number, order: number[]) =>
+        json<{ reordered: boolean }>(`/routines/${routineId}/reorder`, 'POST', { order }),
 };

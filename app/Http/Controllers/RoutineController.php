@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\RoutineStatus;
+use App\Http\Requests\StoreRoutineExerciseRequest;
 use App\Http\Requests\StoreRoutineRequest;
+use App\Http\Requests\UpdateRoutineExerciseRequest;
 use App\Models\Exercise;
 use App\Models\Routine;
+use App\Models\RoutineExercise;
 use App\Services\RoutineService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,45 +38,9 @@ class RoutineController extends Controller
         return Inertia::render('Routines/Create', compact('exercises'));
     }
 
-    public function store(StoreRoutineRequest $request): RedirectResponse
+    public function store(StoreRoutineRequest $request, RoutineService $service): RedirectResponse
     {
-        $data = $request->validated();
-
-        $routine = DB::transaction(function () use ($data) {
-            $routine = Routine::create([
-                'user_id' => auth()->id(),
-                'folder_id' => $data['folder_id'] ?? null,
-                'name' => $data['name'],
-                'description' => $data['description'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'status' => RoutineStatus::Active,
-            ]);
-
-            foreach ($data['exercises'] ?? [] as $i => $ex) {
-                $re = $routine->exercises()->create([
-                    'exercise_id' => $ex['exercise_id'],
-                    'order' => $i,
-                    'notes' => $ex['notes'] ?? null,
-                    'rest_seconds' => $ex['rest_seconds'] ?? 90,
-                ]);
-                foreach ($ex['sets'] ?? [] as $j => $set) {
-                    $re->targetSets()->create([
-                        'order' => $j,
-                        'target_reps_min' => $set['target_reps_min'] ?? null,
-                        'target_reps_max' => $set['target_reps_max'] ?? null,
-                        'target_weight_kg' => $set['target_weight_kg'] ?? null,
-                        'set_type' => $set['set_type'] ?? 'normal',
-                    ]);
-                }
-                if (empty($ex['sets'])) {
-                    for ($s = 0; $s < 3; $s++) {
-                        $re->targetSets()->create(['order' => $s, 'set_type' => 'normal']);
-                    }
-                }
-            }
-
-            return $routine;
-        });
+        $routine = $service->createRoutine(auth()->user(), $request->validated());
 
         return redirect()->route('routines.show', $routine)->with('success', 'Routine created.');
     }
@@ -101,14 +69,12 @@ class RoutineController extends Controller
         $this->authorize('update', $routine);
         $data = $request->validated();
 
-        DB::transaction(function () use ($routine, $data) {
-            $routine->update([
-                'name' => $data['name'],
-                'description' => $data['description'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'folder_id' => $data['folder_id'] ?? $routine->folder_id,
-            ]);
-        });
+        $routine->update([
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'folder_id' => $data['folder_id'] ?? $routine->folder_id,
+        ]);
 
         return redirect()->route('routines.show', $routine)->with('success', 'Routine updated.');
     }
@@ -136,5 +102,83 @@ class RoutineController extends Controller
         $routine->save();
 
         return back()->with('success', 'Routine status updated.');
+    }
+
+    public function addExercise(
+        StoreRoutineExerciseRequest $request,
+        Routine $routine,
+        RoutineService $service
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('update', $routine);
+        $re = $service->addExercise($routine, (int) $request->validated()['exercise_id'], $request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json(['exercise' => $re->load('exercise', 'targetSets')]);
+        }
+
+        return back()->with('success', 'Exercise added to routine.');
+    }
+
+    public function updateExercise(
+        UpdateRoutineExerciseRequest $request,
+        Routine $routine,
+        RoutineExercise $exercise,
+        RoutineService $service
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('update', $routine);
+        abort_unless((int) $exercise->routine_id === (int) $routine->id, 404);
+
+        $data = $request->validated();
+        $sets = $data['sets'] ?? null;
+        unset($data['sets']);
+
+        $re = $service->updateExercise($exercise, $data);
+        if (is_array($sets)) {
+            $re = $service->syncTargetSets($exercise, $sets);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['exercise' => $re->load('exercise', 'targetSets')]);
+        }
+
+        return back()->with('success', 'Exercise configuration saved.');
+    }
+
+    public function removeExercise(
+        Request $request,
+        Routine $routine,
+        RoutineExercise $exercise,
+        RoutineService $service
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('update', $routine);
+        abort_unless((int) $exercise->routine_id === (int) $routine->id, 404);
+
+        $service->removeExercise($exercise);
+
+        if ($request->expectsJson()) {
+            return response()->json(['deleted' => true]);
+        }
+
+        return back()->with('success', 'Exercise removed from routine.');
+    }
+
+    public function reorder(
+        Request $request,
+        Routine $routine,
+        RoutineService $service
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('update', $routine);
+        $data = $request->validate([
+            'order' => ['required', 'array', 'min:1'],
+            'order.*' => ['integer'],
+        ]);
+
+        $service->reorderExercises($routine, array_map('intval', $data['order']));
+
+        if ($request->expectsJson()) {
+            return response()->json(['reordered' => true]);
+        }
+
+        return back()->with('success', 'Exercises reordered.');
     }
 }

@@ -48,6 +48,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/routines/{routine}', [RoutineController::class, 'destroy'])->name('routines.destroy');
     Route::post('/routines/{routine}/duplicate', [RoutineController::class, 'duplicate'])->name('routines.duplicate');
     Route::post('/routines/{routine}/archive', [RoutineController::class, 'archive'])->name('routines.archive');
+    Route::post('/routines/{routine}/exercises', [RoutineController::class, 'addExercise'])->name('routines.add-exercise');
+    Route::patch('/routines/{routine}/exercises/{exercise}', [RoutineController::class, 'updateExercise'])->name('routines.update-exercise');
+    Route::delete('/routines/{routine}/exercises/{exercise}', [RoutineController::class, 'removeExercise'])->name('routines.remove-exercise');
+    Route::post('/routines/{routine}/reorder', [RoutineController::class, 'reorder'])->name('routines.reorder');
 
     // Routine folders
     Route::post('/routine-folders', [RoutineFolderController::class, 'store'])->name('folders.store');
