@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserProfile extends Model
 {
+    protected $primaryKey = 'user_id';
+
+    public $incrementing = false;
+
     protected $fillable = [
         'user_id', 'display_name', 'avatar_path', 'bio', 'height_cm', 'is_public',
     ];

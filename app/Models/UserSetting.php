@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserSetting extends Model
 {
+    protected $primaryKey = 'user_id';
+
+    public $incrementing = false;
+
     protected $fillable = [
         'user_id', 'unit_system', 'theme', 'default_rest_seconds',
         'default_sets', 'week_starts_on', 'notifications',

@@ -13,6 +13,15 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    protected static function booted(): void
+    {
+        // Every account owns exactly one profile + settings row.
+        static::created(function (User $user): void {
+            $user->profile()->firstOrCreate([]);
+            $user->settings()->firstOrCreate([]);
+        });
+    }
+
     protected $fillable = [
         'name',
         'email',
