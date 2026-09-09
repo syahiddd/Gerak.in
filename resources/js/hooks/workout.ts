@@ -1,16 +1,25 @@
 import { useEffect, useState } from 'react';
 import { formatDuration } from '@/lib/units';
 
-/** Ticks every second from a server-provided ISO start time. Server timestamps stay authoritative on finish. */
-export function useElapsed(startedAt: string): string {
+/**
+ * Ticks every second from a server-provided ISO start time, minus paused time.
+ * While pausedAt is set the display freezes. Server timestamps stay
+ * authoritative on finish.
+ */
+export function useElapsed(startedAt: string, pausedSecondsTotal = 0, pausedAt: string | null = null): string {
     const [now, setNow] = useState(() => Date.now());
 
     useEffect(() => {
+        if (pausedAt !== null) return; // frozen while paused
         const t = setInterval(() => setNow(Date.now()), 1000);
         return () => clearInterval(t);
-    }, []);
+    }, [pausedAt]);
 
-    const seconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
+    const end = pausedAt !== null ? new Date(pausedAt).getTime() : now;
+    const seconds = Math.max(
+        0,
+        Math.floor((end - new Date(startedAt).getTime()) / 1000) - pausedSecondsTotal,
+    );
     return formatDuration(seconds);
 }
 

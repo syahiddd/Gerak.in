@@ -38,4 +38,10 @@ export const api = {
         json<{ deleted: boolean }>(`/routines/${routineId}/exercises/${exerciseId}`, 'DELETE'),
     reorderRoutineExercises: (routineId: number, order: number[]) =>
         json<{ reordered: boolean }>(`/routines/${routineId}/reorder`, 'POST', { order }),
+    patchWorkoutExercise: (workoutId: number, exerciseId: number, payload: Record<string, unknown>) =>
+        json<{ exercise: Record<string, unknown> }>(
+            `/workouts/${workoutId}/exercises/${exerciseId}`,
+            'PATCH',
+            payload,
+        ),
 };

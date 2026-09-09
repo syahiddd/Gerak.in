@@ -68,7 +68,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/workouts/{workout}', [WorkoutController::class, 'destroy'])->name('workouts.destroy');
     Route::post('/workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');
     Route::post('/workouts/{workout}/cancel', [WorkoutController::class, 'cancel'])->name('workouts.cancel');
+    Route::post('/workouts/{workout}/pause', [WorkoutController::class, 'pause'])->name('workouts.pause');
+    Route::post('/workouts/{workout}/resume', [WorkoutController::class, 'resume'])->name('workouts.resume');
     Route::post('/workouts/{workout}/exercises', [WorkoutController::class, 'addExercise'])->name('workouts.add-exercise');
+    Route::patch('/workouts/{workout}/exercises/{exercise}', [WorkoutController::class, 'updateExercise'])->name('workouts.update-exercise');
     Route::delete('/workouts/{workout}/exercises/{exercise}', [WorkoutController::class, 'removeExercise'])->name('workouts.remove-exercise');
     Route::post('/workouts/{workout}/sets', [WorkoutController::class, 'storeSet'])->name('workouts.store-set');
     Route::patch('/sets/{set}', [WorkoutController::class, 'updateSet'])->name('workouts.update-set');

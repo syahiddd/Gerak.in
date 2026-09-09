@@ -147,9 +147,10 @@ class WorkoutService
 
         return DB::transaction(function () use ($workout) {
             $workout->loadMissing('exercises.sets');
-            $now = now();
-            $workout->ended_at = $now;
-            $workout->duration_seconds = max(0, (int) ($now->diffInSeconds($workout->started_at) - $workout->paused_seconds_total));
+            // Compute before stamping ended_at so an in-progress pause is excluded.
+            $workout->duration_seconds = $workout->elapsedSeconds();
+            $workout->ended_at = now();
+            $workout->paused_at = null;
             $workout->total_volume_kg = VolumeCalculator::workoutVolumeKg($workout);
             $workout->status = WorkoutStatus::Completed;
             $workout->save();
@@ -158,17 +159,61 @@ class WorkoutService
         });
     }
 
+    public function pause(Workout $workout): Workout
+    {
+        if ($workout->status !== WorkoutStatus::InProgress) {
+            throw ValidationException::withMessages([
+                'workout' => 'Only an in-progress workout can be paused.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($workout) {
+            $workout->status = WorkoutStatus::Paused;
+            $workout->paused_at = now();
+            $workout->save();
+
+            return $workout->refresh();
+        });
+    }
+
+    public function resume(Workout $workout): Workout
+    {
+        if ($workout->status !== WorkoutStatus::Paused) {
+            throw ValidationException::withMessages([
+                'workout' => 'Only a paused workout can be resumed.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($workout) {
+            if ($workout->paused_at !== null) {
+                $workout->paused_seconds_total += now()->getTimestamp() - $workout->paused_at->getTimestamp();
+            }
+            $workout->status = WorkoutStatus::InProgress;
+            $workout->paused_at = null;
+            $workout->save();
+
+            return $workout->refresh();
+        });
+    }
+
     public function cancel(Workout $workout): void
     {
         $this->assertActive($workout);
         $workout->status = WorkoutStatus::Cancelled;
         $workout->ended_at = now();
+        $workout->paused_at = null;
         $workout->save();
     }
 
     public function activeFor(User $user): ?Workout
     {
         return $user->workouts()->active()->latest('started_at')->first();
+    }
+
+    /** Throw a 422 unless the workout is in progress or paused. */
+    public function ensureActive(Workout $workout): void
+    {
+        $this->assertActive($workout);
     }
 
     private function assertActive(Workout $workout): void

@@ -14,7 +14,7 @@ class Workout extends Model
 {
     protected $fillable = [
         'user_id', 'routine_id', 'name', 'notes', 'status',
-        'started_at', 'paused_seconds_total', 'ended_at',
+        'started_at', 'paused_seconds_total', 'paused_at', 'ended_at',
         'duration_seconds', 'total_volume_kg', 'timezone',
     ];
 
@@ -23,6 +23,7 @@ class Workout extends Model
         return [
             'status' => WorkoutStatus::class,
             'started_at' => 'datetime',
+            'paused_at' => 'datetime',
             'ended_at' => 'datetime',
             'total_volume_kg' => 'decimal:2',
         ];
@@ -56,5 +57,22 @@ class Workout extends Model
     public function isActive(): bool
     {
         return in_array($this->status, [WorkoutStatus::InProgress, WorkoutStatus::Paused], true);
+    }
+
+    public function isPaused(): bool
+    {
+        return $this->status === WorkoutStatus::Paused;
+    }
+
+    /** Live elapsed seconds excluding all paused time (including an ongoing pause). */
+    public function elapsedSeconds(): int
+    {
+        $end = ($this->ended_at ?? now())->getTimestamp();
+        $paused = (int) $this->paused_seconds_total;
+        if ($this->paused_at !== null && $this->ended_at === null) {
+            $paused += $end - $this->paused_at->getTimestamp();
+        }
+
+        return max(0, $end - $this->started_at->getTimestamp() - $paused);
     }
 }

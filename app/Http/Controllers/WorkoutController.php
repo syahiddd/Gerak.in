@@ -126,6 +126,42 @@ class WorkoutController extends Controller
         return redirect()->route('workouts.index')->with('info', 'Workout cancelled.');
     }
 
+    public function pause(Workout $workout, WorkoutService $service): RedirectResponse
+    {
+        $this->authorize('update', $workout);
+        $service->pause($workout);
+
+        return back()->with('info', 'Workout paused.');
+    }
+
+    public function resume(Workout $workout, WorkoutService $service): RedirectResponse
+    {
+        $this->authorize('update', $workout);
+        $service->resume($workout);
+
+        return back()->with('success', 'Workout resumed.');
+    }
+
+    public function updateExercise(
+        Request $request,
+        Workout $workout,
+        WorkoutExercise $exercise,
+        WorkoutService $service
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('update', $workout);
+        abort_unless((int) $exercise->workout_id === (int) $workout->id, 404);
+        $service->ensureActive($workout);
+
+        $data = $request->validate(['notes' => ['nullable', 'string', 'max:2000']]);
+        $exercise->update($data);
+
+        if ($request->expectsJson()) {
+            return response()->json(['exercise' => $exercise->refresh()]);
+        }
+
+        return back()->with('success', 'Exercise notes saved.');
+    }
+
     public function addExercise(Request $request, Workout $workout, WorkoutService $service): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $workout);
@@ -139,18 +175,20 @@ class WorkoutController extends Controller
         return back()->with('success', 'Exercise added.');
     }
 
-    public function removeExercise(Workout $workout, WorkoutExercise $exercise): RedirectResponse
+    public function removeExercise(Workout $workout, WorkoutExercise $exercise, WorkoutService $service): RedirectResponse
     {
         $this->authorize('update', $workout);
         abort_unless((int) $exercise->workout_id === (int) $workout->id, 404);
+        $service->ensureActive($workout);
         $exercise->delete();
 
         return back()->with('success', 'Exercise removed.');
     }
 
-    public function storeSet(Request $request, Workout $workout): JsonResponse|RedirectResponse
+    public function storeSet(Request $request, Workout $workout, WorkoutService $service): JsonResponse|RedirectResponse
     {
         $this->authorize('update', $workout);
+        $service->ensureActive($workout);
         $data = $request->validate([
             'workout_exercise_id' => ['required', 'integer', 'exists:workout_exercises,id'],
             'set_type' => ['sometimes', 'string'],
@@ -171,10 +209,11 @@ class WorkoutController extends Controller
         return back();
     }
 
-    public function updateSet(LogSetRequest $request, WorkoutSet $set): JsonResponse|RedirectResponse
+    public function updateSet(LogSetRequest $request, WorkoutSet $set, WorkoutService $service): JsonResponse|RedirectResponse
     {
         $workout = $set->workoutExercise->workout;
         $this->authorize('update', $workout);
+        $service->ensureActive($workout);
 
         $set->fill($request->validated());
         if ($request->has('is_completed')) {
@@ -189,9 +228,10 @@ class WorkoutController extends Controller
         return back();
     }
 
-    public function destroySet(Request $request, WorkoutSet $set): JsonResponse|RedirectResponse
+    public function destroySet(Request $request, WorkoutSet $set, WorkoutService $service): JsonResponse|RedirectResponse
     {
         $this->authorize('update', $set->workoutExercise->workout);
+        $service->ensureActive($set->workoutExercise->workout);
         $set->delete();
 
         if ($request->expectsJson()) {

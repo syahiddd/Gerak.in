@@ -35,7 +35,8 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
     const isActive = initial.status === 'in_progress' || initial.status === 'paused';
 
     const [exercises, setExercises] = useState<WorkoutExercise[]>(initial.exercises ?? []);
-    const elapsed = useElapsed(initial.started_at);
+    const elapsed = useElapsed(initial.started_at, initial.paused_seconds_total ?? 0, initial.paused_at ?? null);
+    const isPaused = initial.status === 'paused';
     const rest = useRestTimer();
     const notesForm = useForm({ notes: initial.notes ?? '' });
     const addExerciseForm = useForm({ exercise_id: '' });
@@ -123,6 +124,15 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                     </div>
                     {isActive ? (
                         <div className="flex gap-2 text-sm">
+                            {isPaused ? (
+                                <Link href={route('workouts.resume', initial.id)} method="post" as="button" className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
+                                    Resume
+                                </Link>
+                            ) : (
+                                <Link href={route('workouts.pause', initial.id)} method="post" as="button" className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+                                    Pause
+                                </Link>
+                            )}
                             <Link href={route('workouts.finish', initial.id)} method="post" as="button" className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
                                 Finish
                             </Link>
@@ -226,7 +236,7 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                                                         <input type="number" step="0.5" min={0} value={set.weight_kg ?? ''} onChange={(e) => patchSet(we.id, set.id, { weight_kg: e.target.value === '' ? null : e.target.value })} className="w-20 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Weight kg" />
                                                     </td>
                                                     <td>
-                                                        <input type="number" min={0} value={set.reps ?? ''} onChange={(e) => patchSet(we.id, set.id, { reps: e.target.value === '' ? null : Number(e.target.value) })} className="w-16 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Reps" />
+                                                        <input type="number" min={0} value={set.reps ?? ''} onChange={(e) => patchSet(we.id, set.id, { reps: e.target.value === '' ? null : Number(e.target.value) })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); toggleSet(we, set); } }} className="w-16 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Reps" />
                                                     </td>
                                                     <td>
                                                         <input type="number" step="0.5" min={0} max={10} value={set.rpe ?? ''} onChange={(e) => patchSet(we.id, set.id, { rpe: e.target.value === '' ? null : e.target.value })} className="w-14 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="RPE" />
@@ -258,6 +268,20 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                             <button onClick={() => addSet(we)} className="mt-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700">
                                 + Add set
                             </button>
+                        )}
+
+                        {isActive ? (
+                            <ExerciseNotesEditor
+                                workoutId={initial.id}
+                                exercise={we}
+                                onSaved={(notes) =>
+                                    setExercises((prev) =>
+                                        prev.map((e) => (e.id === we.id ? { ...e, notes } : e)),
+                                    )
+                                }
+                            />
+                        ) : (
+                            we.notes && <p className="mt-2 text-xs text-zinc-500">{we.notes}</p>
                         )}
                     </Card>
                 ))}
@@ -306,5 +330,59 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                 </Card>
             )}
         </AuthenticatedLayout>
+    );
+}
+
+function ExerciseNotesEditor({
+    workoutId,
+    exercise,
+    onSaved,
+}: {
+    workoutId: number;
+    exercise: WorkoutExercise;
+    onSaved: (notes: string | null) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const [notes, setNotes] = useState(exercise.notes ?? '');
+    const [saving, setSaving] = useState(false);
+
+    const save = async () => {
+        setSaving(true);
+        try {
+            await api.patchWorkoutExercise(workoutId, exercise.id, { notes: notes || null });
+            onSaved(notes || null);
+            setOpen(false);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (!open) {
+        return (
+            <button onClick={() => setOpen(true)} className="mt-2 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+                {exercise.notes ? 'Edit exercise note' : '+ Add exercise note'}
+            </button>
+        );
+    }
+
+    return (
+        <div className="mt-2">
+            <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder="Cues, pain, substitutions…"
+                className="block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                aria-label="Exercise notes"
+            />
+            <div className="mt-1 flex gap-2">
+                <button onClick={save} disabled={saving} className="rounded-lg bg-lime-400 px-3 py-1 text-xs font-bold text-zinc-950 disabled:opacity-60">
+                    {saving ? 'Saving…' : 'Save'}
+                </button>
+                <button onClick={() => { setOpen(false); setNotes(exercise.notes ?? ''); }} className="rounded-lg border border-zinc-300 px-3 py-1 text-xs font-bold dark:border-zinc-700">
+                    Cancel
+                </button>
+            </div>
+        </div>
     );
 }

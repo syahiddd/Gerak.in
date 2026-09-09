@@ -129,6 +129,8 @@ export interface Workout {
     notes: string | null;
     status: 'in_progress' | 'paused' | 'completed' | 'cancelled';
     started_at: string;
+    paused_seconds_total: number;
+    paused_at: string | null;
     ended_at: string | null;
     duration_seconds: number | null;
     total_volume_kg: string | number | null;
