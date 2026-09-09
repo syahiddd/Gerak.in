@@ -6,16 +6,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SettingController extends Controller
 {
-    public function edit(): View
+    public function edit(): Response
     {
         $user = auth()->user();
         $settings = $user->settings ?? $user->settings()->create([]);
 
-        return view('settings.edit', compact('user', 'settings'));
+        return Inertia::render('Settings', compact('user', 'settings'));
     }
 
     public function update(Request $request): RedirectResponse

@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Services\StatisticsService;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(StatisticsService $stats): View
+    public function index(StatisticsService $stats): Response
     {
         $user = auth()->user();
         $overview = $stats->overview($user);
@@ -33,7 +34,7 @@ class DashboardController extends Controller
         $hour = (int) now()->format('G');
         $greeting = $hour < 11 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
-        return view('dashboard', compact(
+        return Inertia::render('Dashboard', compact(
             'overview', 'weekly', 'muscles', 'recentWorkouts',
             'activeWorkout', 'routines', 'recentPrs', 'greeting'
         ));

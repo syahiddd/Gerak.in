@@ -11,26 +11,27 @@ use App\Models\Routine;
 use App\Services\RoutineService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class RoutineController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
         $user = auth()->user();
         $folders = $user->routineFolders()->with(['routines' => fn ($q) => $q->withCount('exercises')->latest()])->get();
         $ungrouped = $user->routines()->whereNull('folder_id')
             ->withCount('exercises')->latest()->get();
 
-        return view('routines.index', compact('folders', 'ungrouped'));
+        return Inertia::render('Routines/Index', compact('folders', 'ungrouped'));
     }
 
-    public function create(): View
+    public function create(): Response
     {
         $exercises = Exercise::where('is_system', true)->orWhere('created_by', auth()->id())
             ->orderBy('name')->limit(200)->get();
 
-        return view('routines.create', compact('exercises'));
+        return Inertia::render('Routines/Create', compact('exercises'));
     }
 
     public function store(StoreRoutineRequest $request): RedirectResponse
@@ -76,15 +77,15 @@ class RoutineController extends Controller
         return redirect()->route('routines.show', $routine)->with('success', 'Routine created.');
     }
 
-    public function show(Routine $routine): View
+    public function show(Routine $routine): Response
     {
         $this->authorize('view', $routine);
         $routine->load(['exercises.exercise.primaryMuscle', 'exercises.targetSets', 'folder']);
 
-        return view('routines.show', compact('routine'));
+        return Inertia::render('Routines/Show', compact('routine'));
     }
 
-    public function edit(Routine $routine): View
+    public function edit(Routine $routine): Response
     {
         $this->authorize('update', $routine);
         $routine->load(['exercises.targetSets']);
@@ -92,7 +93,7 @@ class RoutineController extends Controller
             ->orderBy('name')->limit(200)->get();
         $folders = auth()->user()->routineFolders;
 
-        return view('routines.edit', compact('routine', 'exercises', 'folders'));
+        return Inertia::render('Routines/Edit', compact('routine', 'exercises', 'folders'));
     }
 
     public function update(StoreRoutineRequest $request, Routine $routine): RedirectResponse

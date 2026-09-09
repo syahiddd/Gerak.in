@@ -30,9 +30,14 @@ class StatisticsService
 
     public function weeklyVolume(User $user, int $weeks = 12): array
     {
+        // MySQL is canonical; keep the query runnable on sqlite (tests/local).
+        $weekExpr = DB::getDriverName() === 'sqlite'
+            ? "strftime('%Y-%W', started_at)"
+            : "DATE_FORMAT(started_at, '%x-%v')";
+
         $rows = $user->workouts()->completed()
             ->where('started_at', '>=', now()->subWeeks($weeks)->startOfDay())
-            ->selectRaw("DATE_FORMAT(started_at, '%x-%v') as wk, SUM(total_volume_kg) as vol, COUNT(*) as n")
+            ->selectRaw("{$weekExpr} as wk, SUM(total_volume_kg) as vol, COUNT(*) as n")
             ->groupBy('wk')
             ->orderBy('wk')
             ->get();

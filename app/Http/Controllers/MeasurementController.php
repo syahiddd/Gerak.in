@@ -7,11 +7,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMeasurementRequest;
 use App\Models\BodyMeasurement;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class MeasurementController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
         $measurements = auth()->user()->bodyMeasurements()
             ->latest('recorded_at')->paginate(30)->withQueryString();
@@ -22,7 +23,7 @@ class MeasurementController extends Controller
             ->limit(60)
             ->get(['recorded_at', 'value']);
 
-        return view('measurements.index', compact('measurements', 'chart'));
+        return Inertia::render('Measurements', compact('measurements', 'chart'));
     }
 
     public function store(StoreMeasurementRequest $request): RedirectResponse

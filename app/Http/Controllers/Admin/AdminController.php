@@ -10,13 +10,14 @@ use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AdminController extends Controller
 {
-    public function dashboard(): View
+    public function dashboard(): Response
     {
-        return view('admin.dashboard', [
+        return Inertia::render('Admin/Dashboard', [
             'totalUsers' => User::count(),
             'activeUsers' => User::where('is_suspended', false)->count(),
             'totalWorkouts' => Workout::count(),
@@ -27,14 +28,14 @@ class AdminController extends Controller
         ]);
     }
 
-    public function users(Request $request): View
+    public function users(Request $request): Response
     {
         $q = User::query()->latest();
         if ($request->filled('q')) {
             $q->where(fn ($w) => $w->where('name', 'like', '%'.$request->q.'%')->orWhere('email', 'like', '%'.$request->q.'%'));
         }
 
-        return view('admin.users', ['users' => $q->paginate(20)->withQueryString()]);
+        return Inertia::render('Admin/Users', ['users' => $q->paginate(20)->withQueryString()]);
     }
 
     public function suspend(User $user): RedirectResponse
@@ -51,13 +52,13 @@ class AdminController extends Controller
         return back()->with('success', "Activated {$user->email}.");
     }
 
-    public function exercises(Request $request): View
+    public function exercises(Request $request): Response
     {
         $q = Exercise::with(['primaryMuscle'])->latest();
         if ($request->filled('q')) {
             $q->where('name', 'like', '%'.$request->q.'%');
         }
 
-        return view('admin.exercises', ['exercises' => $q->paginate(20)->withQueryString()]);
+        return Inertia::render('Admin/Exercises', ['exercises' => $q->paginate(20)->withQueryString()]);
     }
 }

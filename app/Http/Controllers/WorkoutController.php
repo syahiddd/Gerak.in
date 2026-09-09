@@ -14,11 +14,12 @@ use App\Services\WorkoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class WorkoutController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $query = auth()->user()->workouts()->completed()
             ->withCount('exercises')
@@ -31,10 +32,10 @@ class WorkoutController extends Controller
             $query->where('started_at', '<=', $request->date('to')->endOfDay());
         }
 
-        return view('workouts.index', ['workouts' => $query->paginate(15)->withQueryString()]);
+        return Inertia::render('Workouts/Index', ['workouts' => $query->paginate(15)->withQueryString()]);
     }
 
-    public function active(WorkoutService $service): RedirectResponse|View
+    public function active(WorkoutService $service): RedirectResponse|Response
     {
         $workout = $service->activeFor(auth()->user());
 
@@ -45,7 +46,7 @@ class WorkoutController extends Controller
         return redirect()->route('workouts.show', $workout);
     }
 
-    public function show(Workout $workout): View
+    public function show(Workout $workout): Response
     {
         $this->authorize('view', $workout);
         $workout->load(['exercises.exercise.primaryMuscle', 'exercises.sets', 'routine']);
@@ -69,7 +70,7 @@ class WorkoutController extends Controller
             ? Exercise::where('is_system', true)->orWhere('created_by', auth()->id())->orderBy('name')->limit(100)->get()
             : collect();
 
-        return view('workouts.show', compact('workout', 'previous', 'library'));
+        return Inertia::render('Workouts/Show', compact('workout', 'previous', 'library'));
     }
 
     public function startEmpty(Request $request, WorkoutService $service): RedirectResponse

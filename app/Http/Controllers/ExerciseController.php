@@ -14,11 +14,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ExerciseController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
@@ -53,7 +54,7 @@ class ExerciseController extends Controller
         $query->orderBy('name');
         $exercises = $query->paginate(24)->withQueryString();
 
-        return view('exercises.index', [
+        return Inertia::render('Exercises/Index', [
             'exercises' => $exercises,
             'muscles' => $muscles,
             'equipment' => $equipment,
@@ -62,7 +63,7 @@ class ExerciseController extends Controller
         ]);
     }
 
-    public function show(Exercise $exercise): View
+    public function show(Exercise $exercise): Response
     {
         $this->authorize('view', $exercise);
         $exercise->load(['equipment', 'primaryMuscle']);
@@ -93,12 +94,12 @@ class ExerciseController extends Controller
 
         $oneRm = $bestSet ? OneRmCalculator::epley((float) $bestSet->weight_kg, $bestSet->reps) : null;
 
-        return view('exercises.show', compact('exercise', 'history', 'prs', 'bestSet', 'oneRm'));
+        return Inertia::render('Exercises/Show', compact('exercise', 'history', 'prs', 'bestSet', 'oneRm'));
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('exercises.create', [
+        return Inertia::render('Exercises/Create', [
             'muscles' => Muscle::orderBy('name')->get(),
             'equipment' => Equipment::orderBy('name')->get(),
             'types' => ExerciseType::cases(),
@@ -118,11 +119,11 @@ class ExerciseController extends Controller
         return redirect()->route('exercises.show', $exercise->slug)->with('success', 'Custom exercise created.');
     }
 
-    public function edit(Exercise $exercise): View
+    public function edit(Exercise $exercise): Response
     {
         $this->authorize('update', $exercise);
 
-        return view('exercises.edit', [
+        return Inertia::render('Exercises/Edit', [
             'exercise' => $exercise,
             'muscles' => Muscle::orderBy('name')->get(),
             'equipment' => Equipment::orderBy('name')->get(),
