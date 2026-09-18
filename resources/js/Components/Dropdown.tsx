@@ -56,8 +56,8 @@ const Content = ({
     contentClasses = 'py-1 bg-white',
     children,
 }: PropsWithChildren<{
-    align?: 'left' | 'right';
-    width?: '48';
+    align?: 'left' | 'right' | 'top';
+    width?: '48' | 'full';
     contentClasses?: string;
 }>) => {
     const { open, setOpen } = useContext(DropDownContext);
@@ -68,13 +68,19 @@ const Content = ({
         alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
     } else if (align === 'right') {
         alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
+    } else if (align === 'top') {
+        alignmentClasses = 'start-0 origin-bottom-left';
     }
 
     let widthClasses = '';
 
     if (width === '48') {
         widthClasses = 'w-48';
+    } else if (width === 'full') {
+        widthClasses = 'w-full';
     }
+
+    const positionClasses = align === 'top' ? 'bottom-full mb-2' : 'mt-2';
 
     return (
         <>
@@ -88,7 +94,7 @@ const Content = ({
                 leaveTo="opacity-0 scale-95"
             >
                 <div
-                    className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
+                    className={`absolute z-50 rounded-md shadow-lg ${positionClasses} ${alignmentClasses} ${widthClasses}`}
                     onClick={() => setOpen(false)}
                 >
                     <div
@@ -114,7 +120,7 @@ const DropdownLink = ({
         <Link
             {...props}
             className={
-                'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ' +
+                'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 ' +
                 className
             }
         >
