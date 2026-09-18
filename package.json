@@ -29,6 +29,7 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
+        "lucide-react": "^1.47.0",
         "recharts": "^3.10.1"
     }
 }

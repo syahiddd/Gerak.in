@@ -22,7 +22,7 @@ interface Props extends PageProps {
         total_sets: number;
         current_streak_days: number;
         pr_count: number;
-    };
+    };  
     weekly: { labels: string[]; volumes: number[]; counts: number[] };
     muscles: { labels: string[]; sets: number[] };
     recentWorkouts: Workout[];

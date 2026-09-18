@@ -21,6 +21,8 @@ Route::get('/', function () {
         : Inertia::render('Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
         ]);
