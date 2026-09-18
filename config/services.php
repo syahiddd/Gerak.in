@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'exercisedb' => [
+        'base_url' => env('EXERCISEDB_BASE_URL', 'https://edb-with-videos-and-images-by-ascendapi.p.rapidapi.com'),
+        'key' => env('EXERCISEDB_API_KEY'),
+        'host' => env('EXERCISEDB_HOST', 'edb-with-videos-and-images-by-ascendapi.p.rapidapi.com'),
+        'timeout' => (int) env('EXERCISEDB_TIMEOUT', 15),
+        'cache_ttl' => (int) env('EXERCISEDB_CACHE_TTL', 86400),
+    ],
+
 ];

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Equipment;
 use App\Models\Exercise;
 use App\Models\Muscle;
 use App\Models\User;
@@ -79,6 +80,30 @@ class ExerciseTest extends TestCase
         // Invalid type is rejected, not silently ignored.
         $this->actingAs($user)->get(route('exercises.index', ['type' => 'nonsense']))
             ->assertSessionHasErrors('type');
+    }
+
+    public function test_reference_lists_survive_database_cache_round_trip(): void
+    {
+        // Regression: the database cache store unserializes with
+        // `allowed_classes => false`, so caching Eloquent models makes the
+        // muscles/equipment props come back as __PHP_Incomplete_Class and the
+        // page renders empty filter dropdowns. Plain arrays round-trip fine.
+        config()->set('cache.default', 'database');
+
+        $this->seedTaxonomy();
+        Equipment::create(['name' => 'Barbell', 'slug' => 'barbell']);
+        $user = User::factory()->create();
+
+        // First hit warms the cache rows, second hit reads them back.
+        $this->actingAs($user)->get(route('exercises.index'))->assertOk();
+        $this->actingAs($user)->get(route('exercises.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('muscles', 2)
+                ->where('muscles.0.slug', 'back')
+                ->where('muscles.1.slug', 'chest')
+                ->has('equipment', 1)
+                ->where('equipment.0.slug', 'barbell'));
     }
 
     public function test_detail_shows_performance_summary(): void

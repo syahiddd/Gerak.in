@@ -1,4 +1,5 @@
 import { EmptyState } from '@/Components/ui';
+import ExerciseMedia from '@/Components/ExerciseMedia';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Routine } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -37,10 +38,15 @@ export default function RoutineShow({ routine }: { routine: Routine }) {
                 )}
                 {exercises.map((re) => (
                     <div key={re.id} className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                        <p className="font-bold">{re.exercise.name}</p>
-                        <p className="text-xs text-zinc-500">
-                            {re.exercise.primary_muscle?.name ?? ''} · rest {re.rest_seconds ?? 90}s
-                        </p>
+                        <div className="flex items-start gap-3">
+                            <ExerciseMedia exercise={re.exercise} variant="inline" />
+                            <div>
+                                <p className="font-bold">{re.exercise.name}</p>
+                                <p className="text-xs text-zinc-500">
+                                    {re.exercise.primary_muscle?.name ?? ''} · rest {re.rest_seconds ?? 90}s
+                                </p>
+                            </div>
+                        </div>
                         <div className="mt-2 overflow-x-auto">
                             <table className="w-full text-sm tabular-nums">
                                 <thead className="text-xs text-zinc-500">

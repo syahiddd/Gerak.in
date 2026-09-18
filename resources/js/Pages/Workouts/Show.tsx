@@ -1,4 +1,5 @@
 import { Card } from '@/Components/ui';
+import ExerciseMedia from '@/Components/ExerciseMedia';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
@@ -180,12 +181,15 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
             <div className="space-y-4">
                 {exercises.map((we) => (
                     <Card key={we.id}>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <Link href={route('exercises.show', we.exercise.slug)} className="font-bold hover:underline">
-                                    {we.exercise.name}
-                                </Link>
-                                <p className="text-xs text-zinc-500">{we.exercise.primary_muscle?.name ?? ''}</p>
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <ExerciseMedia exercise={we.exercise} variant="inline" />
+                                <div>
+                                    <Link href={route('exercises.show', we.exercise.slug)} className="font-bold hover:underline">
+                                        {we.exercise.name}
+                                    </Link>
+                                    <p className="text-xs text-zinc-500">{we.exercise.primary_muscle?.name ?? ''}</p>
+                                </div>
                             </div>
                             {isActive && (
                                 <Link

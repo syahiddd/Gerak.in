@@ -30,8 +30,12 @@ class ExerciseController extends Controller
             'sort' => ['nullable', 'string', 'in:name,recent'],
         ]);
 
-        $muscles = Cache::rememberForever('muscles:list', fn () => Muscle::orderBy('name')->get());
-        $equipment = Cache::rememberForever('equipment:list', fn () => Equipment::orderBy('name')->get());
+        // Cache PLAIN ARRAYS, never Eloquent models: the database cache store
+        // unserializes with `allowed_classes => false` (config/cache.php),
+        // so cached models come back as __PHP_Incomplete_Class and break `.map`
+        // in the UI. Plain arrays round-trip cleanly (also no base64 blobs).
+        $muscles = Cache::rememberForever('muscles:list:v2', fn () => Muscle::orderBy('name')->get()->toArray());
+        $equipment = Cache::rememberForever('equipment:list:v2', fn () => Equipment::orderBy('name')->get()->toArray());
 
         $query = Exercise::query()
             ->with(['equipment', 'primaryMuscle'])
