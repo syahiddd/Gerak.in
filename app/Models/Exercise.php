@@ -15,9 +15,11 @@ class Exercise extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'slug', 'description', 'instructions', 'equipment_id',
-        'primary_muscle_id', 'secondary_muscle_ids', 'exercise_type',
-        'image_path', 'video_url', 'is_system', 'created_by',
+        'name', 'slug', 'external_id', 'description', 'overview', 'instructions',
+        'exercise_tips', 'variations', 'related_exercise_ids', 'keywords',
+        'equipment_id', 'primary_muscle_id', 'secondary_muscle_ids', 'exercise_type',
+        'image_path', 'image_url', 'image_urls', 'gif_url', 'video_url',
+        'media_source', 'last_synced_at', 'is_system', 'created_by',
     ];
 
     protected function casts(): array
@@ -25,6 +27,12 @@ class Exercise extends Model
         return [
             'exercise_type' => ExerciseType::class,
             'secondary_muscle_ids' => 'array',
+            'image_urls' => 'array',
+            'exercise_tips' => 'array',
+            'variations' => 'array',
+            'related_exercise_ids' => 'array',
+            'keywords' => 'array',
+            'last_synced_at' => 'datetime',
             'is_system' => 'boolean',
         ];
     }

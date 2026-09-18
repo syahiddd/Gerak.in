@@ -1,4 +1,5 @@
 import { EmptyState, Pagination } from '@/Components/ui';
+import ExerciseMedia from '@/Components/ExerciseMedia';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Equipment, EXERCISE_TYPE_LABELS, Exercise, Muscle, Paginated } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -12,7 +13,12 @@ interface Props {
 
 const TYPE_OPTIONS = Object.entries(EXERCISE_TYPE_LABELS);
 
-export default function ExerciseIndex({ exercises, muscles, equipment, filters }: Props) {
+export default function ExerciseIndex({ exercises, muscles, equipment, filters = {} }: Props) {
+    const rows = exercises?.data ?? [];
+    const links = exercises?.links ?? [];
+    // Never let a malformed prop blank-screen the page (e.g. poisoned reference cache).
+    const muscleList = Array.isArray(muscles) ? muscles : [];
+    const equipmentList = Array.isArray(equipment) ? equipment : [];
     const { data, setData, get, processing } = useForm({
         q: filters.q ?? '',
         muscle: filters.muscle ?? '',
@@ -41,13 +47,13 @@ export default function ExerciseIndex({ exercises, muscles, equipment, filters }
                 />
                 <select value={data.muscle} onChange={(e) => setData('muscle', e.target.value)} className="rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Muscle">
                     <option value="">All muscles</option>
-                    {muscles.map((m) => (
+                    {muscleList.map((m) => (
                         <option key={m.id} value={m.id}>{m.name}</option>
                     ))}
                 </select>
                 <select value={data.equipment} onChange={(e) => setData('equipment', e.target.value)} className="rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Equipment">
                     <option value="">All equipment</option>
-                    {equipment.map((e) => (
+                    {equipmentList.map((e) => (
                         <option key={e.id} value={e.id}>{e.name}</option>
                     ))}
                 </select>
@@ -71,18 +77,19 @@ export default function ExerciseIndex({ exercises, muscles, equipment, filters }
                 </div>
             </form>
 
-            {exercises.data.length === 0 ? (
+            {rows.length === 0 ? (
                 <div className="mt-4">
                     <EmptyState title="No exercises found" hint="Try a different search or create a custom exercise." />
                 </div>
             ) : (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {exercises.data.map((ex) => (
+                    {rows.map((ex) => (
                         <Link
                             key={ex.id}
                             href={route('exercises.show', ex.slug)}
                             className="rounded-2xl border border-zinc-200 bg-white p-4 hover:border-lime-400 dark:border-zinc-800 dark:bg-zinc-900"
                         >
+                            <ExerciseMedia exercise={ex} variant="thumbnail" className="mb-3" />
                             <p className="font-bold">{ex.name}</p>
                             <p className="mt-1 text-xs text-zinc-500">
                                 {EXERCISE_TYPE_LABELS[ex.exercise_type] ?? ex.exercise_type} · {ex.primary_muscle?.name ?? '—'} · {ex.equipment?.name ?? '—'}
@@ -94,7 +101,7 @@ export default function ExerciseIndex({ exercises, muscles, equipment, filters }
                     ))}
                 </div>
             )}
-            <Pagination links={exercises.links} />
+            <Pagination links={links} />
         </AuthenticatedLayout>
     );
 }
