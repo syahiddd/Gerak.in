@@ -23,9 +23,14 @@ class RoutineController extends Controller
     public function index(): Response
     {
         $user = auth()->user();
-        $folders = $user->routineFolders()->with(['routines' => fn ($q) => $q->withCount('exercises')->latest()])->get();
+        // Exercise names only, for the one-line "Bench Press, Squat, …" summary on each card.
+        $summary = ['exercises:id,routine_id,exercise_id,order', 'exercises.exercise:id,name'];
+
+        $folders = $user->routineFolders()
+            ->with(['routines' => fn ($q) => $q->withCount('exercises')->with($summary)->latest()])
+            ->get();
         $ungrouped = $user->routines()->whereNull('folder_id')
-            ->withCount('exercises')->latest()->get();
+            ->withCount('exercises')->with($summary)->latest()->get();
 
         return Inertia::render('Routines/Index', compact('folders', 'ungrouped'));
     }
