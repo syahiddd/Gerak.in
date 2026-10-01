@@ -3,7 +3,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { applyTheme } from '@/hooks/workout';
-import { User, UserSettings } from '@/types';
+import { User, UserSettings, WorkoutVisibility } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function Settings({ user, settings }: { user: User; settings: UserSettings }) {
@@ -13,6 +13,7 @@ export default function Settings({ user, settings }: { user: User; settings: Use
         default_rest_seconds: settings.default_rest_seconds,
         default_sets: settings.default_sets,
         week_starts_on: settings.week_starts_on,
+        default_workout_visibility: settings.default_workout_visibility ?? 'public',
         timezone: user.timezone,
     });
 
@@ -65,6 +66,20 @@ export default function Settings({ user, settings }: { user: User; settings: Use
                             <option value="mon">Monday</option>
                             <option value="sun">Sunday</option>
                         </select>
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="default_workout_visibility" value="Who sees new workouts" />
+                        <select
+                            id="default_workout_visibility"
+                            value={data.default_workout_visibility}
+                            onChange={(e) => setData('default_workout_visibility', e.target.value as WorkoutVisibility)}
+                            className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                        >
+                            <option value="public">Everyone</option>
+                            <option value="followers">Followers</option>
+                            <option value="private">Only you</option>
+                        </select>
+                        <p className="mt-1 text-xs text-zinc-500">Pre-selected when you save a workout. You can change it each time.</p>
                     </div>
                     <div>
                         <InputLabel htmlFor="timezone" value="Timezone" />

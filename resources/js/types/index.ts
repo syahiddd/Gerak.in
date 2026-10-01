@@ -4,11 +4,13 @@ export interface UserSettings {
     default_rest_seconds: number;
     default_sets: number;
     week_starts_on: 'mon' | 'sun';
+    default_workout_visibility?: WorkoutVisibility;
 }
 
 export interface User {
     id: number;
     name: string;
+    username: string;
     email: string;
     email_verified_at?: string;
     role: 'user' | 'admin';
@@ -142,6 +144,8 @@ export interface Workout {
     ended_at: string | null;
     duration_seconds: number | null;
     total_volume_kg: string | number | null;
+    visibility?: WorkoutVisibility;
+    description?: string | null;
     exercises?: WorkoutExercise[];
     exercises_count?: number;
     routine?: { id: number; name: string } | null;
@@ -191,3 +195,80 @@ export const SET_TYPE_LABELS: Record<string, string> = {
     assisted: 'Assisted',
     myo_rep: 'Myo-rep',
 };
+
+/* ---------- Social ---------- */
+
+export type WorkoutVisibility = 'public' | 'followers' | 'private';
+
+export interface PublicUser {
+    id: number;
+    name: string;
+    username: string;
+}
+
+export interface PersonRow extends PublicUser {
+    is_me: boolean;
+    is_following: boolean;
+    followers_count?: number;
+}
+
+export type PostMedia = Pick<Exercise, 'id' | 'name' | 'slug' | 'image_path' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url'>;
+
+export interface PostExercise {
+    id: number;
+    sets: number;
+    exercise: PostMedia | null;
+    record_types?: string[];
+    set_list?: {
+        id: number;
+        set_type: string;
+        weight_kg: string | number | null;
+        reps: number | null;
+        duration_s: number | null;
+        distance_m: number | null;
+    }[];
+}
+
+export interface PostComment {
+    id: number;
+    body: string;
+    created_at: string;
+    user: PublicUser;
+    can_delete: boolean;
+}
+
+export interface FeedPost {
+    id: number;
+    title: string;
+    description: string | null;
+    visibility: WorkoutVisibility;
+    ended_at: string | null;
+    duration_seconds: number | null;
+    volume_kg: number | null;
+    sets_count: number;
+    records_count: number;
+    likes_count: number;
+    comments_count: number;
+    liked_by_me: boolean;
+    is_owner: boolean;
+    user: PublicUser;
+    exercises_total: number;
+    exercises: PostExercise[];
+    comments?: PostComment[];
+}
+
+export interface CursorPage<T> {
+    data: T[];
+    next_cursor: string | null;
+    next_page_url: string | null;
+}
+
+export interface PublicProfile extends PublicUser {
+    bio: string | null;
+    joined_at: string | null;
+    workouts_count: number;
+    followers_count: number;
+    following_count: number;
+    is_me: boolean;
+    is_following: boolean;
+}

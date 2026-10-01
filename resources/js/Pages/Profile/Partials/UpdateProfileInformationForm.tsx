@@ -9,10 +9,12 @@ import { FormEventHandler } from 'react';
 export default function UpdateProfileInformation({
     mustVerifyEmail,
     status,
+    bio = null,
     className = '',
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    bio?: string | null;
     className?: string;
 }) {
     const user = usePage().props.auth.user;
@@ -20,6 +22,8 @@ export default function UpdateProfileInformation({
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
             name: user.name,
+            username: user.username,
+            bio: bio ?? '',
             email: user.email,
         });
 
@@ -56,6 +60,52 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.name} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="username" value="Username" />
+
+                    <div className="relative mt-1">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">@</span>
+                        <TextInput
+                            id="username"
+                            className="block w-full pl-7"
+                            value={data.username}
+                            onChange={(e) => setData('username', e.target.value.toLowerCase())}
+                            required
+                            minLength={3}
+                            maxLength={30}
+                            pattern="[a-z0-9_.]{3,30}"
+                            autoComplete="off"
+                            aria-describedby="username-hint"
+                        />
+                    </div>
+                    <p id="username-hint" className="mt-1 text-xs text-zinc-500">
+                        3–30 characters: lowercase letters, numbers, _ and . Your profile lives at{' '}
+                        <Link href={route('users.show', user.username)} className="font-semibold underline">
+                            /u/{user.username}
+                        </Link>
+                        .
+                    </p>
+
+                    <InputError className="mt-2" message={errors.username} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="bio" value="Bio" />
+
+                    <textarea
+                        id="bio"
+                        rows={3}
+                        maxLength={500}
+                        value={data.bio}
+                        onChange={(e) => setData('bio', e.target.value)}
+                        placeholder="Training for my first powerlifting meet."
+                        className="mt-1 block w-full rounded-xl border-zinc-300 text-sm shadow-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    />
+                    <p className="mt-1 text-xs text-zinc-500">Shown on your public profile.</p>
+
+                    <InputError className="mt-2" message={errors.bio} />
                 </div>
 
                 <div>

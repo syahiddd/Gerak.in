@@ -1,5 +1,6 @@
 import { Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
+import { VISIBILITY_LABEL } from '@/Components/social/format';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
@@ -148,15 +149,30 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                             </Link>
                         </div>
                     ) : (
-                        <Link
-                            href={route('workouts.destroy', initial.id)}
-                            method="delete"
-                            as="button"
-                            className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-500"
-                            onBefore={() => confirm('Delete this workout?')}
-                        >
-                            Delete
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                            {initial.status === 'completed' && (
+                                <>
+                                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                        Visible to: {VISIBILITY_LABEL[initial.visibility ?? 'private']}
+                                    </span>
+                                    <Link href={route('posts.show', initial.id)} className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
+                                        View post
+                                    </Link>
+                                    <Link href={route('workouts.save', initial.id)} className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+                                        Edit sharing
+                                    </Link>
+                                </>
+                            )}
+                            <Link
+                                href={route('workouts.destroy', initial.id)}
+                                method="delete"
+                                as="button"
+                                className="rounded-xl border border-red-300 px-4 py-2 font-bold text-red-500"
+                                onBefore={() => confirm('Delete this workout?')}
+                            >
+                                Delete
+                            </Link>
+                        </div>
                     )}
                 </div>
             }
