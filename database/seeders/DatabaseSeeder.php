@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             // ExerciseMediaSeeder runs manually (needs EXERCISEDB_API_KEY):
             // php artisan db:seed --class=ExerciseMediaSeeder
             DemoSeeder::class,
+            SocialDemoSeeder::class,
         ]);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\SetType;
 use App\Enums\WorkoutStatus;
+use App\Enums\WorkoutVisibility;
 use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
@@ -153,6 +154,8 @@ class WorkoutService
             $workout->paused_at = null;
             $workout->total_volume_kg = VolumeCalculator::workoutVolumeKg($workout);
             $workout->status = WorkoutStatus::Completed;
+            // Shared per the owner's default; they can change it on the save screen.
+            $workout->visibility = $workout->user->settings?->default_workout_visibility ?? WorkoutVisibility::Public;
             $workout->save();
 
             return $this->records->evaluateWorkout($workout);

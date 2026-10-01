@@ -1,4 +1,5 @@
 import Dropdown from '@/Components/Dropdown';
+import UserSearchBox from '@/Components/social/UserSearchBox';
 import { FlashMessages } from '@/Components/ui';
 import { applyTheme } from '@/hooks/workout';
 import { Link, usePage } from '@inertiajs/react';
@@ -9,6 +10,7 @@ import {
     House,
     LayoutDashboard,
     Library,
+    Newspaper,
     Settings,
     ShieldCheck,
     User,
@@ -17,6 +19,7 @@ import { PropsWithChildren, ReactNode, useState } from 'react';
 
 const NAV = [
     { label: 'Dashboard', href: 'dashboard', match: ['dashboard'], Icon: LayoutDashboard },
+    { label: 'Feed', href: 'feed.index', match: ['feed.*', 'posts.*', 'users.*'], Icon: Newspaper },
     { label: 'Workout', href: 'workouts.index', match: ['workouts.*'], Icon: Dumbbell },
     { label: 'Routines', href: 'routines.index', match: ['routines.*'], Icon: ClipboardList },
     { label: 'Exercises', href: 'exercises.index', match: ['exercises.*'], Icon: Library },
@@ -24,10 +27,10 @@ const NAV = [
 ];
 
 const MOBILE_NAV = [
-    { label: 'Home', href: 'dashboard', match: ['dashboard'], Icon: House },
+    { label: 'Home', href: 'dashboard', match: ['dashboard', 'statistics.*', 'records.*'], Icon: House },
+    { label: 'Feed', href: 'feed.index', match: ['feed.*', 'posts.*', 'users.*'], Icon: Newspaper },
     { label: 'Workout', href: 'workouts.index', match: ['workouts.*'], Icon: Dumbbell },
     { label: 'Routines', href: 'routines.index', match: ['routines.*'], Icon: ClipboardList },
-    { label: 'Stats', href: 'statistics.index', match: ['statistics.*', 'records.*'], Icon: BarChart3 },
     { label: 'Profile', href: 'profile.edit', match: ['profile.*', 'settings.*'], Icon: User },
 ];
 
@@ -36,7 +39,7 @@ export default function Authenticated({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const { auth, flash } = usePage().props as unknown as {
-        auth: { user: { name: string; email: string; role: string; settings: { theme: string } | null } };
+        auth: { user: { name: string; username: string; email: string; role: string; settings: { theme: string } | null } };
         flash: { success?: string | null; info?: string | null; pr_events?: { exercise: string; type: string; detail: string }[] | null };
     };
     const user = auth.user;
@@ -52,6 +55,8 @@ export default function Authenticated({
 
     const sidebarLinks = (
         <nav className="flex-1 space-y-1 px-3 py-4 text-sm font-medium">
+            <UserSearchBox className="mb-3" />
+
             {NAV.map((n) => {
                 const active = isActive(n.match);
                 const Icon = n.Icon;
@@ -133,6 +138,7 @@ export default function Authenticated({
                             width="full"
                             contentClasses="py-1 bg-white dark:bg-zinc-800"
                         >
+                            <Dropdown.Link href={route('users.show', user.username)}>My public profile</Dropdown.Link>
                             <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
                             <Dropdown.Link href={route('settings.edit')}>Settings</Dropdown.Link>
                             {user.role === 'admin' && (
