@@ -1,5 +1,6 @@
 import { Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
+import { VISIBILITY_LABEL } from '@/Components/social/format';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
@@ -39,8 +40,8 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
     const elapsed = useElapsed(initial.started_at, initial.paused_seconds_total ?? 0, initial.paused_at ?? null);
     const isPaused = initial.status === 'paused';
     const rest = useRestTimer();
-    const notesForm = useForm({ notes: initial.notes ?? '' });
     const addExerciseForm = useForm({ exercise_id: '' });
+    const selectedExercise = library.find((ex) => String(ex.id) === String(addExerciseForm.data.exercise_id));
     const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
     // Draft backup so a refresh never loses context (server is source of truth).
@@ -148,15 +149,30 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                             </Link>
                         </div>
                     ) : (
-                        <Link
-                            href={route('workouts.destroy', initial.id)}
-                            method="delete"
-                            as="button"
-                            className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-500"
-                            onBefore={() => confirm('Delete this workout?')}
-                        >
-                            Delete
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                            {initial.status === 'completed' && (
+                                <>
+                                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                        Visible to: {VISIBILITY_LABEL[initial.visibility ?? 'private']}
+                                    </span>
+                                    <Link href={route('posts.show', initial.id)} className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
+                                        View post
+                                    </Link>
+                                    <Link href={route('workouts.save', initial.id)} className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+                                        Edit sharing
+                                    </Link>
+                                </>
+                            )}
+                            <Link
+                                href={route('workouts.destroy', initial.id)}
+                                method="delete"
+                                as="button"
+                                className="rounded-xl border border-red-300 px-4 py-2 font-bold text-red-500"
+                                onBefore={() => confirm('Delete this workout?')}
+                            >
+                                Delete
+                            </Link>
+                        </div>
                     )}
                 </div>
             }
@@ -311,19 +327,14 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                         </button>
                     </form>
 
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            notesForm.patch(route('workouts.update', initial.id));
-                        }}
-                        className="mt-4 max-w-xl"
-                    >
-                        <label htmlFor="notes" className="text-sm font-semibold">Workout notes</label>
-                        <textarea id="notes" value={notesForm.data.notes} onChange={(e) => notesForm.setData('notes', e.target.value)} rows={2} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
-                        <button className="mt-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700">
-                            Save notes
-                        </button>
-                    </form>
+                    {/* Preview the movement before adding it. */}
+                    {selectedExercise && (
+                        <div className="mt-3 max-w-xl rounded-2xl bg-white p-3 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
+                            <ExerciseMedia key={selectedExercise.id} exercise={selectedExercise} variant="thumbnail" />
+                            <p className="mt-2 text-sm font-bold">{selectedExercise.name}</p>
+                        </div>
+                    )}
+
                 </>
             )}
 

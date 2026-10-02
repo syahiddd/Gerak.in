@@ -3,14 +3,20 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
+use App\Http\Controllers\FeedController;
+use App\Http\Controllers\FollowController;
 use App\Http\Controllers\MeasurementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicProfileController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\RoutineController;
 use App\Http\Controllers\RoutineFolderController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\UserSearchController;
+use App\Http\Controllers\WorkoutCommentController;
 use App\Http\Controllers\WorkoutController;
+use App\Http\Controllers\WorkoutLikeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -78,6 +84,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/workouts/{workout}/sets', [WorkoutController::class, 'storeSet'])->name('workouts.store-set');
     Route::patch('/sets/{set}', [WorkoutController::class, 'updateSet'])->name('workouts.update-set');
     Route::delete('/sets/{set}', [WorkoutController::class, 'destroySet'])->name('workouts.destroy-set');
+
+    Route::get('/workouts/{workout}/save', [WorkoutController::class, 'save'])->name('workouts.save');
+
+    // Social: feed, posts, likes, comments, follows, public profiles
+    Route::get('/feed', [FeedController::class, 'index'])->name('feed.index');
+    Route::get('/w/{workout}', [FeedController::class, 'show'])->name('posts.show');
+    Route::post('/workouts/{workout}/like', [WorkoutLikeController::class, 'store'])->name('posts.like');
+    Route::delete('/workouts/{workout}/like', [WorkoutLikeController::class, 'destroy'])->name('posts.unlike');
+    Route::post('/workouts/{workout}/comments', [WorkoutCommentController::class, 'store'])
+        ->middleware('throttle:20,1')->name('posts.comments.store');
+    Route::delete('/comments/{comment}', [WorkoutCommentController::class, 'destroy'])->name('posts.comments.destroy');
+    Route::get('/people', UserSearchController::class)->name('users.search');
+    Route::get('/u/{user:username}', [PublicProfileController::class, 'show'])->name('users.show');
+    Route::get('/u/{user:username}/followers', [PublicProfileController::class, 'followers'])->name('users.followers');
+    Route::get('/u/{user:username}/following', [PublicProfileController::class, 'following'])->name('users.following');
+    Route::post('/u/{user:username}/follow', [FollowController::class, 'store'])->name('users.follow');
+    Route::delete('/u/{user:username}/follow', [FollowController::class, 'destroy'])->name('users.unfollow');
 
     // Stats / records / measurements
     Route::get('/statistics', [StatisticsController::class, 'index'])->name('statistics.index');

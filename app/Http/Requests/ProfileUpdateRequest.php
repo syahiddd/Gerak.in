@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Support\UsernameGenerator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,6 +19,14 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'username' => [
+                'sometimes',
+                'required',
+                'string',
+                'regex:'.UsernameGenerator::PATTERN,
+                Rule::unique(User::class)->ignore($this->user()->id),
+            ],
+            'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
             'email' => [
                 'required',
                 'string',

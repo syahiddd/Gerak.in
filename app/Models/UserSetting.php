@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UnitSystem;
+use App\Enums\WorkoutVisibility;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,13 +17,14 @@ class UserSetting extends Model
 
     protected $fillable = [
         'user_id', 'unit_system', 'theme', 'default_rest_seconds',
-        'default_sets', 'week_starts_on', 'notifications',
+        'default_sets', 'week_starts_on', 'default_workout_visibility', 'notifications',
     ];
 
     protected function casts(): array
     {
         return [
             'unit_system' => UnitSystem::class,
+            'default_workout_visibility' => WorkoutVisibility::class,
             'default_rest_seconds' => 'integer',
             'default_sets' => 'integer',
             'notifications' => 'array',

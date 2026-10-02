@@ -8,11 +8,12 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 export default function Edit({
     mustVerifyEmail,
     status,
-}: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    bio,
+}: PageProps<{ mustVerifyEmail: boolean; status?: string; bio?: string | null }>) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-white">
                     Profile
                 </h2>
             }
@@ -21,19 +22,20 @@ export default function Edit({
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200 sm:p-8 dark:bg-zinc-900 dark:ring-zinc-800">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
+                            bio={bio}
                             className="max-w-xl"
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200 sm:p-8 dark:bg-zinc-900 dark:ring-zinc-800">
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200 sm:p-8 dark:bg-zinc-900 dark:ring-zinc-800">
                         <DeleteUserForm className="max-w-xl" />
                     </div>
                 </div>

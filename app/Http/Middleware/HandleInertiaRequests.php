@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'username' => $user->username,
                     'email' => $user->email,
                     'role' => $user->role->value,
                     'timezone' => $user->timezone,
@@ -46,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                         'default_rest_seconds' => $user->settings->default_rest_seconds,
                         'default_sets' => $user->settings->default_sets,
                         'week_starts_on' => $user->settings->week_starts_on,
+                        'default_workout_visibility' => $user->settings->default_workout_visibility?->value ?? 'public',
                     ] : null,
                 ] : null,
             ],
@@ -53,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'info' => fn () => $request->session()->get('info'),
                 'pr_events' => fn () => $request->session()->get('pr_events'),
+                'celebrate' => fn () => $request->session()->get('celebrate'),
             ],
         ];
     }

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Support\UsernameGenerator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,6 +17,13 @@ class User extends Authenticatable
 
     protected static function booted(): void
     {
+        // Everyone gets a unique @username; they can change it on the profile page.
+        static::creating(function (User $user): void {
+            if (! $user->username) {
+                $user->username = UsernameGenerator::generate((string) $user->name);
+            }
+        });
+
         // Every account owns exactly one profile + settings row.
         static::created(function (User $user): void {
             $user->profile()->firstOrCreate([]);
@@ -24,6 +33,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'role',
@@ -88,5 +98,22 @@ class User extends Authenticatable
     public function customExercises(): HasMany
     {
         return $this->hasMany(Exercise::class, 'created_by');
+    }
+
+    /** Users this user follows. */
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id')->withTimestamps();
+    }
+
+    /** Users following this user. */
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'follows', 'following_id', 'follower_id')->withTimestamps();
+    }
+
+    public function isFollowing(User $other): bool
+    {
+        return $this->following()->whereKey($other->id)->exists();
     }
 }

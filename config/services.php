@@ -43,4 +43,11 @@ return [
         'cache_ttl' => (int) env('EXERCISEDB_CACHE_TTL', 86400),
     ],
 
+    'workoutx' => [
+        'base_url' => env('WORKOUTX_BASE_URL', 'https://api.workoutxapp.com'),
+        'key' => env('WORKOUTX_API_KEY'),
+        'timeout' => (int) env('WORKOUTX_TIMEOUT', 15),
+        'cache_ttl' => (int) env('WORKOUTX_CACHE_TTL', 2592000),
+    ],
+
 ];

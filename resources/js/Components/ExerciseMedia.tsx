@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Exercise } from '@/types';
 
 type Variant = 'thumbnail' | 'hero' | 'inline';
@@ -7,6 +7,8 @@ interface Props {
     exercise: Pick<Exercise, 'name' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url' | 'image_path'>;
     variant?: Variant;
     className?: string;
+    /** Freeze GIFs on their first frame; play while the parent card is hovered/focused. */
+    playOnHover?: boolean;
 }
 
 type ImageUrls = Record<string, string>;
@@ -33,10 +35,102 @@ function pickPoster(ex: Props['exercise']): string | null {
 
 function pickThumb(ex: Props['exercise']): string | null {
     const urls = asImageUrls(ex.image_urls);
-    return urls['360p'] ?? urls['480p'] ?? ex.image_url ?? ex.gif_url ?? ex.image_path ?? null;
+    return ex.gif_url ?? urls['360p'] ?? urls['480p'] ?? ex.image_url ?? ex.gif_url ?? ex.image_path ?? null;
 }
 
-export default function ExerciseMedia({ exercise, variant = 'thumbnail', className = '' }: Props) {
+/** Draws the first frame of a GIF to a data URL; null until ready or if the image is cross-origin. */
+function useStillFrame(src: string, onError: () => void): string | null | 'tainted' {
+    const [still, setStill] = useState<string | null | 'tainted'>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        const img = new Image();
+        img.onload = () => {
+            if (cancelled) return;
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                canvas.getContext('2d')?.drawImage(img, 0, 0);
+                setStill(canvas.toDataURL('image/png'));
+            } catch {
+                setStill('tainted');
+            }
+        };
+        img.onerror = () => !cancelled && onError();
+        img.src = src;
+
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [src]);
+
+    return still;
+}
+
+/**
+ * GIF that stays on its first frame and only plays while the surrounding
+ * card (closest link/button) is hovered or keyboard-focused.
+ */
+function HoverGif({ src, name, className, onError }: { src: string; name: string; className: string; onError: () => void }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [active, setActive] = useState(false);
+    const still = useStillFrame(src, onError);
+
+    useEffect(() => {
+        const trigger = ref.current?.closest<HTMLElement>('a, button') ?? ref.current;
+        if (!trigger) return;
+        const on = () => setActive(true);
+        const off = () => setActive(false);
+        trigger.addEventListener('mouseenter', on);
+        trigger.addEventListener('mouseleave', off);
+        trigger.addEventListener('focus', on);
+        trigger.addEventListener('blur', off);
+
+        return () => {
+            trigger.removeEventListener('mouseenter', on);
+            trigger.removeEventListener('mouseleave', off);
+            trigger.removeEventListener('focus', on);
+            trigger.removeEventListener('blur', off);
+        };
+    }, []);
+
+    // Cross-origin GIFs can't be frozen via canvas; show them animated as before.
+    const playing = active || still === 'tainted';
+
+    return (
+        <div ref={ref} className={`relative aspect-video overflow-hidden rounded-xl bg-white ${className}`}>
+            {still && still !== 'tainted' && (
+                <img src={still} alt={`${name} demonstration`} className="absolute inset-0 h-full w-full object-contain" />
+            )}
+            {/* Mounted only while playing so the animation restarts from the first frame. */}
+            {playing && (
+                <img
+                    src={src}
+                    alt={still === 'tainted' ? `${name} demonstration` : ''}
+                    aria-hidden={still !== 'tainted'}
+                    onError={onError}
+                    className="absolute inset-0 h-full w-full object-contain"
+                />
+            )}
+            {still !== 'tainted' && (
+                <span
+                    aria-hidden
+                    className={`absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-950/80 text-lime-400 transition-opacity duration-200 ${
+                        active ? 'opacity-0' : 'opacity-100'
+                    }`}
+                >
+                    <svg viewBox="0 0 12 12" className="ml-0.5 h-3 w-3 fill-current">
+                        <path d="M2 1.2v9.6L10.4 6z" />
+                    </svg>
+                </span>
+            )}
+        </div>
+    );
+}
+
+export default function ExerciseMedia({ exercise, variant = 'thumbnail', className = '', playOnHover = false }: Props) {
     const [failed, setFailed] = useState(false);
     const [videoFailed, setVideoFailed] = useState(false);
 
@@ -65,7 +159,10 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
         );
     }
 
-    const src = variant === 'hero' ? pickPoster(exercise) : pickThumb(exercise);
+    const src = variant === 'hero' ? (exercise.gif_url ?? pickPoster(exercise)) : pickThumb(exercise);
+    const isGif = !!exercise.gif_url && src === exercise.gif_url;
+    // WorkoutX GIFs have a white background; contain them so limbs aren't cropped.
+    const fit = isGif ? 'bg-white object-contain' : 'bg-zinc-100 object-cover dark:bg-zinc-800';
 
     if (!src || failed) {
         return (
@@ -88,9 +185,13 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
                 alt={`${exercise.name} demo`}
                 loading="lazy"
                 onError={() => setFailed(true)}
-                className={`h-10 w-10 rounded-lg object-cover ${className}`}
+                className={`h-10 w-10 rounded-lg ${fit} ${className}`}
             />
         );
+    }
+
+    if (playOnHover && isGif) {
+        return <HoverGif src={src} name={exercise.name} className={className} onError={() => setFailed(true)} />;
     }
 
     return (
@@ -100,8 +201,9 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
                 alt={`${exercise.name} demonstration`}
                 loading="lazy"
                 onError={() => setFailed(true)}
-                className="aspect-video w-full rounded-xl bg-zinc-100 object-cover dark:bg-zinc-800"
+                className={`aspect-video w-full rounded-xl ${fit}`}
             />
+            {variant === 'hero' && isGif && <p className="mt-1 text-[11px] text-zinc-400">Animasi · WorkoutX</p>}
         </div>
     );
 }

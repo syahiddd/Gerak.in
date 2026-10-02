@@ -89,7 +89,7 @@ export default function ExerciseIndex({ exercises, muscles, equipment, filters =
                             href={route('exercises.show', ex.slug)}
                             className="rounded-2xl border border-zinc-200 bg-white p-4 hover:border-lime-400 dark:border-zinc-800 dark:bg-zinc-900"
                         >
-                            <ExerciseMedia exercise={ex} variant="thumbnail" className="mb-3" />
+                            <ExerciseMedia exercise={ex} variant="thumbnail" className="mb-3" playOnHover />
                             <p className="font-bold">{ex.name}</p>
                             <p className="mt-1 text-xs text-zinc-500">
                                 {EXERCISE_TYPE_LABELS[ex.exercise_type] ?? ex.exercise_type} · {ex.primary_muscle?.name ?? '—'} · {ex.equipment?.name ?? '—'}
