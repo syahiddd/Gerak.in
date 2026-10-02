@@ -46,6 +46,17 @@ class Workout extends Model
         return $this->hasMany(WorkoutExercise::class)->orderBy('order');
     }
 
+    protected static function booted(): void
+    {
+        // DB cascades remove photo rows but not files; delete through the model.
+        static::deleting(fn (Workout $w) => $w->photos()->get()->each->delete());
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(WorkoutPhoto::class)->orderBy('order');
+    }
+
     public function likes(): HasMany
     {
         return $this->hasMany(WorkoutLike::class);

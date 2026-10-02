@@ -26,7 +26,9 @@ class WorkoutSaveTest extends TestCase
         $service->completeSet($set);
 
         $this->actingAs($user)->post(route('workouts.finish', $workout))
-            ->assertRedirect(route('workouts.save', $workout));
+            ->assertRedirect(route('workouts.save', $workout))
+            ->assertSessionHas('celebrate.workout_number', 1)
+            ->assertSessionHas('celebrate.pr_events');
         $this->assertSame('followers', $workout->fresh()->visibility->value);
 
         $this->actingAs($user)->get(route('workouts.save', $workout))

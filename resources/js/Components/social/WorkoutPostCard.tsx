@@ -7,6 +7,7 @@ import { ReactNode } from 'react';
 import Avatar from './Avatar';
 import { humanDuration, timeAgo, VISIBILITY_LABEL } from './format';
 import LikeButton from './LikeButton';
+import PostPhotos from './PostPhotos';
 
 const VISIBILITY_ICON = { public: Globe, followers: Users, private: Lock };
 
@@ -90,6 +91,8 @@ export default function WorkoutPostCard({ post }: { post: FeedPost }) {
                 </div>
 
                 <PostStats post={post} />
+
+                <PostPhotos photos={post.photos} alt={post.title} />
 
                 {post.exercises.length > 0 && (
                     <ul className="space-y-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">

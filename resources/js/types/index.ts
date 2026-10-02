@@ -22,6 +22,12 @@ export interface Flash {
     success?: string | null;
     info?: string | null;
     pr_events?: { exercise: string; type: string; detail: string }[] | null;
+    celebrate?: Celebration | null;
+}
+
+export interface Celebration {
+    workout_number: number;
+    pr_events: { exercise: string; type: string; detail: string }[];
 }
 
 export type PageProps<
@@ -229,6 +235,13 @@ export interface PostExercise {
     }[];
 }
 
+export interface PostPhoto {
+    id: number;
+    url: string;
+    width?: number | null;
+    height?: number | null;
+}
+
 export interface PostComment {
     id: number;
     body: string;
@@ -252,6 +265,7 @@ export interface FeedPost {
     liked_by_me: boolean;
     is_owner: boolean;
     user: PublicUser;
+    photos: PostPhoto[];
     exercises_total: number;
     exercises: PostExercise[];
     comments?: PostComment[];

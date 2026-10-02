@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutComment;
+use App\Models\WorkoutPhoto;
 use BackedEnum;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -121,6 +122,7 @@ class FeedService
         return $query
             ->with([
                 'user:id,name,username',
+                'photos:id,workout_id,path,width,height,order',
                 'exercises' => fn ($q) => $q
                     ->withCount(['sets as completed_sets_count' => fn ($s) => $s->where('is_completed', true)])
                     ->when($withSets, fn ($q) => $q->with(['sets' => fn ($s) => $s->where('is_completed', true)->orderBy('order')])),
@@ -149,6 +151,12 @@ class FeedService
             'liked_by_me' => (bool) $w->liked_by_me,
             'is_owner' => $w->user_id === $viewer->id,
             'user' => $this->presentUser($w->user),
+            'photos' => $w->photos->map(fn (WorkoutPhoto $p) => [
+                'id' => $p->id,
+                'url' => $p->url(),
+                'width' => $p->width,
+                'height' => $p->height,
+            ])->values(),
             'exercises_total' => $exercises->count(),
             'exercises' => ($previewOnly ? $exercises->take(self::PREVIEW_EXERCISES) : $exercises)
                 ->map(fn ($we) => $this->exerciseSummary($we))->values(),

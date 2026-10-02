@@ -2,6 +2,7 @@ import ExerciseMedia from '@/Components/ExerciseMedia';
 import Avatar from '@/Components/social/Avatar';
 import { timeAgo } from '@/Components/social/format';
 import LikeButton from '@/Components/social/LikeButton';
+import PostPhotos from '@/Components/social/PostPhotos';
 import { PostHeader, PostStats } from '@/Components/social/WorkoutPostCard';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { displayWeight } from '@/lib/units';
@@ -40,6 +41,7 @@ export default function Post({ post }: { post: FeedPost }) {
                             {post.description && <p className="mt-2 whitespace-pre-line text-zinc-600 dark:text-zinc-300">{post.description}</p>}
                         </div>
                         <PostStats post={post} />
+                        <PostPhotos photos={post.photos} alt={post.title} />
                     </div>
 
                     <div className="mt-4 flex items-center border-t border-zinc-100 px-3 py-1.5 dark:border-zinc-800">

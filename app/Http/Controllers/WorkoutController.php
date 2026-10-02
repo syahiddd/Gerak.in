@@ -13,6 +13,7 @@ use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use App\Services\FeedService;
+use App\Services\WorkoutPhotoService;
 use App\Services\WorkoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -92,7 +93,7 @@ class WorkoutController extends Controller
         return redirect()->route('workouts.show', $workout)->with('success', "Started \"{$routine->name}\".");
     }
 
-    public function update(Request $request, Workout $workout): RedirectResponse
+    public function update(Request $request, Workout $workout, WorkoutPhotoService $photos): RedirectResponse
     {
         $this->authorize('update', $workout);
         $data = $request->validate([
@@ -101,9 +102,21 @@ class WorkoutController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'visibility' => ['sometimes', Rule::enum(WorkoutVisibility::class)],
             'from_save' => ['sometimes', 'boolean'],
+            'photos' => ['sometimes', 'array', 'max:'.WorkoutPhotoService::MAX_PHOTOS],
+            // 2 MB matches PHP's default upload_max_filesize; the browser shrinks photos first.
+            'photos.*' => ['image', 'mimes:jpeg,png', 'max:2048'],
+            'remove_photo_ids' => ['sometimes', 'array'],
+            'remove_photo_ids.*' => ['integer'],
+        ], [
+            'photos.*.max' => 'Each photo must be 2 MB or smaller.',
+            'photos.*.mimes' => 'Photos must be JPG or PNG.',
         ]);
-        unset($data['from_save']);
-        $workout->update($data);
+
+        if ($request->hasFile('photos') || $request->filled('remove_photo_ids')) {
+            $photos->sync($workout, $request->file('photos', []), array_map('intval', $request->input('remove_photo_ids', [])));
+        }
+
+        $workout->update(collect($data)->except(['from_save', 'photos', 'remove_photo_ids'])->all());
 
         if ($request->boolean('from_save') && $workout->status === WorkoutStatus::Completed) {
             return redirect()->route('posts.show', $workout)->with('success', 'Workout saved.');
@@ -121,7 +134,11 @@ class WorkoutController extends Controller
         }
 
         return Inertia::render('Workouts/Save', [
-            'workout' => $workout->only(['id', 'name', 'description']) + ['visibility' => $workout->visibility->value],
+            'workout' => $workout->only(['id', 'name', 'description']) + [
+                'visibility' => $workout->visibility->value,
+                'photos' => $workout->photos()->get()->map(fn ($p) => ['id' => $p->id, 'url' => $p->url()])->values(),
+            ],
+            'maxPhotos' => WorkoutPhotoService::MAX_PHOTOS,
             'post' => $feed->detail($workout, $request->user()),
         ]);
     }
@@ -139,9 +156,12 @@ class WorkoutController extends Controller
         $this->authorize('update', $workout);
         $events = $service->finish($workout);
 
+        // The save screen opens with a celebration; it shows these PRs itself.
         return redirect()->route('workouts.save', $workout)->with([
-            'success' => 'Workout completed. Nice work!',
-            'pr_events' => $events,
+            'celebrate' => [
+                'workout_number' => $workout->user->workouts()->completed()->count(),
+                'pr_events' => $events,
+            ],
         ]);
     }
 
