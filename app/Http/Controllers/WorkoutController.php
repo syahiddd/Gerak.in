@@ -71,11 +71,8 @@ class WorkoutController extends Controller
             $previous[$we->id] = $prev;
         }
 
-        $library = $workout->isActive()
-            ? Exercise::where('is_system', true)->orWhere('created_by', auth()->id())->orderBy('name')->limit(100)->get()
-            : collect();
-
-        return Inertia::render('Workouts/Show', compact('workout', 'previous', 'library'));
+        // Exercises to add are searched on demand by the picker (GET /exercises/lookup).
+        return Inertia::render('Workouts/Show', compact('workout', 'previous'));
     }
 
     public function startEmpty(Request $request, WorkoutService $service): RedirectResponse

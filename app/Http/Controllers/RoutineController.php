@@ -37,10 +37,8 @@ class RoutineController extends Controller
 
     public function create(): Response
     {
-        $exercises = Exercise::where('is_system', true)->orWhere('created_by', auth()->id())
-            ->orderBy('name')->limit(200)->get();
-
-        return Inertia::render('Routines/Create', compact('exercises'));
+        // Exercises are searched on demand by the picker (GET /exercises/lookup).
+        return Inertia::render('Routines/Create');
     }
 
     public function store(StoreRoutineRequest $request, RoutineService $service): RedirectResponse
@@ -61,12 +59,10 @@ class RoutineController extends Controller
     public function edit(Routine $routine): Response
     {
         $this->authorize('update', $routine);
-        $routine->load(['exercises.targetSets']);
-        $exercises = Exercise::where('is_system', true)->orWhere('created_by', auth()->id())
-            ->orderBy('name')->limit(200)->get();
+        $routine->load(['exercises.exercise', 'exercises.targetSets']);
         $folders = auth()->user()->routineFolders;
 
-        return Inertia::render('Routines/Edit', compact('routine', 'exercises', 'folders'));
+        return Inertia::render('Routines/Edit', compact('routine', 'folders'));
     }
 
     public function update(StoreRoutineRequest $request, Routine $routine): RedirectResponse

@@ -33,6 +33,20 @@ class RoutineBuilderTest extends TestCase
         return $routine;
     }
 
+    public function test_edit_page_includes_exercise_details(): void
+    {
+        $user = User::factory()->create();
+        $routine = $this->routineWithExercise($user, $this->exercise('Bench Press'));
+
+        // The edit UI renders each item's exercise name; without the eager load it crashed.
+        $this->actingAs($user)->get(route('routines.edit', $routine))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Routines/Edit')
+                ->where('routine.exercises.0.exercise.name', 'Bench Press')
+                ->has('routine.exercises.0.target_sets', 1));
+    }
+
     public function test_update_meta_and_archive_toggle(): void
     {
         $user = User::factory()->create();

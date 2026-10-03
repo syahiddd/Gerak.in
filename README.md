@@ -35,6 +35,26 @@ php artisan serve
 
 Open http://localhost:8000.
 
+## Exercise library & animations
+
+The 46 seeded exercises can be extended to ~1,340 exercises with animations:
+
+```bash
+php artisan storage:link
+# ~1,300 exercises + 2,600 GIF/JPG files (~140 MB) from hasaneyldrm/exercises-dataset
+php artisan exercises:import-dataset
+# Optional: WorkoutX GIFs for the seeded exercises (needs WORKOUTX_API_KEY)
+php artisan workoutx:sync-gifs
+```
+
+`exercises:import-dataset` is safe to re-run (it only fills empty fields and retries failed downloads).
+Use `--limit=20` for a trial, `--no-media` for data only, or `--source=path/to/clone` to import from a local clone.
+
+**Licensing.** Exercise data from [hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) is MIT.
+The images/GIFs are **© Gym visual** (https://gymvisual.com/), distributed in that repo with permission at 180×180, and must
+always carry that attribution (the app shows it under animations and in the page footer). Reuse is governed by Gym visual's
+Terms & Conditions; a commercial release needs a license from Gym visual.
+
 ## Demo accounts (development only)
 
 | Role | Email | Password |

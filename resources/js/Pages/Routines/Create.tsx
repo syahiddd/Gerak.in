@@ -2,25 +2,34 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Exercise } from '@/types';
+import ExercisePicker from '@/Components/ExercisePicker';
+import { ExerciseOption } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 
 interface Row {
     exercise_id: string;
     rest_seconds: number;
+    /** Picked option, kept so the name/GIF stay visible; stripped before submit. */
+    exercise: ExerciseOption | null;
 }
 
-export default function RoutineCreate({ exercises }: { exercises: Exercise[] }) {
-    const { data, setData, post, processing, errors } = useForm({
+const emptyRow = (): Row => ({ exercise_id: '', rest_seconds: 90, exercise: null });
+
+export default function RoutineCreate() {
+    const { data, setData, post, processing, errors, transform } = useForm({
         name: '',
         description: '',
-        exercises: [{ exercise_id: '', rest_seconds: 90 }] as Row[],
+        exercises: [emptyRow()],
     });
+
+    transform((d) => ({ ...d, exercises: d.exercises.map(({ exercise_id, rest_seconds }) => ({ exercise_id, rest_seconds })) }));
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('routines.store'));
     };
+
+    const rowError = (i: number) => (errors as Record<string, string>)[`exercises.${i}.exercise_id`];
 
     const setRow = (i: number, patch: Partial<Row>) => {
         const rows = [...data.exercises];
@@ -46,21 +55,25 @@ export default function RoutineCreate({ exercises }: { exercises: Exercise[] }) 
                 <h2 className="font-bold">Exercises</h2>
                 {data.exercises.map((row, i) => (
                     <div key={i} className="grid grid-cols-12 items-end gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
-                        <div className="col-span-7">
-                            <label className="text-xs font-semibold">Exercise</label>
-                            <select value={row.exercise_id} onChange={(e) => setRow(i, { exercise_id: e.target.value })} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" required>
-                                <option value="">Select…</option>
-                                {exercises.map((ex) => (
-                                    <option key={ex.id} value={ex.id}>{ex.name}</option>
-                                ))}
-                            </select>
+                        {/* Phone: exercise on its own row; rest + remove share the second row. */}
+                        <div className="col-span-12 sm:col-span-7">
+                            <label className="text-xs font-semibold" htmlFor={`exercise-${i}`}>
+                                Exercise
+                            </label>
+                            <ExercisePicker
+                                id={`exercise-${i}`}
+                                className="mt-1"
+                                value={row.exercise}
+                                onChange={(ex) => setRow(i, { exercise: ex, exercise_id: ex ? String(ex.id) : '' })}
+                            />
+                            {rowError(i) && <p className="mt-1 text-xs text-red-500">Choose an exercise.</p>}
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-7 sm:col-span-3">
                             <label className="text-xs font-semibold">Rest (s)</label>
                             <input type="number" value={row.rest_seconds} onChange={(e) => setRow(i, { rest_seconds: Number(e.target.value) })} min={0} max={3600} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
                         </div>
-                        <div className="col-span-2">
-                            <button type="button" onClick={() => setData('exercises', data.exercises.filter((_, j) => j !== i))} className="w-full rounded-xl border border-red-300 px-2 py-2 text-sm font-bold text-red-500">
+                        <div className="col-span-5 sm:col-span-2">
+                            <button type="button" onClick={() => setData('exercises', data.exercises.filter((_, j) => j !== i))} className="w-full rounded-xl border border-red-300 px-2 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
                                 Remove
                             </button>
                         </div>
@@ -68,7 +81,7 @@ export default function RoutineCreate({ exercises }: { exercises: Exercise[] }) 
                 ))}
                 <button
                     type="button"
-                    onClick={() => setData('exercises', [...data.exercises, { exercise_id: '', rest_seconds: 90 }])}
+                    onClick={() => setData('exercises', [...data.exercises, emptyRow()])}
                     className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700"
                 >
                     + Add exercise

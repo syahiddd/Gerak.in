@@ -1,3 +1,5 @@
+import type { ExerciseOption } from '@/types';
+
 /** Same-origin JSON helper (session auth + CSRF). Used for set autosave so typing never triggers full page visits. */
 function csrf(): string {
     return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
@@ -18,6 +20,14 @@ async function json<T>(url: string, method: string, body?: unknown): Promise<T> 
 }
 
 export const api = {
+    /** Exercise picker search; empty query returns recently used exercises. */
+    lookupExercises: (q: string, signal?: AbortSignal) =>
+        fetch(`/exercises/lookup?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' }, signal })
+            .then((res) => {
+                if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+                return res.json() as Promise<{ data: ExerciseOption[] }>;
+            })
+            .then((r) => r.data),
     patchSet: (id: number, payload: Record<string, unknown>) =>
         json<{ set: Record<string, unknown> }>(`/sets/${id}`, 'PATCH', payload),
     deleteSet: (id: number) => json<{ deleted: boolean }>(`/sets/${id}`, 'DELETE'),
