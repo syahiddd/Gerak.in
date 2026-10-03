@@ -17,7 +17,7 @@ export default function RoutineIndex({ folders, ungrouped }: { folders: RoutineF
 
             <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Routines</h1>
 
-            <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="mt-6 grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
                 {/* Actions first on mobile, right column on desktop — same as Hevy. */}
                 <aside className="rounded-2xl bg-white p-2 ring-1 ring-zinc-200 lg:sticky lg:top-6 lg:order-2 dark:bg-zinc-900 dark:ring-zinc-800">
                     <ActionRow href={route('routines.create')} icon={<ClipboardIcon />} label="New Routine" />
@@ -25,7 +25,7 @@ export default function RoutineIndex({ folders, ungrouped }: { folders: RoutineF
                     <ActionRow onClick={() => setDialog({ mode: 'create' })} icon={<FolderPlusIcon />} label="New Folder" />
                 </aside>
 
-                <div className="space-y-6 lg:order-1">
+                <div className="min-w-0 space-y-6 lg:order-1">
                     <Section title="My Routines" count={ungrouped.length}>
                         {ungrouped.length === 0 ? (
                             <EmptyCard
