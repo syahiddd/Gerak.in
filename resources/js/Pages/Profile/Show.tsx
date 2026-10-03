@@ -1,8 +1,10 @@
 import { Card, EmptyState, StatCard } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { formatDuration, formatNumber } from '@/lib/units';
-import { PageProps, PersonalRecord, Routine, Workout } from '@/types';
+import { ProfileHeader } from '@/Pages/Social/Profile';
+import { PageProps, PersonalRecord, PublicProfile, Routine, Workout } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { LogOut, Settings, ShieldCheck } from 'lucide-react';
 import {
     Bar,
     BarChart,
@@ -16,6 +18,7 @@ import {
 } from 'recharts';
 
 interface Props extends PageProps {
+    profile: PublicProfile;
     overview: {
         total_workouts: number;
         total_volume_kg: number | string;
@@ -34,8 +37,9 @@ interface Props extends PageProps {
 
 const PIE_COLORS = ['#a3e635', '#34d399', '#38bdf8', '#fbbf24', '#f472b6', '#a78bfa', '#94a3b8'];
 
-export default function Dashboard({
+export default function ProfileShow({
     auth,
+    profile,
     overview,
     weekly,
     muscles,
@@ -55,18 +59,36 @@ export default function Dashboard({
         sets: muscles.sets[i] ?? 0,
     }));
 
+    const iconBtn =
+        'flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white';
+
     return (
-        <AuthenticatedLayout
-            header={
-                <>
-                    <h1 className="text-xl font-extrabold">
-                        {greeting}, {auth.user.name}
-                    </h1>
-                    <p className="text-sm text-zinc-500">What are we training today?</p>
-                </>
-            }
-        >
-            <Head title="Dashboard" />
+        <AuthenticatedLayout>
+            <Head title="Profile" />
+
+            {/* Settings / admin / log out live here now that the mobile drawer is gone. */}
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                    <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl">Profile</h1>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                    {auth.user.role === 'admin' && (
+                        <Link href={route('admin.dashboard')} className={iconBtn} aria-label="Admin" title="Admin">
+                            <ShieldCheck className="h-5 w-5" />
+                        </Link>
+                    )}
+                    <Link href={route('settings.edit')} className={iconBtn} aria-label="Settings" title="Settings">
+                        <Settings className="h-5 w-5" />
+                    </Link>
+                    <Link href={route('logout')} method="post" as="button" className={iconBtn} aria-label="Log out" title="Log out">
+                        <LogOut className="h-5 w-5" />
+                    </Link>
+                </div>
+            </div>
+
+            <div className="mb-4">
+                <ProfileHeader profile={profile} as="h2" />
+            </div>
 
             {activeWorkout && (
                 <div className="mb-4 flex items-center justify-between rounded-2xl bg-lime-400 p-4 text-zinc-950">
@@ -170,7 +192,12 @@ export default function Dashboard({
                     </Card>
 
                     <Card>
-                        <h2 className="font-bold">Weekly activity</h2>
+                        <div className="flex items-center justify-between">
+                            <h2 className="font-bold">Weekly activity</h2>
+                            <Link href={route('statistics.index')} className="text-sm font-semibold text-lime-600 dark:text-lime-400">
+                                All statistics
+                            </Link>
+                        </div>
                         <div className="h-48">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={weeklyData}>
