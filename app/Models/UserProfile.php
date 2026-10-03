@@ -22,6 +22,12 @@ class UserProfile extends Model
         return ['height_cm' => 'decimal:1', 'is_public' => 'boolean'];
     }
 
+    /** Relative URL so it works whatever APP_URL/host the app is served from. */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? '/storage/'.$this->avatar_path : null;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

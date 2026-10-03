@@ -66,6 +66,7 @@ class FeedService
             ->with([
                 'personalRecords:id,achieved_workout_id,exercise_id,record_type',
                 'comments.user:id,name,username',
+                'comments.user.profile:user_id,avatar_path',
             ])
             ->firstOrFail();
 
@@ -103,7 +104,7 @@ class FeedService
 
     public function presentUser(User $user): array
     {
-        return ['id' => $user->id, 'name' => $user->name, 'username' => $user->username];
+        return ['id' => $user->id, 'name' => $user->name, 'username' => $user->username, 'avatar_url' => $user->avatarUrl()];
     }
 
     private function paginate(Builder $query, User $viewer, ?string $cursor): CursorPaginator
@@ -122,6 +123,7 @@ class FeedService
         return $query
             ->with([
                 'user:id,name,username',
+                'user.profile:user_id,avatar_path',
                 'photos:id,workout_id,path,width,height,order',
                 'exercises' => fn ($q) => $q
                     ->withCount(['sets as completed_sets_count' => fn ($s) => $s->where('is_completed', true)])

@@ -55,6 +55,12 @@ class User extends Authenticatable
         ];
     }
 
+    /** Profile photo URL, or null to fall back to initials. Eager load `profile` in lists. */
+    public function avatarUrl(): ?string
+    {
+        return $this->profile?->avatarUrl();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
