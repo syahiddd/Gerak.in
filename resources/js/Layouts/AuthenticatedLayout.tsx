@@ -1,22 +1,27 @@
+import BrandLogo from '@/Components/BrandLogo';
 import Dropdown from '@/Components/Dropdown';
 import UserSearchBox from '@/Components/social/UserSearchBox';
 import { FlashMessages } from '@/Components/ui';
 import { applyTheme } from '@/hooks/workout';
 import { Link, usePage } from '@inertiajs/react';
+import { Dialog } from '@headlessui/react';
 import {
     BarChart3,
     ClipboardList,
     Dumbbell,
     Library,
+    Menu,
     Newspaper,
     ShieldCheck,
     User,
+    X,
 } from 'lucide-react';
-import { PropsWithChildren, ReactNode } from 'react';
+import { PropsWithChildren, ReactNode, useState } from 'react';
 
 // The old dashboard now lives on the Profile page.
 const PROFILE_MATCH = ['profile.*', 'settings.*', 'measurements.*'];
 
+// Single source of truth for main navigation (desktop sidebar + mobile drawer).
 const NAV = [
     { label: 'Feed', href: 'feed.index', match: ['feed.*', 'posts.*', 'users.*'], Icon: Newspaper },
     { label: 'Workout', href: 'workouts.index', match: ['workouts.*'], Icon: Dumbbell },
@@ -24,15 +29,6 @@ const NAV = [
     { label: 'Exercises', href: 'exercises.index', match: ['exercises.*'], Icon: Library },
     { label: 'Statistics', href: 'statistics.index', match: ['statistics.*', 'records.*'], Icon: BarChart3 },
     { label: 'Profile', href: 'profile.show', match: PROFILE_MATCH, Icon: User },
-];
-
-// No drawer on mobile, so every main section needs a tab; Statistics is linked from Profile.
-const MOBILE_NAV = [
-    { label: 'Feed', href: 'feed.index', match: ['feed.*', 'posts.*', 'users.*'], Icon: Newspaper },
-    { label: 'Workout', href: 'workouts.index', match: ['workouts.*'], Icon: Dumbbell },
-    { label: 'Routines', href: 'routines.index', match: ['routines.*'], Icon: ClipboardList },
-    { label: 'Exercises', href: 'exercises.index', match: ['exercises.*'], Icon: Library },
-    { label: 'Profile', href: 'profile.show', match: [...PROFILE_MATCH, 'statistics.*', 'records.*'], Icon: User },
 ];
 
 export default function Authenticated({
@@ -53,7 +49,10 @@ export default function Authenticated({
         applyTheme(next as 'light' | 'dark');
     };
 
-    const sidebarLinks = (
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const closeDrawer = () => setDrawerOpen(false);
+
+    const navLinks = (onNavigate: () => void) => (
         <nav className="flex-1 space-y-1 px-3 py-4 text-sm font-medium">
             <UserSearchBox className="mb-3" />
 
@@ -64,6 +63,7 @@ export default function Authenticated({
                     <Link
                         key={n.href}
                         href={route(n.href)}
+                        onClick={onNavigate}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
                             active
                                 ? 'bg-lime-400 font-bold text-zinc-950 dark:bg-lime-400 dark:text-zinc-950'
@@ -78,6 +78,7 @@ export default function Authenticated({
             {user.role === 'admin' && (
                 <Link
                     href={route('admin.dashboard')}
+                    onClick={onNavigate}
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
                         route().current('admin.*')
                             ? 'bg-zinc-900 font-bold text-white dark:bg-white dark:text-zinc-900'
@@ -93,12 +94,7 @@ export default function Authenticated({
 
     const logo = (
         <Link href={route('feed.index')} className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-lime-400 text-lg font-extrabold text-zinc-950">
-                G
-            </span>
-            <span className="text-lg font-extrabold tracking-tight">
-                Gerak<span className="text-lime-500">.in</span>
-            </span>
+            <BrandLogo />
         </Link>
     );
 
@@ -108,7 +104,7 @@ export default function Authenticated({
             <aside className="hidden w-64 shrink-0 flex-col border-r border-zinc-200 bg-white sm:flex dark:border-zinc-800 dark:bg-zinc-900 sm:fixed sm:inset-y-0 sm:z-30">
                 <div className="flex h-16 items-center px-5">{logo}</div>
 
-                {sidebarLinks}
+                {navLinks(() => {})}
 
                 <div className="space-y-2 border-t border-zinc-200 p-4 dark:border-zinc-800">
                     <button
@@ -150,20 +146,95 @@ export default function Authenticated({
                 </div>
             </aside>
 
-            {/* ===== Topbar Mobile (no drawer: the bottom nav + Profile page cover everything) ===== */}
+            {/* ===== Topbar Mobile + hamburger ===== */}
             <div className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 sm:hidden dark:border-zinc-800 dark:bg-zinc-900">
                 {logo}
                 <button
-                    onClick={toggleTheme}
-                    className="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-500 dark:border-zinc-700"
-                    aria-label="Toggle theme"
+                    onClick={() => setDrawerOpen(true)}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    aria-label="Open navigation menu"
+                    aria-expanded={drawerOpen}
                 >
-                    Theme
+                    <Menu className="h-6 w-6" />
                 </button>
             </div>
 
+            {/* ===== Drawer navigasi mobile (semua tombol navbar) ===== */}
+            <Dialog open={drawerOpen} onClose={closeDrawer} className="relative z-50 sm:hidden">
+                <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+                <div className="fixed inset-y-0 right-0 flex w-80 max-w-[85vw]">
+                    <Dialog.Panel className="flex w-full flex-col overflow-y-auto bg-white pb-[env(safe-area-inset-bottom)] dark:bg-zinc-900">
+                        <div className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
+                            {logo}
+                            <button
+                                onClick={closeDrawer}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                aria-label="Close navigation menu"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="px-3 pt-3">
+                            <p className="truncate px-3 text-sm font-bold">{user.name}</p>
+                            <p className="truncate px-3 text-xs text-zinc-500">{user.email}</p>
+                        </div>
+
+                        {navLinks(closeDrawer)}
+
+                        <div className="space-y-2 border-t border-zinc-200 p-4 text-sm dark:border-zinc-800">
+                            <button
+                                onClick={toggleTheme}
+                                className="w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-left font-medium text-zinc-600 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:text-white"
+                            >
+                                Toggle Theme
+                            </button>
+                            <Link
+                                href={route('users.show', user.username)}
+                                onClick={closeDrawer}
+                                className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            >
+                                My public profile
+                            </Link>
+                            <Link
+                                href={route('profile.edit')}
+                                onClick={closeDrawer}
+                                className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            >
+                                Edit profile
+                            </Link>
+                            <Link
+                                href={route('settings.edit')}
+                                onClick={closeDrawer}
+                                className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            >
+                                Settings
+                            </Link>
+                            {user.role === 'admin' && (
+                                <Link
+                                    href={route('admin.dashboard')}
+                                    onClick={closeDrawer}
+                                    className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                >
+                                    Admin
+                                </Link>
+                            )}
+                            <Link
+                                href={route('logout')}
+                                method="post"
+                                as="button"
+                                onClick={closeDrawer}
+                                className="block w-full rounded-xl px-3 py-2.5 text-left font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            >
+                                Log Out
+                            </Link>
+                        </div>
+                    </Dialog.Panel>
+                </div>
+            </Dialog>
+
             {/* ===== Konten kanan ===== */}
-            <div className="flex min-h-screen flex-1 flex-col pb-20 sm:pb-0 sm:pl-64">
+            <div className="flex min-h-screen flex-1 flex-col pb-[env(safe-area-inset-bottom)] sm:pl-64">
                 {header && (
                     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">{header}</div>
@@ -183,25 +254,6 @@ export default function Authenticated({
                         and WorkoutX.
                     </p>
                 </main>
-
-                {/* Bottom nav mobile tetap dipertahankan */}
-                <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white text-[11px] font-medium sm:hidden dark:border-zinc-800 dark:bg-zinc-900" aria-label="Mobile">
-                    <div className="grid grid-cols-5">
-                        {MOBILE_NAV.map((n) => {
-                            const Icon = n.Icon;
-                            return (
-                                <Link
-                                    key={n.label}
-                                    href={route(n.href)}
-                                    className={`flex flex-col items-center gap-1 py-2 ${isActive(n.match) ? 'text-lime-600 dark:text-lime-400' : 'text-zinc-500'}`}
-                                >
-                                    <Icon className="h-5 w-5" strokeWidth={isActive(n.match) ? 2.5 : 2} />
-                                    {n.label}
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </nav>
             </div>
         </div>
     );
