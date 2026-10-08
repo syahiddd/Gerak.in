@@ -34,10 +34,7 @@ class StatisticsService
 
     public function weeklyVolume(User $user, int $weeks = 12): array
     {
-        // MySQL is canonical; keep the query runnable on sqlite (tests/local).
-        $weekExpr = DB::getDriverName() === 'sqlite'
-            ? "strftime('%Y-%W', started_at)"
-            : "DATE_FORMAT(started_at, '%x-%v')";
+        $weekExpr = $this->weekExpression();
 
         $rows = $user->workouts()->completed()
             ->where('started_at', '>=', now()->subWeeks($weeks)->startOfDay())
@@ -55,10 +52,7 @@ class StatisticsService
 
     public function monthlyVolume(User $user, int $months = 12): array
     {
-        // MySQL is canonical; keep the query runnable on sqlite (tests/local).
-        $monthExpr = DB::getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', started_at)"
-            : "DATE_FORMAT(started_at, '%Y-%m')";
+        $monthExpr = $this->monthExpression();
 
         $rows = $user->workouts()->completed()
             ->where('started_at', '>=', now()->subMonths($months)->startOfMonth())
@@ -126,5 +120,29 @@ class StatisticsService
         }
 
         return $streak;
+    }
+
+    /**
+     * ISO week-year label (e.g. "2026-36"), portable across mysql/pgsql/sqlite.
+     */
+    private function weekExpression(): string
+    {
+        return match (DB::getDriverName()) {
+            'pgsql' => "TO_CHAR(started_at, 'IYYY-IW')",
+            'sqlite' => "strftime('%Y-%W', started_at)",
+            default => "DATE_FORMAT(started_at, '%x-%v')",
+        };
+    }
+
+    /**
+     * Month label (e.g. "2026-09"), portable across mysql/pgsql/sqlite.
+     */
+    private function monthExpression(): string
+    {
+        return match (DB::getDriverName()) {
+            'pgsql' => "TO_CHAR(started_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', started_at)",
+            default => "DATE_FORMAT(started_at, '%Y-%m')",
+        };
     }
 }
