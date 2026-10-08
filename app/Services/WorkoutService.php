@@ -18,11 +18,14 @@ use Illuminate\Validation\ValidationException;
 
 class WorkoutService
 {
-    public function __construct(private PersonalRecordService $records) {}
+    public function __construct(
+        private PersonalRecordService $records,
+        private StatisticsService $stats,
+    ) {}
 
     public function startEmpty(User $user, ?string $name = null): Workout
     {
-        return DB::transaction(function () use ($user, $name) {
+        $workout = DB::transaction(function () use ($user, $name) {
             $this->assertNoActiveWorkout($user);
 
             return Workout::create([
@@ -33,6 +36,10 @@ class WorkoutService
                 'timezone' => $user->timezone ?? 'Asia/Jakarta',
             ]);
         });
+
+        $this->stats->forgetTrainingOverview($user);
+
+        return $workout;
     }
 
     public function startFromRoutine(User $user, Routine $routine): Workout
@@ -41,7 +48,7 @@ class WorkoutService
             abort(403);
         }
 
-        return DB::transaction(function () use ($user, $routine) {
+        $workout = DB::transaction(function () use ($user, $routine) {
             $this->assertNoActiveWorkout($user);
             $routine->loadMissing('exercises.targetSets');
 
@@ -92,6 +99,10 @@ class WorkoutService
 
             return $workout->load('exercises.sets');
         });
+
+        $this->stats->forgetTrainingOverview($user);
+
+        return $workout;
     }
 
     public function addExercise(Workout $workout, int $exerciseId): WorkoutExercise
@@ -146,7 +157,7 @@ class WorkoutService
     {
         $this->assertActive($workout);
 
-        return DB::transaction(function () use ($workout) {
+        $events = DB::transaction(function () use ($workout) {
             $workout->loadMissing('exercises.sets');
             // Compute before stamping ended_at so an in-progress pause is excluded.
             $workout->duration_seconds = $workout->elapsedSeconds();
@@ -160,6 +171,10 @@ class WorkoutService
 
             return $this->records->evaluateWorkout($workout);
         });
+
+        $this->stats->forgetTrainingOverview($workout->user_id);
+
+        return $events;
     }
 
     public function pause(Workout $workout): Workout
@@ -206,6 +221,8 @@ class WorkoutService
         $workout->ended_at = now();
         $workout->paused_at = null;
         $workout->save();
+
+        $this->stats->forgetTrainingOverview($workout->user_id);
     }
 
     public function activeFor(User $user): ?Workout

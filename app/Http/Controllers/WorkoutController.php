@@ -56,19 +56,25 @@ class WorkoutController extends Controller
         $this->authorize('view', $workout);
         $workout->load(['exercises.exercise.primaryMuscle', 'exercises.sets', 'routine']);
 
-        // Previous performance per exercise (last completed workout before this one).
-        $previous = [];
-        foreach ($workout->exercises as $we) {
-            $prev = WorkoutSet::join('workout_exercises as we', 'we.id', '=', 'workout_sets.workout_exercise_id')
+        // Previous performance per exercise in ONE query (last 5 completed sets
+        // per exercise), grouped in PHP to avoid one round-trip per exercise.
+        $exerciseIds = $workout->exercises->pluck('exercise_id')->unique()->all();
+        $recentSets = collect();
+        if ($exerciseIds !== []) {
+            $recentSets = WorkoutSet::join('workout_exercises as we', 'we.id', '=', 'workout_sets.workout_exercise_id')
                 ->join('workouts as w', 'w.id', '=', 'we.workout_id')
                 ->where('w.user_id', auth()->id())
                 ->where('w.status', 'completed')
-                ->where('we.exercise_id', $we->exercise_id)
+                ->whereIn('we.exercise_id', $exerciseIds)
                 ->where('workout_sets.is_completed', true)
                 ->orderByDesc('w.started_at')
-                ->limit(5)
-                ->get(['workout_sets.weight_kg', 'workout_sets.reps']);
-            $previous[$we->id] = $prev;
+                ->limit(500) // recent history only; grouped per exercise below
+                ->get(['we.exercise_id as eid', 'workout_sets.weight_kg', 'workout_sets.reps']);
+        }
+
+        $previous = [];
+        foreach ($workout->exercises as $we) {
+            $previous[$we->id] = $recentSets->where('eid', $we->exercise_id)->take(5)->values();
         }
 
         // Exercises to add are searched on demand by the picker (GET /exercises/lookup).

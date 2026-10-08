@@ -12,6 +12,7 @@ use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
 use App\Services\RoutineService;
+use App\Services\StatisticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,9 +42,10 @@ class RoutineController extends Controller
         return Inertia::render('Routines/Create');
     }
 
-    public function store(StoreRoutineRequest $request, RoutineService $service): RedirectResponse
+    public function store(StoreRoutineRequest $request, RoutineService $service, StatisticsService $stats): RedirectResponse
     {
         $routine = $service->createRoutine(auth()->user(), $request->validated());
+        $stats->forgetTrainingOverview(auth()->user());
 
         return redirect()->route('routines.show', $routine)->with('success', 'Routine created.');
     }
@@ -65,7 +67,7 @@ class RoutineController extends Controller
         return Inertia::render('Routines/Edit', compact('routine', 'folders'));
     }
 
-    public function update(StoreRoutineRequest $request, Routine $routine): RedirectResponse
+    public function update(StoreRoutineRequest $request, Routine $routine, StatisticsService $stats): RedirectResponse
     {
         $this->authorize('update', $routine);
         $data = $request->validated();
@@ -76,31 +78,35 @@ class RoutineController extends Controller
             'notes' => $data['notes'] ?? null,
             'folder_id' => $data['folder_id'] ?? $routine->folder_id,
         ]);
+        $stats->forgetTrainingOverview(auth()->user());
 
         return redirect()->route('routines.show', $routine)->with('success', 'Routine updated.');
     }
 
-    public function destroy(Routine $routine): RedirectResponse
+    public function destroy(Routine $routine, StatisticsService $stats): RedirectResponse
     {
         $this->authorize('delete', $routine);
         $routine->delete();
+        $stats->forgetTrainingOverview(auth()->user());
 
         return redirect()->route('routines.index')->with('success', 'Routine deleted.');
     }
 
-    public function duplicate(Routine $routine, RoutineService $service): RedirectResponse
+    public function duplicate(Routine $routine, RoutineService $service, StatisticsService $stats): RedirectResponse
     {
         $this->authorize('view', $routine);
         $copy = $service->duplicate(auth()->user(), $routine);
+        $stats->forgetTrainingOverview(auth()->user());
 
         return redirect()->route('routines.show', $copy)->with('success', 'Routine duplicated.');
     }
 
-    public function archive(Routine $routine): RedirectResponse
+    public function archive(Routine $routine, StatisticsService $stats): RedirectResponse
     {
         $this->authorize('update', $routine);
         $routine->status = $routine->isArchived() ? RoutineStatus::Active : RoutineStatus::Archived;
         $routine->save();
+        $stats->forgetTrainingOverview(auth()->user());
 
         return back()->with('success', 'Routine status updated.');
     }

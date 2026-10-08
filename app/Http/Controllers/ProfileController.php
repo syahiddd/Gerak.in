@@ -24,13 +24,14 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $hour = (int) now()->format('G');
+        // Heavy aggregates are cached briefly; busted on workout/routine changes.
+        $training = $stats->trainingOverview($user);
 
         return Inertia::render('Profile/Show', [
             'profile' => ProfileCard::for($user, $user),
-            'overview' => $stats->overview($user),
-            'weekly' => $stats->weeklyVolume($user, 8),
-            'muscles' => $stats->muscleDistribution($user, 30),
+            'overview' => $training['overview'],
+            'weekly' => $training['weekly'],
+            'muscles' => $training['muscles'],
             'recentWorkouts' => $user->workouts()->completed()->withCount('exercises')->latest('started_at')->limit(5)->get(),
             'activeWorkout' => $user->workouts()->active()->latest('started_at')->first(),
             'routines' => $user->routines()->where('status', 'active')->withCount('exercises')->latest()->limit(3)->get(),
