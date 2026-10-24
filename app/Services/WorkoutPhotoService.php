@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Workout;
 use App\Models\WorkoutPhoto;
+use App\Support\ImageMetadata;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -65,7 +66,7 @@ class WorkoutPhotoService
 
         [$data, $ext, $width, $height] = $this->canReencode($type)
             ? $this->reencode($bytes)
-            : [self::stripJpegMetadata($bytes), 'jpg', (int) $info[0], (int) $info[1]];
+            : [ImageMetadata::stripJpeg($bytes), 'jpg', (int) $info[0], (int) $info[1]];
 
         $path = "workout-photos/{$workout->id}/".Str::random(24).'.'.$ext;
         Storage::disk('public')->put($path, $data);
@@ -114,46 +115,5 @@ class WorkoutPhotoService
         imagedestroy($dst);
 
         return [$out, $jpeg ? 'jpg' : 'png', $nw, $nh];
-    }
-
-    /**
-     * Drops APP1–APP15 (EXIF/GPS, XMP, ICC extras, maker notes) and COM segments
-     * from a JPEG, keeping the image data byte-for-byte. Note: the EXIF
-     * orientation flag goes too; the browser already rotates pixels upright.
-     */
-    public static function stripJpegMetadata(string $jpeg): string
-    {
-        if (substr($jpeg, 0, 2) !== "\xFF\xD8") {
-            throw ValidationException::withMessages(['photos' => 'One of the photos is not a valid JPG.']);
-        }
-
-        $out = "\xFF\xD8";
-        $pos = 2;
-        $len = strlen($jpeg);
-
-        while ($pos + 4 <= $len) {
-            if ($jpeg[$pos] !== "\xFF") {
-                throw ValidationException::withMessages(['photos' => 'One of the photos is not a valid JPG.']);
-            }
-            $marker = ord($jpeg[$pos + 1]);
-            if ($marker === 0xFF) { // fill byte
-                $pos++;
-
-                continue;
-            }
-            if ($marker === 0xDA) { // start of scan: the rest is image data
-                return $out.substr($jpeg, $pos);
-            }
-
-            $segLen = (ord($jpeg[$pos + 2]) << 8) | ord($jpeg[$pos + 3]);
-            $segment = substr($jpeg, $pos, 2 + $segLen);
-            $isMetadata = ($marker >= 0xE1 && $marker <= 0xEF) || $marker === 0xFE;
-            if (! $isMetadata) {
-                $out .= $segment;
-            }
-            $pos += 2 + $segLen;
-        }
-
-        throw ValidationException::withMessages(['photos' => 'One of the photos is not a valid JPG.']);
     }
 }

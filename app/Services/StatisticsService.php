@@ -5,13 +5,43 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class StatisticsService
 {
+    private const TRAINING_TTL = 60;
+
+    /**
+     * Cached training snapshot for profile/dashboard/statistics pages.
+     * Busted on workout start/finish/cancel and routine changes (see forgetTrainingOverview).
+     *
+     * @return array{overview: array, weekly: array, monthly: array, muscles: array}
+     */
+    public function trainingOverview(User $user): array
+    {
+        return Cache::remember(
+            "training-overview:{$user->id}",
+            self::TRAINING_TTL,
+            fn () => [
+                'overview' => $this->overview($user),
+                'weekly' => $this->weeklyVolume($user, 12),
+                'monthly' => $this->monthlyVolume($user, 12),
+                'muscles' => $this->muscleDistribution($user, 30),
+            ]
+        );
+    }
+
+    public function forgetTrainingOverview(User|int $user): void
+    {
+        Cache::forget('training-overview:'.($user instanceof User ? $user->id : $user));
+    }
+
     public function overview(User $user): array
     {
-        $completed = $user->workouts()->completed();
+        $workoutAgg = $user->workouts()->completed()
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(total_volume_kg), 0) as vol')
+            ->first();
 
         $setAgg = DB::table('workout_sets')
             ->join('workout_exercises', 'workout_exercises.id', '=', 'workout_sets.workout_exercise_id')
@@ -23,8 +53,8 @@ class StatisticsService
             ->first();
 
         return [
-            'total_workouts' => (clone $completed)->count(),
-            'total_volume_kg' => round((float) ((clone $completed)->sum('total_volume_kg') ?? 0), 2),
+            'total_workouts' => (int) ($workoutAgg->n ?? 0),
+            'total_volume_kg' => round((float) ($workoutAgg->vol ?? 0), 2),
             'total_sets' => (int) ($setAgg->sets ?? 0),
             'total_reps' => (int) ($setAgg->reps ?? 0),
             'current_streak_days' => $this->currentStreakDays($user),
@@ -34,10 +64,7 @@ class StatisticsService
 
     public function weeklyVolume(User $user, int $weeks = 12): array
     {
-        // MySQL is canonical; keep the query runnable on sqlite (tests/local).
-        $weekExpr = DB::getDriverName() === 'sqlite'
-            ? "strftime('%Y-%W', started_at)"
-            : "DATE_FORMAT(started_at, '%x-%v')";
+        $weekExpr = $this->weekExpression();
 
         $rows = $user->workouts()->completed()
             ->where('started_at', '>=', now()->subWeeks($weeks)->startOfDay())
@@ -55,10 +82,7 @@ class StatisticsService
 
     public function monthlyVolume(User $user, int $months = 12): array
     {
-        // MySQL is canonical; keep the query runnable on sqlite (tests/local).
-        $monthExpr = DB::getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', started_at)"
-            : "DATE_FORMAT(started_at, '%Y-%m')";
+        $monthExpr = $this->monthExpression();
 
         $rows = $user->workouts()->completed()
             ->where('started_at', '>=', now()->subMonths($months)->startOfMonth())
@@ -126,5 +150,29 @@ class StatisticsService
         }
 
         return $streak;
+    }
+
+    /**
+     * ISO week-year label (e.g. "2026-36"), portable across mysql/pgsql/sqlite.
+     */
+    private function weekExpression(): string
+    {
+        return match (DB::getDriverName()) {
+            'pgsql' => "TO_CHAR(started_at, 'IYYY-IW')",
+            'sqlite' => "strftime('%Y-%W', started_at)",
+            default => "DATE_FORMAT(started_at, '%x-%v')",
+        };
+    }
+
+    /**
+     * Month label (e.g. "2026-09"), portable across mysql/pgsql/sqlite.
+     */
+    private function monthExpression(): string
+    {
+        return match (DB::getDriverName()) {
+            'pgsql' => "TO_CHAR(started_at, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', started_at)",
+            default => "DATE_FORMAT(started_at, '%Y-%m')",
+        };
     }
 }

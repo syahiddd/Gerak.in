@@ -1,3 +1,4 @@
+import BrandLogo from '@/Components/BrandLogo';
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { CheckCircle2, Dumbbell, Eye, EyeOff, Flame, TrendingUp } from 'lucide-react';
@@ -46,12 +47,7 @@ export default function Welcome({
                 {/* ===== Kolom kiri: form login ===== */}
                 <div className="flex min-h-screen flex-col px-6 py-6 sm:px-12">
                     <Link href="/" className="flex w-fit items-center gap-2.5">
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-lime-400 text-xl font-extrabold text-zinc-950">
-                            G
-                        </span>
-                        <span className="text-xl font-extrabold tracking-tight">
-                            Gerak<span className="text-lime-400">.in</span>
-                        </span>
+                        <BrandLogo size="lg" accent="text-lime-400" />
                     </Link>
 
                     <div className="flex flex-1 items-center justify-center py-10">
@@ -178,7 +174,6 @@ export default function Welcome({
 
                     <div className="relative flex min-h-screen flex-col items-center justify-center px-12 py-12">
                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-400">
-                            Train with intent
                         </p>
                         <h2 className="mt-3 max-w-md text-center text-3xl font-extrabold leading-snug tracking-tight">
                             Your workouts, routines &amp; PRs — in one place.

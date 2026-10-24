@@ -4,11 +4,17 @@ import TextInput from '@/Components/TextInput';
 import { EmptyState } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { api } from '@/lib/api';
-import { Exercise, Routine, RoutineExercise, RoutineFolder, RoutineTargetSet } from '@/types';
+import ExercisePicker from '@/Components/ExercisePicker';
+import { ExerciseOption, Routine, RoutineExercise, RoutineFolder, RoutineTargetSet } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 const SET_TYPES = ['normal', 'warmup', 'drop', 'failure', 'assisted', 'myo_rep'];
+
+// Phone: set # + 4 numbers on one line (type/remove wrap below). sm+: one line with a Type column.
+const SET_GRID = 'grid grid-cols-[1.5rem_repeat(4,minmax(0,1fr))] items-center gap-1.5 sm:grid-cols-[2rem_repeat(4,minmax(0,1fr))_10rem] sm:gap-2';
+const SET_INPUT =
+    'w-full min-w-0 rounded-lg border-zinc-300 px-2 py-1 text-sm [appearance:textfield] dark:border-zinc-700 dark:bg-zinc-800 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
 
 interface EditableSet {
     target_weight_kg: string;
@@ -45,11 +51,9 @@ const numOrNull = (v: string): number | null => (v === '' ? null : Number(v));
 
 export default function RoutineEdit({
     routine,
-    exercises: library,
     folders,
 }: {
     routine: Routine;
-    exercises: Exercise[];
     folders: RoutineFolder[];
 }) {
     const { data, setData, patch, processing } = useForm({
@@ -61,7 +65,7 @@ export default function RoutineEdit({
     const [items, setItems] = useState<EditableExercise[]>(() =>
         (routine.exercises ?? []).map(toEditable),
     );
-    const [newExerciseId, setNewExerciseId] = useState('');
+    const [newExercise, setNewExercise] = useState<ExerciseOption | null>(null);
     const [adding, setAdding] = useState(false);
 
     const submitMeta = (e: React.FormEvent) => {
@@ -81,14 +85,14 @@ export default function RoutineEdit({
 
     const addExercise = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newExerciseId) return;
+        if (!newExercise) return;
         setAdding(true);
         try {
             const { exercise } = await api.addRoutineExercise(routine.id, {
-                exercise_id: Number(newExerciseId),
+                exercise_id: newExercise.id,
             });
             setItems((prev) => [...prev, toEditable(exercise as unknown as RoutineExercise)]);
-            setNewExerciseId('');
+            setNewExercise(null);
         } finally {
             setAdding(false);
         }
@@ -195,41 +199,48 @@ export default function RoutineEdit({
                             </div>
                         </div>
 
-                        <div className="mt-3 overflow-x-auto">
-                            <table className="w-full text-sm tabular-nums">
-                                <thead className="text-xs text-zinc-500">
-                                    <tr>
-                                        <th className="py-1 text-left">Set</th>
-                                        <th className="text-left">Weight (kg)</th>
-                                        <th className="text-left">Reps min</th>
-                                        <th className="text-left">Reps max</th>
-                                        <th className="text-left">RPE</th>
-                                        <th className="text-left">Type</th>
-                                        <th />
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {it.draft_sets.map((s, i) => (
-                                        <tr key={i} className="border-t border-zinc-100 dark:border-zinc-800">
-                                            <td className="py-1 font-bold">{i + 1}</td>
-                                            <td><input type="number" step="0.5" min={0} value={s.target_weight_kg} onChange={(e) => mutateSet(it.id, i, { target_weight_kg: e.target.value })} className="w-20 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Target weight" /></td>
-                                            <td><input type="number" min={0} value={s.target_reps_min} onChange={(e) => mutateSet(it.id, i, { target_reps_min: e.target.value })} className="w-16 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Target reps min" /></td>
-                                            <td><input type="number" min={0} value={s.target_reps_max} onChange={(e) => mutateSet(it.id, i, { target_reps_max: e.target.value })} className="w-16 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Target reps max" /></td>
-                                            <td><input type="number" step="0.5" min={0} max={10} value={s.target_rpe} onChange={(e) => mutateSet(it.id, i, { target_rpe: e.target.value })} className="w-14 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Target RPE" /></td>
-                                            <td>
-                                                <select value={s.set_type} onChange={(e) => mutateSet(it.id, i, { set_type: e.target.value })} className="rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Set type">
-                                                    {SET_TYPES.map((t) => (
-                                                        <option key={t} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <button onClick={() => mutateItem(it.id, (x) => ({ ...x, saved: false, draft_sets: x.draft_sets.filter((_, j) => j !== i) }))} className="text-xs text-red-500" aria-label="Remove set">✕</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        {/* Grid instead of a table so sets fit a phone: on narrow screens Type + remove wrap to a second line. */}
+                        <div className="mt-3 text-sm tabular-nums">
+                            <div className={`${SET_GRID} pb-1 text-xs font-semibold text-zinc-500`}>
+                                <span>Set</span>
+                                <span>
+                                    <span className="sm:hidden">kg</span>
+                                    <span className="hidden sm:inline">Weight (kg)</span>
+                                </span>
+                                <span>
+                                    <span className="sm:hidden">Min</span>
+                                    <span className="hidden sm:inline">Reps min</span>
+                                </span>
+                                <span>
+                                    <span className="sm:hidden">Max</span>
+                                    <span className="hidden sm:inline">Reps max</span>
+                                </span>
+                                <span>RPE</span>
+                                <span className="hidden sm:block">Type</span>
+                            </div>
+                            {it.draft_sets.map((s, i) => (
+                                <div key={i} className={`${SET_GRID} border-t border-zinc-100 py-1.5 dark:border-zinc-800`}>
+                                    <span className="font-bold">{i + 1}</span>
+                                    <input type="number" inputMode="decimal" step="0.5" min={0} value={s.target_weight_kg} onChange={(e) => mutateSet(it.id, i, { target_weight_kg: e.target.value })} className={SET_INPUT} aria-label={`Set ${i + 1} target weight`} />
+                                    <input type="number" inputMode="numeric" min={0} value={s.target_reps_min} onChange={(e) => mutateSet(it.id, i, { target_reps_min: e.target.value })} className={SET_INPUT} aria-label={`Set ${i + 1} reps min`} />
+                                    <input type="number" inputMode="numeric" min={0} value={s.target_reps_max} onChange={(e) => mutateSet(it.id, i, { target_reps_max: e.target.value })} className={SET_INPUT} aria-label={`Set ${i + 1} reps max`} />
+                                    <input type="number" inputMode="decimal" step="0.5" min={0} max={10} value={s.target_rpe} onChange={(e) => mutateSet(it.id, i, { target_rpe: e.target.value })} className={SET_INPUT} aria-label={`Set ${i + 1} RPE`} />
+                                    <div className="col-span-4 col-start-2 flex items-center gap-1.5 sm:col-span-1 sm:col-start-auto">
+                                        <select value={s.set_type} onChange={(e) => mutateSet(it.id, i, { set_type: e.target.value })} className="min-w-0 flex-1 rounded-lg border-zinc-300 py-1 pl-2 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label={`Set ${i + 1} type`}>
+                                            {SET_TYPES.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={() => mutateItem(it.id, (x) => ({ ...x, saved: false, draft_sets: x.draft_sets.filter((_, j) => j !== i) }))}
+                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                            aria-label={`Remove set ${i + 1}`}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
                         <div className="mt-3 flex items-center gap-2">
@@ -248,13 +259,8 @@ export default function RoutineEdit({
             </div>
 
             <form onSubmit={addExercise} className="mt-4 flex max-w-xl gap-2">
-                <select value={newExerciseId} onChange={(e) => setNewExerciseId(e.target.value)} className="block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" required aria-label="Exercise to add">
-                    <option value="">Add exercise…</option>
-                    {library.map((ex) => (
-                        <option key={ex.id} value={ex.id}>{ex.name}</option>
-                    ))}
-                </select>
-                <button disabled={adding} className="whitespace-nowrap rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-60 dark:bg-white dark:text-zinc-950">
+                <ExercisePicker className="min-w-0 flex-1" value={newExercise} onChange={setNewExercise} placeholder="Add exercise…" />
+                <button disabled={adding || !newExercise} className="whitespace-nowrap rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-60 dark:bg-white dark:text-zinc-950">
                     {adding ? 'Adding…' : 'Add'}
                 </button>
             </form>

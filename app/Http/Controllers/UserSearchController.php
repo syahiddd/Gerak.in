@@ -26,11 +26,13 @@ class UserSearchController extends Controller
                 ->withCount('followers')
                 ->orderByDesc('followers_count')
                 ->limit(20)
+                ->with('profile:user_id,avatar_path')
                 ->get(['id', 'name', 'username'])
                 ->map(fn (User $u) => [
                     'id' => $u->id,
                     'name' => $u->name,
                     'username' => $u->username,
+                    'avatar_url' => $u->avatarUrl(),
                     'followers_count' => $u->followers_count,
                     'is_me' => $u->id === $viewer->id,
                     'is_following' => $myFollowing->has($u->id),

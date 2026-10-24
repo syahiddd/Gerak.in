@@ -1,11 +1,12 @@
 import { Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
+import ExercisePicker from '@/Components/ExercisePicker';
 import { VISIBILITY_LABEL } from '@/Components/social/format';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
 import { formatDuration, formatNumber } from '@/lib/units';
-import { Exercise, Workout, WorkoutExercise, WorkoutSet } from '@/types';
+import { Exercise, ExerciseOption, Workout, WorkoutExercise, WorkoutSet } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -17,7 +18,6 @@ interface PreviousSet {
 interface Props {
     workout: Workout;
     previous: Record<string, PreviousSet[]>;
-    library: Exercise[];
 }
 
 const SET_TYPE_SHORT: Record<string, string> = {
@@ -29,7 +29,7 @@ const SET_TYPE_SHORT: Record<string, string> = {
     myo_rep: 'M',
 };
 
-export default function WorkoutShow({ workout: initial, previous, library }: Props) {
+export default function WorkoutShow({ workout: initial, previous }: Props) {
     const { auth } = usePage().props as unknown as {
         auth: { user: { settings: { default_rest_seconds: number } | null } };
     };
@@ -41,7 +41,7 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
     const isPaused = initial.status === 'paused';
     const rest = useRestTimer();
     const addExerciseForm = useForm({ exercise_id: '' });
-    const selectedExercise = library.find((ex) => String(ex.id) === String(addExerciseForm.data.exercise_id));
+    const [selectedExercise, setSelectedExercise] = useState<ExerciseOption | null>(null);
     const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
     // Draft backup so a refresh never loses context (server is source of truth).
@@ -312,17 +312,29 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            addExerciseForm.post(route('workouts.add-exercise', initial.id));
+                            if (!selectedExercise) return;
+                            addExerciseForm.post(route('workouts.add-exercise', initial.id), {
+                                onSuccess: () => {
+                                    setSelectedExercise(null);
+                                    addExerciseForm.reset();
+                                },
+                            });
                         }}
                         className="mt-4 flex max-w-xl gap-2"
                     >
-                        <select value={addExerciseForm.data.exercise_id} onChange={(e) => addExerciseForm.setData('exercise_id', e.target.value)} className="block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" required>
-                            <option value="">Add exercise…</option>
-                            {library.map((ex) => (
-                                <option key={ex.id} value={ex.id}>{ex.name}</option>
-                            ))}
-                        </select>
-                        <button className="whitespace-nowrap rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white dark:bg-white dark:text-zinc-950">
+                        <ExercisePicker
+                            className="min-w-0 flex-1"
+                            value={selectedExercise}
+                            onChange={(ex) => {
+                                setSelectedExercise(ex);
+                                addExerciseForm.setData('exercise_id', ex ? String(ex.id) : '');
+                            }}
+                            placeholder="Add exercise…"
+                        />
+                        <button
+                            disabled={!selectedExercise || addExerciseForm.processing}
+                            className="whitespace-nowrap rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-40 dark:bg-white dark:text-zinc-950"
+                        >
                             Add
                         </button>
                     </form>
@@ -330,7 +342,7 @@ export default function WorkoutShow({ workout: initial, previous, library }: Pro
                     {/* Preview the movement before adding it. */}
                     {selectedExercise && (
                         <div className="mt-3 max-w-xl rounded-2xl bg-white p-3 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
-                            <ExerciseMedia key={selectedExercise.id} exercise={selectedExercise} variant="thumbnail" />
+                            <ExerciseMedia key={selectedExercise.id} exercise={selectedExercise} variant="hero" />
                             <p className="mt-2 text-sm font-bold">{selectedExercise.name}</p>
                         </div>
                     )}

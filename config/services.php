@@ -43,6 +43,11 @@ return [
         'cache_ttl' => (int) env('EXERCISEDB_CACHE_TTL', 86400),
     ],
 
+    // hasaneyldrm/exercises-dataset: data MIT, media © Gym visual (attribution required).
+    'exercise_dataset' => [
+        'base_url' => env('EXERCISE_DATASET_URL', 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main'),
+    ],
+
     'workoutx' => [
         'base_url' => env('WORKOUTX_BASE_URL', 'https://api.workoutxapp.com'),
         'key' => env('WORKOUTX_API_KEY'),

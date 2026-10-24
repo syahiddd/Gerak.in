@@ -9,7 +9,9 @@ use App\Http\Requests\StoreExerciseRequest;
 use App\Models\Equipment;
 use App\Models\Exercise;
 use App\Models\Muscle;
+use App\Models\WorkoutExercise;
 use App\Support\OneRmCalculator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -44,7 +46,7 @@ class ExerciseController extends Controller
             });
 
         if (! empty($validated['q'])) {
-            $query->where('name', 'like', '%'.$validated['q'].'%');
+            $query->search($validated['q']);
         }
         if (! empty($validated['muscle'])) {
             $query->where('primary_muscle_id', $validated['muscle']);
@@ -69,6 +71,54 @@ class ExerciseController extends Controller
             'equipment' => $equipment,
             'types' => ExerciseType::cases(),
             'filters' => $validated,
+        ]);
+    }
+
+    /**
+     * JSON search for the exercise picker (workouts, routines). With 1,300+
+     * exercises a plain <select> is unusable, so pickers query this as you type.
+     * Empty query returns the user's recently used exercises.
+     */
+    public function lookup(Request $request): JsonResponse
+    {
+        $q = trim((string) ($request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? ''));
+        $user = $request->user();
+        $columns = ['id', 'name', 'slug', 'primary_muscle_id', 'image_path', 'image_url', 'image_urls', 'gif_url', 'video_url', 'media_source'];
+        $base = fn () => Exercise::query()->availableTo($user)->with('primaryMuscle:id,name');
+
+        if ($q !== '') {
+            $results = $base()->search($q)
+                // Names starting with the query first ("bench" → "Bench Press" before "Barbell Bench Press").
+                ->orderByRaw('CASE WHEN name LIKE ? THEN 0 ELSE 1 END', [addcslashes($q, '%_').'%'])
+                ->orderByRaw('LENGTH(name)')
+                ->orderBy('name')
+                ->limit(20)
+                ->get($columns);
+        } else {
+            $recentIds = WorkoutExercise::query()
+                ->join('workouts', 'workouts.id', '=', 'workout_exercises.workout_id')
+                ->where('workouts.user_id', $user->id)
+                ->latest('workout_exercises.created_at')
+                ->limit(100)
+                ->pluck('workout_exercises.exercise_id')
+                ->unique()
+                ->take(20)
+                ->values();
+            $results = $base()->whereIn('id', $recentIds)->get($columns)
+                ->sortBy(fn (Exercise $e) => $recentIds->search($e->id))
+                ->values();
+            if ($results->count() < 20) {
+                $results = $results->concat(
+                    $base()->whereNotIn('id', $recentIds)->whereNotNull('gif_url')->orderBy('name')->limit(20 - $results->count())->get($columns)
+                );
+            }
+        }
+
+        return response()->json([
+            'data' => $results->map(fn (Exercise $e) => [
+                ...$e->only(['id', 'name', 'slug', 'image_path', 'image_url', 'image_urls', 'gif_url', 'video_url', 'media_credit']),
+                'primary_muscle' => $e->primaryMuscle?->only(['id', 'name']),
+            ])->values(),
         ]);
     }
 

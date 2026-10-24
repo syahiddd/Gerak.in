@@ -21,7 +21,8 @@ class InertiaPagesTest extends TestCase
         $user = User::factory()->create();
 
         $cases = [
-            ['dashboard', 'Dashboard'],
+            ['profile.show', 'Profile/Show'],
+            ['profile.edit', 'Profile/Edit'],
             ['exercises.index', 'Exercises/Index'],
             ['exercises.create', 'Exercises/Create'],
             ['routines.index', 'Routines/Index'],
@@ -40,6 +41,19 @@ class InertiaPagesTest extends TestCase
         }
     }
 
+    public function test_dashboard_redirects_to_profile_with_overview(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('dashboard'))->assertRedirect('/profile');
+        $this->actingAs($user)->get(route('profile.show'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('profile.is_me', true)
+                ->where('profile.username', $user->username)
+                ->has('overview')
+                ->has('recentWorkouts'));
+    }
+
     public function test_workout_show_renders_with_props(): void
     {
         $user = User::factory()->create();
@@ -54,6 +68,7 @@ class InertiaPagesTest extends TestCase
                 ->component('Workouts/Show')
                 ->has('workout')
                 ->has('previous')
-                ->has('library'));
+                // The add-exercise picker searches /exercises/lookup instead of a preloaded list.
+                ->missing('library'));
     }
 }

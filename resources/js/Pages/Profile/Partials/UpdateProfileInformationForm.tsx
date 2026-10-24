@@ -3,8 +3,11 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
-import { Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
+import Avatar from '@/Components/social/Avatar';
+import { formatBytes, toSquareWebp } from '@/lib/image';
+import { Camera } from 'lucide-react';
+import { ChangeEvent, FormEventHandler, useEffect, useRef, useState } from 'react';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -44,6 +47,8 @@ export default function UpdateProfileInformation({
                     Update your account's profile information and email address.
                 </p>
             </header>
+
+            <ProfilePhotoField />
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div>
@@ -164,5 +169,116 @@ export default function UpdateProfileInformation({
                 </div>
             </form>
         </section>
+    );
+}
+
+/**
+ * Profile photo picker. The photo is center-cropped and converted to WebP in the
+ * browser, then uploaded right away (independent of the Save button below).
+ */
+function ProfilePhotoField() {
+    const user = usePage().props.auth.user;
+    const input = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [busy, setBusy] = useState(false);
+    const [note, setNote] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => () => {
+        if (preview) URL.revokeObjectURL(preview);
+    }, [preview]);
+
+    const pick = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        setError(null);
+        setNote(null);
+
+        if (!file.type.startsWith('image/')) {
+            setError('Choose an image file (JPG, PNG or WebP).');
+            return;
+        }
+
+        setBusy(true);
+        let avatar: File;
+        try {
+            avatar = await toSquareWebp(file);
+        } catch {
+            setBusy(false);
+            setError("This photo couldn't be read by your browser. Try a JPG or PNG.");
+            return;
+        }
+
+        setPreview(URL.createObjectURL(avatar));
+        const format = avatar.type === 'image/webp' ? 'WebP' : 'JPG';
+        router.post(
+            route('profile.avatar.update'),
+            { avatar },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => setNote(`Saved`),
+                onError: (errs) => {
+                    setPreview(null);
+                    setError(errs.avatar ?? 'Upload failed. Try again.');
+                },
+                onFinish: () => setBusy(false),
+            },
+        );
+    };
+
+    const remove = () => {
+        if (!confirm('Remove your profile photo?')) return;
+        setPreview(null);
+        setNote(null);
+        router.delete(route('profile.avatar.destroy'), { preserveScroll: true });
+    };
+
+    const hasPhoto = !!(preview || user.avatar_url);
+
+    return (
+        <div className="mt-6 flex items-center gap-5">
+            <div className="relative">
+                <Avatar user={user} size="xl" src={preview} />
+                {busy && (
+                    <span className="absolute inset-0 flex items-center justify-center rounded-full bg-zinc-950/60 text-xs font-bold text-white">
+                        Uploading…
+                    </span>
+                )}
+            </div>
+            <div>
+                <p className="text-sm font-semibold dark:text-white">Profile photo</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => input.current?.click()}
+                        disabled={busy}
+                        className="inline-flex items-center gap-2 rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-lime-300 disabled:opacity-60"
+                    >
+                        <Camera className="h-4 w-4" aria-hidden />
+                        {hasPhoto ? 'Change photo' : 'Upload photo'}
+                    </button>
+                    {hasPhoto && (
+                        <button
+                            type="button"
+                            onClick={remove}
+                            disabled={busy}
+                            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-700 hover:border-red-400 hover:text-red-500 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200"
+                        >
+                            Remove
+                        </button>
+                    )}
+                </div>
+                <input ref={input} type="file" accept="image/*" onChange={pick} className="hidden" />
+                {error ? (
+                    <p className="mt-2 text-sm text-red-500">{error}</p>
+                ) : note ? (
+                    <p className="mt-2 text-xs text-lime-600 dark:text-lime-400">{note}</p>
+                ) : (
+                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Cropped to a square from the center and saved as WebP.</p>
+                )}
+            </div>
+        </div>
     );
 }

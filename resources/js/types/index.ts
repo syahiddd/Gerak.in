@@ -11,6 +11,7 @@ export interface User {
     id: number;
     name: string;
     username: string;
+    avatar_url?: string | null;
     email: string;
     email_verified_at?: string;
     role: 'user' | 'admin';
@@ -72,6 +73,8 @@ export interface Exercise {
     gif_url?: string | null;
     video_url: string | null;
     media_source?: string | null;
+    /** Who to credit for the animation; Gym visual media must always show "© Gym visual". */
+    media_credit?: 'gymvisual' | 'workoutx' | null;
     is_system: boolean;
     created_by: number | null;
     equipment?: Equipment | null;
@@ -175,6 +178,12 @@ export interface BodyMeasurement {
     notes: string | null;
 }
 
+/** Slim exercise returned by GET /exercises/lookup (picker). */
+export type ExerciseOption = Pick<
+    Exercise,
+    'id' | 'name' | 'slug' | 'image_path' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url' | 'media_credit'
+> & { primary_muscle: { id: number; name: string } | null };
+
 export interface Paginated<T> {
     data: T[];
     current_page: number;
@@ -210,6 +219,7 @@ export interface PublicUser {
     id: number;
     name: string;
     username: string;
+    avatar_url?: string | null;
 }
 
 export interface PersonRow extends PublicUser {

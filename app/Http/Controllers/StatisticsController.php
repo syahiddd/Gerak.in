@@ -12,13 +12,8 @@ class StatisticsController extends Controller
 {
     public function index(StatisticsService $stats): Response
     {
-        $user = auth()->user();
+        $training = $stats->trainingOverview(auth()->user());
 
-        return Inertia::render('Statistics', [
-            'overview' => $stats->overview($user),
-            'weekly' => $stats->weeklyVolume($user, 12),
-            'monthly' => $stats->monthlyVolume($user, 12),
-            'muscles' => $stats->muscleDistribution($user, 30),
-        ]);
+        return Inertia::render('Statistics', $training);
     }
 }

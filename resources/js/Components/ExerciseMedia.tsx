@@ -4,7 +4,7 @@ import { Exercise } from '@/types';
 type Variant = 'thumbnail' | 'hero' | 'inline';
 
 interface Props {
-    exercise: Pick<Exercise, 'name' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url' | 'image_path'>;
+    exercise: Pick<Exercise, 'name' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url' | 'image_path'> & Partial<Pick<Exercise, 'media_credit'>>;
     variant?: Variant;
     className?: string;
     /** Freeze GIFs on their first frame; play while the parent card is hovered/focused. */
@@ -203,7 +203,26 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
                 onError={() => setFailed(true)}
                 className={`aspect-video w-full rounded-xl ${fit}`}
             />
-            {variant === 'hero' && isGif && <p className="mt-1 text-[11px] text-zinc-400">Animasi · WorkoutX</p>}
+            {variant === 'hero' && isGif && <MediaCredit credit={exercise.media_credit} />}
         </div>
     );
+}
+
+/**
+ * Animation credit under large media. Gym visual media (exercises-dataset) is
+ * shared on the condition that "© Gym visual — https://gymvisual.com/" accompanies it.
+ */
+export function MediaCredit({ credit }: { credit?: 'gymvisual' | 'workoutx' | null }) {
+    if (credit === 'gymvisual') {
+        return (
+            <p className="mt-1 text-[11px] text-zinc-400">
+                Animation ©{' '}
+                <a href="https://gymvisual.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">
+                    Gym visual
+                </a>
+            </p>
+        );
+    }
+
+    return <p className="mt-1 text-[11px] text-zinc-400">Animation · WorkoutX</p>;
 }

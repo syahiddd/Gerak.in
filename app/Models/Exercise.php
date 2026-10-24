@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\ExerciseType;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Exercise extends Model
 {
     use SoftDeletes;
+
+    protected $appends = ['media_credit'];
 
     protected $fillable = [
         'name', 'slug', 'external_id', 'description', 'overview', 'instructions',
@@ -57,9 +60,33 @@ class Exercise extends Model
         return $q->where('is_system', true);
     }
 
+    /** Every word must appear somewhere in the name: "pec deck" finds "Lever Pec Deck Fly". */
     public function scopeSearch(Builder $q, string $term): Builder
     {
-        return $q->where('name', 'like', '%'.$term.'%');
+        foreach (preg_split('/\s+/', trim($term), -1, PREG_SPLIT_NO_EMPTY) ?: [] as $word) {
+            $q->where('name', 'like', '%'.addcslashes($word, '%_').'%');
+        }
+
+        return $q;
+    }
+
+    /** Exercises the user may pick: system ones plus their own custom ones. */
+    public function scopeAvailableTo(Builder $q, User $user): Builder
+    {
+        return $q->where(fn (Builder $w) => $w->where('is_system', true)->orWhere('created_by', $user->id));
+    }
+
+    /**
+     * Who to credit for the animation. Gym visual media must always carry
+     * "© Gym visual" (hasaneyldrm/exercises-dataset terms).
+     */
+    protected function mediaCredit(): Attribute
+    {
+        return Attribute::get(fn () => match (true) {
+            str_starts_with((string) $this->gif_url, '/storage/exercise-dataset/') => 'gymvisual',
+            str_starts_with((string) $this->gif_url, '/storage/exercise-gifs/') => 'workoutx',
+            default => null,
+        });
     }
 
     public function isEditableBy(User $user): bool

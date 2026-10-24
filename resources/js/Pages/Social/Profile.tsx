@@ -30,7 +30,7 @@ export default function Profile({ profile, posts }: { profile: PublicProfile; po
     );
 }
 
-export function ProfileHeader({ profile }: { profile: PublicProfile }) {
+export function ProfileHeader({ profile, as: Heading = 'h1' }: { profile: PublicProfile; as?: 'h1' | 'h2' }) {
     const joined = profile.joined_at ? new Date(profile.joined_at).toLocaleDateString('en', { month: 'long', year: 'numeric' }) : null;
 
     const stats = [
@@ -44,13 +44,13 @@ export function ProfileHeader({ profile }: { profile: PublicProfile }) {
             <div className="flex flex-wrap items-center gap-5">
                 <Avatar user={profile} size="lg" />
                 <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-2xl font-extrabold">{profile.name}</h1>
+                    <Heading className="truncate text-2xl font-extrabold">{profile.name}</Heading>
                     <p className="text-zinc-500 dark:text-zinc-400">@{profile.username}</p>
                 </div>
                 {profile.is_me ? (
                     <Link
                         href={route('profile.edit')}
-                        className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className="basis-full rounded-xl border border-zinc-300 px-4 py-2 text-center text-sm font-bold hover:bg-zinc-100 sm:basis-auto dark:border-zinc-700 dark:hover:bg-zinc-800"
                     >
                         Edit profile
                     </Link>
