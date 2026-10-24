@@ -1,0 +1,18 @@
+# Installed during the build (npm) / by the vercel-php runtime (composer).
+/node_modules
+/vendor
+
+# Local-only files and data
+.env
+.env.*
+!.env.example
+/database/*.sqlite
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/app/public/*
+/storage/app/dataset-cache
+/public/storage
+/public/hot
+/tests
