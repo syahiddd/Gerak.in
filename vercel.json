@@ -9,7 +9,8 @@
         }
     },
     "routes": [
-        { "handle": "filesystem" },
+        { "src": "/build/(.*)", "dest": "/build/$1" },
+        { "src": "/(favicon\\.ico|favicon\\.svg|robots\\.txt|logo[a-z-]*\\.svg)", "dest": "/$1" },
         { "src": "/(.*)", "dest": "/api/index.php" }
     ],
     "env": {
