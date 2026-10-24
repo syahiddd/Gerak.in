@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind Vercel's proxy PHP sees plain HTTP. Trust its X-Forwarded-* headers so
+        // generated URLs (Vite assets, redirects) use https:// instead of being blocked
+        // as mixed content, which left the page blank. Only the platform proxy can reach PHP.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
