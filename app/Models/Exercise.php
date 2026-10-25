@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Exercise extends Model
 {
@@ -77,13 +79,47 @@ class Exercise extends Model
     }
 
     /**
+     * Resolve a dataset storage path to a remote URL if the file is not on local disk.
+     */
+    private function resolveDatasetMediaUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        if (str_starts_with($path, '/storage/exercise-dataset/')) {
+            $diskPath = Str::after($path, '/storage/');
+            if (! Storage::disk('public')->exists($diskPath)) {
+                $rel = Str::after($path, '/storage/exercise-dataset/');
+                $base = rtrim((string) config('services.exercise_dataset.base_url', 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main'), '/');
+
+                return $base.'/'.$rel;
+            }
+        }
+
+        return $path;
+    }
+
+    protected function gifUrl(): Attribute
+    {
+        return Attribute::get(fn (?string $value) => $this->resolveDatasetMediaUrl($value));
+    }
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn (?string $value) => $this->resolveDatasetMediaUrl($value));
+    }
+
+    /**
      * Who to credit for the animation. Gym visual media must always carry
      * "© Gym visual" (hasaneyldrm/exercises-dataset terms).
      */
     protected function mediaCredit(): Attribute
     {
         return Attribute::get(fn () => match (true) {
+            $this->media_source === 'gymvisual' => 'gymvisual',
             str_starts_with((string) $this->gif_url, '/storage/exercise-dataset/') => 'gymvisual',
+            str_contains((string) $this->gif_url, 'exercises-dataset') => 'gymvisual',
             str_starts_with((string) $this->gif_url, '/storage/exercise-gifs/') => 'workoutx',
             default => null,
         });

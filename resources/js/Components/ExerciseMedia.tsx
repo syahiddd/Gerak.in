@@ -4,7 +4,7 @@ import { Exercise } from '@/types';
 type Variant = 'thumbnail' | 'hero' | 'inline';
 
 interface Props {
-    exercise: Pick<Exercise, 'name' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url' | 'image_path'> & Partial<Pick<Exercise, 'media_credit'>>;
+    exercise: Pick<Exercise, 'name' | 'image_url' | 'image_urls' | 'gif_url' | 'video_url' | 'image_path'> & Partial<Pick<Exercise, 'media_credit' | 'media_source'>>;
     variant?: Variant;
     className?: string;
     /** Freeze GIFs on their first frame; play while the parent card is hovered/focused. */
@@ -45,6 +45,7 @@ function useStillFrame(src: string, onError: () => void): string | null | 'taint
     useEffect(() => {
         let cancelled = false;
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.onload = () => {
             if (cancelled) return;
             try {
@@ -57,7 +58,22 @@ function useStillFrame(src: string, onError: () => void): string | null | 'taint
                 setStill('tainted');
             }
         };
-        img.onerror = () => !cancelled && onError();
+        img.onerror = () => {
+            if (cancelled) return;
+            // If CORS anonymous failed, try standard load and treat as tainted so GIF still plays
+            if (img.crossOrigin) {
+                const fallback = new Image();
+                fallback.onload = () => {
+                    if (!cancelled) setStill('tainted');
+                };
+                fallback.onerror = () => {
+                    if (!cancelled) onError();
+                };
+                fallback.src = src;
+                return;
+            }
+            onError();
+        };
         img.src = src;
 
         return () => {
@@ -154,7 +170,7 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
                     className="aspect-video w-full rounded-xl bg-zinc-100 object-cover dark:bg-zinc-800"
                     aria-label={`${exercise.name} demonstration video`}
                 />
-                <p className="mt-1 text-[11px] text-zinc-400">Demo video · ExerciseDB</p>
+                <p className="mt-1 text-[11px] text-zinc-400">Demo video{exercise.media_source === 'exercisedb' ? ' · ExerciseDB' : ''}</p>
             </div>
         );
     }
