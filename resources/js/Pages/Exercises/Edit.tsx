@@ -31,6 +31,7 @@ export default function ExerciseEdit({
         primary_muscle_id: exercise.primary_muscle_id ? String(exercise.primary_muscle_id) : '',
         equipment_id: exercise.equipment_id ? String(exercise.equipment_id) : '',
         description: exercise.description ?? '',
+        video_url: exercise.video_url ?? '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -79,6 +80,11 @@ export default function ExerciseEdit({
                 <div>
                     <InputLabel htmlFor="description" value="Description" />
                     <textarea id="description" value={data.description} onChange={(e) => setData('description', e.target.value)} rows={3} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
+                </div>
+                <div>
+                    <InputLabel htmlFor="video_url" value="Video URL (optional demo video)" />
+                    <TextInput id="video_url" type="url" value={data.video_url} onChange={(e) => setData('video_url', e.target.value)} placeholder="https://..." className="mt-1 block w-full" />
+                    <InputError message={errors.video_url} className="mt-2" />
                 </div>
                 <PrimaryButton disabled={processing}>Save</PrimaryButton>
             </form>

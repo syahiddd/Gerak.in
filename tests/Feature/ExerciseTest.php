@@ -7,6 +7,7 @@ use App\Models\Exercise;
 use App\Models\Muscle;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -106,10 +107,11 @@ class ExerciseTest extends TestCase
                 ->where('equipment.0.slug', 'barbell'));
     }
 
-    public function test_detail_shows_performance_summary(): void
+    public function test_detail_shows_performance_summary_and_media(): void
     {
         [$chest] = $this->seedTaxonomy();
         $ex = $this->systemExercise('Bench Press', $chest->id);
+        $ex->update(['video_url' => 'https://example.com/bench.mp4']);
         $user = User::factory()->create();
 
         $workout = $user->workouts()->create([
@@ -128,6 +130,7 @@ class ExerciseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Exercises/Show')
+                ->where('exercise.video_url', 'https://example.com/bench.mp4')
                 ->where('bestSet.reps', 8)
                 ->where('oneRm', 101.33)
                 ->has('history', 1));
@@ -142,17 +145,21 @@ class ExerciseTest extends TestCase
             'name' => 'My Cable Twist',
             'exercise_type' => 'weight_reps',
             'primary_muscle_id' => $chest->id,
+            'video_url' => 'https://example.com/twist.mp4',
         ]);
         $create->assertRedirect();
         $ex = Exercise::where('name', 'My Cable Twist')->firstOrFail();
         $this->assertFalse((bool) $ex->is_system);
         $this->assertEquals($user->id, (int) $ex->created_by);
+        $this->assertEquals('https://example.com/twist.mp4', $ex->video_url);
 
         $this->actingAs($user)->patch(route('exercises.update', $ex), [
             'name' => 'My Cable Twist v2',
             'exercise_type' => 'weight_reps',
+            'video_url' => 'https://example.com/twist-v2.mp4',
         ])->assertRedirect();
         $this->assertEquals('My Cable Twist v2', $ex->fresh()->name);
+        $this->assertEquals('https://example.com/twist-v2.mp4', $ex->fresh()->video_url);
 
         $this->actingAs($user)->delete(route('exercises.destroy', $ex))->assertRedirect();
         $this->assertSoftDeleted('exercises', ['id' => $ex->id]);
@@ -195,5 +202,38 @@ class ExerciseTest extends TestCase
             'name' => '',
             'exercise_type' => 'teleportation',
         ])->assertSessionHasErrors(['name', 'exercise_type']);
+    }
+
+    public function test_dataset_media_falls_back_to_remote_url_when_not_on_disk(): void
+    {
+        Storage::fake('public');
+
+        $exercise = Exercise::create([
+            'name' => 'Air Bike',
+            'slug' => 'air-bike',
+            'exercise_type' => 'duration',
+            'is_system' => true,
+            'gif_url' => '/storage/exercise-dataset/videos/0003-1ZFqTDN.gif',
+            'image_url' => '/storage/exercise-dataset/images/0003-1ZFqTDN.jpg',
+            'media_source' => 'gymvisual',
+        ]);
+
+        $this->assertSame(
+            'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0003-1ZFqTDN.gif',
+            $exercise->gif_url
+        );
+        $this->assertSame(
+            'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/images/0003-1ZFqTDN.jpg',
+            $exercise->image_url
+        );
+        $this->assertSame('gymvisual', $exercise->media_credit);
+
+        // When the file exists on the public disk, the local /storage path is preserved:
+        Storage::disk('public')->put('exercise-dataset/videos/0003-1ZFqTDN.gif', 'fake-gif-bytes');
+        Storage::disk('public')->put('exercise-dataset/images/0003-1ZFqTDN.jpg', 'fake-jpg-bytes');
+
+        $this->assertSame('/storage/exercise-dataset/videos/0003-1ZFqTDN.gif', $exercise->gif_url);
+        $this->assertSame('/storage/exercise-dataset/images/0003-1ZFqTDN.jpg', $exercise->image_url);
+        $this->assertSame('gymvisual', $exercise->media_credit);
     }
 }
