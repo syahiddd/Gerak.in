@@ -63,6 +63,8 @@ export default function Authenticated({
                     <Link
                         key={n.href}
                         href={route(n.href)}
+                        prefetch
+                        cacheFor="30s"
                         onClick={onNavigate}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
                             active
