@@ -29,7 +29,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
+        // Load both relations up front instead of two lazy loads per request.
+        $user = $request->user()?->loadMissing(['profile', 'settings']);
 
         return [
             ...parent::share($request),
