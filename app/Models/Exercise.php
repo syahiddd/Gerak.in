@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class Exercise extends Model
 {
@@ -89,7 +90,7 @@ class Exercise extends Model
 
         if (str_starts_with($path, '/storage/exercise-dataset/')) {
             $diskPath = Str::after($path, '/storage/');
-            if (! Storage::disk('public')->exists($diskPath)) {
+            if (! self::existsOnPublicDisk($diskPath)) {
                 $rel = Str::after($path, '/storage/exercise-dataset/');
                 $base = rtrim((string) config('services.exercise_dataset.base_url', 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main'), '/');
 
@@ -98,6 +99,28 @@ class Exercise extends Model
         }
 
         return $path;
+    }
+
+    /** Set once the public disk proved unusable, so we don't retry it for every attribute read. */
+    private static bool $publicDiskUnavailable = false;
+
+    /**
+     * On read-only deploys (Vercel) storage/app/public is not shipped and the local
+     * driver throws while creating its root, so treat the file as missing instead.
+     */
+    private static function existsOnPublicDisk(string $diskPath): bool
+    {
+        if (self::$publicDiskUnavailable) {
+            return false;
+        }
+
+        try {
+            return Storage::disk('public')->exists($diskPath);
+        } catch (Throwable) {
+            self::$publicDiskUnavailable = true;
+
+            return false;
+        }
     }
 
     protected function gifUrl(): Attribute
