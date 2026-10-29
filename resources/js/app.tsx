@@ -5,7 +5,8 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Gerak.in';
+// Fixed brand name: Vercel doesn't expand VITE_APP_NAME="${APP_NAME}", which put the literal in the tab title.
+const appName = 'Gerak.in';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
