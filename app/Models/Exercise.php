@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Throwable;
 
 class Exercise extends Model
 {
@@ -79,7 +80,8 @@ class Exercise extends Model
     }
 
     /**
-     * Resolve a dataset storage path to a remote URL if the file is not on local disk.
+     * Resolve a dataset or WorkoutX storage path to a remote exercises-dataset URL
+     * if the file is not on local disk.
      */
     private function resolveDatasetMediaUrl(?string $path): ?string
     {
@@ -87,17 +89,51 @@ class Exercise extends Model
             return null;
         }
 
-        if (str_starts_with($path, '/storage/exercise-dataset/')) {
-            $diskPath = Str::after($path, '/storage/');
-            if (! Storage::disk('public')->exists($diskPath)) {
-                $rel = Str::after($path, '/storage/exercise-dataset/');
-                $base = rtrim((string) config('services.exercise_dataset.base_url', 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main'), '/');
+        $rel = match (true) {
+            str_starts_with($path, '/storage/exercise-dataset/') => Str::after($path, '/storage/exercise-dataset/'),
+            // WorkoutX files are named by ExerciseDB id, the same ids the dataset uses.
+            str_starts_with($path, '/storage/exercise-gifs/') => self::datasetGifs()[basename($path, '.gif')] ?? null,
+            default => null,
+        };
 
-                return $base.'/'.$rel;
-            }
+        if ($rel === null || self::existsOnPublicDisk(Str::after($path, '/storage/'))) {
+            return $path;
         }
 
-        return $path;
+        $base = rtrim((string) config('services.exercise_dataset.base_url', 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main'), '/');
+
+        return $base.'/'.$rel;
+    }
+
+    /** @var array<string, string>|null */
+    private static ?array $datasetGifs = null;
+
+    /** @return array<string, string> ExerciseDB id => dataset GIF path */
+    private static function datasetGifs(): array
+    {
+        return self::$datasetGifs ??= require database_path('data/exercise-dataset-gifs.php');
+    }
+
+    /** Set once the public disk proved unusable, so we don't retry it for every attribute read. */
+    private static bool $publicDiskUnavailable = false;
+
+    /**
+     * On read-only deploys (Vercel) storage/app/public is not shipped and the local
+     * driver throws while creating its root, so treat the file as missing instead.
+     */
+    private static function existsOnPublicDisk(string $diskPath): bool
+    {
+        if (self::$publicDiskUnavailable) {
+            return false;
+        }
+
+        try {
+            return Storage::disk('public')->exists($diskPath);
+        } catch (Throwable) {
+            self::$publicDiskUnavailable = true;
+
+            return false;
+        }
     }
 
     protected function gifUrl(): Attribute
