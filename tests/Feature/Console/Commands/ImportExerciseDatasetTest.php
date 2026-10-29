@@ -111,7 +111,8 @@ class ImportExerciseDatasetTest extends TestCase
         $this->assertSame(2, Exercise::count(), 'no duplicates for matched names');
 
         $bench->refresh();
-        $this->assertSame('/storage/exercise-gifs/0025.gif', $bench->gif_url, 'WorkoutX GIF kept');
+        // Raw column: the accessor may swap in a remote URL when the file isn't on disk.
+        $this->assertSame('/storage/exercise-gifs/0025.gif', $bench->getRawOriginal('gif_url'), 'WorkoutX GIF kept');
         $this->assertSame('gv:0025', $bench->external_id);
         $this->assertSame('Barbell Bench Press', $bench->name);
 

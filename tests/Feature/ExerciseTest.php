@@ -236,4 +236,39 @@ class ExerciseTest extends TestCase
         $this->assertSame('/storage/exercise-dataset/images/0003-1ZFqTDN.jpg', $exercise->image_url);
         $this->assertSame('gymvisual', $exercise->media_credit);
     }
+
+    public function test_workoutx_gif_falls_back_to_dataset_gif_with_same_id_when_not_on_disk(): void
+    {
+        Storage::fake('public');
+
+        $exercise = Exercise::create([
+            'name' => 'Barbell Bench Press',
+            'slug' => 'barbell-bench-press',
+            'exercise_type' => 'weight_reps',
+            'is_system' => true,
+            'gif_url' => '/storage/exercise-gifs/0025.gif',
+        ]);
+
+        $this->assertSame(
+            'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0025-EIeI8Vf.gif',
+            $exercise->gif_url
+        );
+        // The dataset copy is Gym visual media, so it must carry that credit.
+        $this->assertSame('gymvisual', $exercise->media_credit);
+
+        // The local WorkoutX file wins when it is present.
+        Storage::disk('public')->put('exercise-gifs/0025.gif', 'fake-gif-bytes');
+        $this->assertSame('/storage/exercise-gifs/0025.gif', $exercise->gif_url);
+        $this->assertSame('workoutx', $exercise->media_credit);
+
+        // Ids the dataset doesn't have are left untouched.
+        $unknown = Exercise::create([
+            'name' => 'Plank',
+            'slug' => 'plank',
+            'exercise_type' => 'duration',
+            'is_system' => true,
+            'gif_url' => '/storage/exercise-gifs/5202.gif',
+        ]);
+        $this->assertSame('/storage/exercise-gifs/5202.gif', $unknown->gif_url);
+    }
 }

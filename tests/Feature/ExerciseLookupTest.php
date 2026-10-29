@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Exercise;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -61,6 +62,9 @@ class ExerciseLookupTest extends TestCase
 
     public function test_empty_query_prefers_recently_used_and_reports_media_credit(): void
     {
+        // The WorkoutX file must be on disk, otherwise the dataset copy (Gym visual) is served instead.
+        Storage::fake('public');
+        Storage::disk('public')->put('exercise-gifs/2137.gif', 'fake-gif-bytes');
         $user = User::factory()->create();
         $used = $this->exercise('Hip Thrust', ['gif_url' => '/storage/exercise-dataset/videos/1409-x.gif', 'media_source' => 'gymvisual']);
         $this->exercise('Arnold Press', ['gif_url' => '/storage/exercise-gifs/2137.gif']);
