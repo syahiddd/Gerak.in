@@ -1,3 +1,4 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -229,8 +230,8 @@ function ProfilePhotoField() {
         );
     };
 
-    const remove = () => {
-        if (!confirm('Remove your profile photo?')) return;
+    const remove = async () => {
+        if (!(await confirmAction({ title: 'Remove your profile photo?', confirmLabel: 'Remove photo' }))) return;
         setPreview(null);
         setNote(null);
         router.delete(route('profile.avatar.destroy'), { preserveScroll: true });

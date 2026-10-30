@@ -1,4 +1,5 @@
 import BrandLogo from '@/Components/BrandLogo';
+import { ConfirmHost } from '@/Components/ConfirmDialog';
 import Dropdown from '@/Components/Dropdown';
 import UserSearchBox from '@/Components/social/UserSearchBox';
 import { btn, FlashMessages } from '@/Components/ui';
@@ -249,6 +250,8 @@ export default function Authenticated({
                         and WorkoutX.
                     </p>
                 </main>
+
+                <ConfirmHost />
             </div>
         </div>
     );

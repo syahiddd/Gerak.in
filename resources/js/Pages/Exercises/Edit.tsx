@@ -1,3 +1,4 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -91,8 +92,8 @@ export default function ExerciseEdit({
 
             <div className="mt-3 max-w-2xl">
                 <DangerButton
-                    onClick={() => {
-                        if (confirm('Delete this exercise?')) destroy(route('exercises.destroy', exercise.id));
+                    onClick={async () => {
+                        if (await confirmAction({ title: 'Delete this exercise?', body: 'This can’t be undone.', confirmLabel: 'Delete exercise' })) destroy(route('exercises.destroy', exercise.id));
                     }}
                 >
                     Delete exercise

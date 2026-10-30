@@ -1,3 +1,4 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
@@ -101,7 +102,7 @@ export default function RoutineEdit({
     };
 
     const removeExercise = async (it: EditableExercise) => {
-        if (!confirm(`Remove ${it.exercise.name} from this routine?`)) return;
+        if (!(await confirmAction({ title: `Remove ${it.exercise.name} from this routine?`, confirmLabel: "Remove" }))) return;
         setItems((prev) => prev.filter((e) => e.id !== it.id));
         await api.deleteRoutineExercise(routine.id, it.id).catch(() => undefined);
     };

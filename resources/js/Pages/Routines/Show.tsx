@@ -1,9 +1,10 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import { btn, EmptyState } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { formatNumber, setLabel } from '@/lib/units';
 import { Routine } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 export default function RoutineShow({ routine }: { routine: Routine }) {
     const exercises = routine.exercises ?? [];
@@ -81,15 +82,16 @@ export default function RoutineShow({ routine }: { routine: Routine }) {
                 <Link href={route('routines.archive', routine.id)} method="post" as="button" className={btn.ghost}>
                     {routine.status === 'archived' ? 'Unarchive' : 'Archive'}
                 </Link>
-                <Link
-                    href={route('routines.destroy', routine.id)}
-                    method="delete"
-                    as="button"
+                <button
+                    type="button"
                     className={btn.danger}
-                    onBefore={() => confirm('Delete this routine?')}
+                    onClick={async () => {
+                        const ok = await confirmAction({ title: `Delete "${routine.name}"?`, body: 'This can’t be undone.', confirmLabel: 'Delete routine' });
+                        if (ok) router.delete(route('routines.destroy', routine.id));
+                    }}
                 >
                     Delete
-                </Link>
+                </button>
             </div>
         </AuthenticatedLayout>
     );

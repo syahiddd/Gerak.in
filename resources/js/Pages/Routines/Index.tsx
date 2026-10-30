@@ -1,3 +1,4 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputError from '@/Components/InputError';
 import Modal from '@/Components/Modal';
 import { btn } from '@/Components/ui';
@@ -48,8 +49,8 @@ export default function RoutineIndex({ folders, ungrouped }: { folders: RoutineF
                                     <MenuAction onClick={() => setDialog({ mode: 'rename', folder })}>Rename folder</MenuAction>
                                     <MenuAction
                                         danger
-                                        onClick={() => {
-                                            if (confirm(`Delete "${folder.name}"? Its routines move to My Routines.`)) {
+                                        onClick={async () => {
+                                            if (await confirmAction({ title: `Delete "${folder.name}"?`, body: "Its routines move to My Routines.", confirmLabel: "Delete folder" })) {
                                                 router.delete(route('folders.destroy', folder.id), { preserveScroll: true });
                                             }
                                         }}
@@ -122,8 +123,8 @@ function RoutineCard({ routine }: { routine: Routine }) {
                         <MenuAction onClick={() => router.post(route('routines.duplicate', routine.id))}>Duplicate routine</MenuAction>
                         <MenuAction
                             danger
-                            onClick={() => {
-                                if (confirm(`Delete "${routine.name}"? This can't be undone.`)) {
+                            onClick={async () => {
+                                if (await confirmAction({ title: `Delete "${routine.name}"?`, body: "This can’t be undone.", confirmLabel: "Delete routine" })) {
                                     router.delete(route('routines.destroy', routine.id), { preserveScroll: true });
                                 }
                             }}

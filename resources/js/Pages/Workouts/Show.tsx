@@ -1,3 +1,4 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import { btn, Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import ExercisePicker from '@/Components/ExercisePicker';
@@ -7,7 +8,7 @@ import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
 import { formatNumber, setLabel } from '@/lib/units';
 import { Exercise, ExerciseOption, Workout, WorkoutExercise, WorkoutSet } from '@/types';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Check, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -40,6 +41,9 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
     const isActive = initial.status === 'in_progress' || initial.status === 'paused';
 
     const [exercises, setExercises] = useState<WorkoutExercise[]>(initial.exercises ?? []);
+    // Inertia keeps this component mounted across visits, so take the server's list after add/remove;
+    // otherwise a removed exercise stays on screen and a second Remove hits a 404.
+    useEffect(() => setExercises(initial.exercises ?? []), [initial.exercises]);
     const elapsed = useElapsed(initial.started_at, initial.paused_seconds_total ?? 0, initial.paused_at ?? null);
     const isPaused = initial.status === 'paused';
     const rest = useRestTimer();
@@ -89,7 +93,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
     };
 
     const deleteSet = async (we: WorkoutExercise, set: WorkoutSet) => {
-        if (!confirm('Delete set?')) return;
+        if (!(await confirmAction({ title: 'Delete this set?', confirmLabel: 'Delete set' }))) return;
         setExercises((prev) =>
             prev.map((e) => (e.id === we.id ? { ...e, sets: e.sets.filter((s) => s.id !== set.id) } : e)),
         );
@@ -143,15 +147,20 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                             <Link href={route('workouts.finish', initial.id)} method="post" as="button" className={isPaused ? btn.secondary : btn.primary}>
                                 Finish
                             </Link>
-                            <Link
-                                href={route('workouts.cancel', initial.id)}
-                                method="post"
-                                as="button"
+                            <button
+                                type="button"
                                 className={btn.danger}
-                                onBefore={() => confirm('Cancel this workout?')}
+                                onClick={async () => {
+                                    const ok = await confirmAction({
+                                        title: 'Cancel this workout?',
+                                        body: 'It won’t appear in your history or count toward your stats.',
+                                        confirmLabel: 'Cancel workout',
+                                    });
+                                    if (ok) router.post(route('workouts.cancel', initial.id));
+                                }}
                             >
                                 Cancel
-                            </Link>
+                            </button>
                         </div>
                     ) : (
                         <div className="flex flex-wrap items-center gap-2">
@@ -165,15 +174,20 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                     </Link>
                                 </>
                             )}
-                            <Link
-                                href={route('workouts.destroy', initial.id)}
-                                method="delete"
-                                as="button"
+                            <button
+                                type="button"
                                 className={btn.danger}
-                                onBefore={() => confirm('Delete this workout?')}
+                                onClick={async () => {
+                                    const ok = await confirmAction({
+                                        title: 'Delete this workout?',
+                                        body: 'This can’t be undone.',
+                                        confirmLabel: 'Delete workout',
+                                    });
+                                    if (ok) router.delete(route('workouts.destroy', initial.id));
+                                }}
                             >
                                 Delete
-                            </Link>
+                            </button>
                         </div>
                     )}
                 </div>
@@ -226,15 +240,19 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                 </div>
                             </div>
                             {isActive && (
-                                <Link
-                                    href={route('workouts.remove-exercise', [initial.id, we.id])}
-                                    method="delete"
-                                    as="button"
+                                <button
+                                    type="button"
                                     className={btn.danger}
-                                    onBefore={() => confirm('Remove exercise?')}
+                                    onClick={async () => {
+                                        const ok = await confirmAction({
+                                            title: `Remove ${we.exercise.name}?`,
+                                            confirmLabel: 'Remove',
+                                        });
+                                        if (ok) router.delete(route('workouts.remove-exercise', [initial.id, we.id]));
+                                    }}
                                 >
                                     Remove
-                                </Link>
+                                </button>
                             )}
                         </div>
 

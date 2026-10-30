@@ -1,3 +1,4 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import Avatar from '@/Components/social/Avatar';
 import { timeAgo } from '@/Components/social/format';
@@ -185,8 +186,8 @@ function Comments({ post }: { post: FeedPost }) {
 }
 
 function CommentRow({ c }: { c: PostComment }) {
-    const remove = () => {
-        if (confirm('Delete this comment?')) {
+    const remove = async () => {
+        if (await confirmAction({ title: 'Delete this comment?', confirmLabel: 'Delete comment' })) {
             router.delete(route('posts.comments.destroy', c.id), { preserveScroll: true });
         }
     };

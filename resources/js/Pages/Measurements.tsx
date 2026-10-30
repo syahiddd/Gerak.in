@@ -1,10 +1,11 @@
+import { confirmAction } from '@/Components/ConfirmDialog';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { btn, Pagination } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BodyMeasurement, Paginated } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const TYPES = [
@@ -95,15 +96,16 @@ export default function Measurements({
                                     <strong>{TYPE_LABELS[m.type] ?? m.type}</strong>: {String(m.value)}{' '}
                                     <span className="text-zinc-500 dark:text-zinc-400">· {m.recorded_at ? new Date(m.recorded_at).toLocaleDateString() : ''}</span>
                                 </p>
-                                <Link
-                                    href={route('measurements.destroy', m.id)}
-                                    method="delete"
-                                    as="button"
+                                <button
+                                    type="button"
                                     className={`${btn.danger} -my-2 px-2`}
-                                    onBefore={() => confirm('Delete?')}
+                                    onClick={async () => {
+                                        const ok = await confirmAction({ title: 'Delete this measurement?', confirmLabel: 'Delete' });
+                                        if (ok) router.delete(route('measurements.destroy', m.id), { preserveScroll: true });
+                                    }}
                                 >
                                     Delete
-                                </Link>
+                                </button>
                             </div>
                         ))}
                         <Pagination links={measurements.links} />
