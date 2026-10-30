@@ -1,73 +1,108 @@
 import { btn, EmptyState, Pagination } from '@/Components/ui';
+import WorkoutRow from '@/Components/WorkoutRow';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { formatDuration, formatNumber } from '@/lib/units';
 import { Paginated, Workout } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { FormEvent, useState } from 'react';
 
-export default function WorkoutIndex({ workouts }: { workouts: Paginated<Workout> }) {
+interface Props {
+    workouts: Paginated<Workout>;
+    active: { id: number; name: string; started_at: string; status: string } | null;
+    filters: { from: string | null; to: string | null };
+}
+
+const monthLabel = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+export default function WorkoutIndex({ workouts, active, filters }: Props) {
     const startEmpty = useForm({});
-    const [from, setFrom] = useState('');
-    const [to, setTo] = useState('');
+    const [from, setFrom] = useState(filters.from ?? '');
+    const [to, setTo] = useState(filters.to ?? '');
+    const filtered = Boolean(filters.from || filters.to);
+
+    const applyFilter = (e: FormEvent) => {
+        e.preventDefault();
+        router.get(route('workouts.index'), { from: from || undefined, to: to || undefined }, { preserveState: true });
+    };
+
+    // Rows arrive newest first, so a month heading goes in front of each month's first row.
+    const months: { label: string; rows: Workout[] }[] = [];
+    for (const w of workouts.data) {
+        const label = monthLabel(w.started_at);
+        if (months.at(-1)?.label !== label) months.push({ label, rows: [] });
+        months.at(-1)!.rows.push(w);
+    }
 
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h1 className="text-xl font-extrabold">Workout History</h1>
-                    <div className="flex flex-wrap gap-2">
-                        <Link href={route('workouts.active')} className={btn.secondary}>
-                            Resume active
-                        </Link>
-                        <button
-                            onClick={() => startEmpty.post(route('workouts.start-empty'))}
-                            className={btn.primary}
-                        >
+                    <div>
+                        <h1 className="text-xl font-extrabold">Workout history</h1>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                            {workouts.total} {workouts.total === 1 ? 'workout' : 'workouts'}
+                            {filtered ? ' in this range' : ' logged'}
+                        </p>
+                    </div>
+                    {!active && (
+                        <button onClick={() => startEmpty.post(route('workouts.start-empty'))} disabled={startEmpty.processing} className={btn.primary}>
                             Start empty workout
                         </button>
-                    </div>
+                    )}
                 </div>
             }
         >
             <Head title="History" />
 
-            <form
-                method="GET"
-                action={route('workouts.index')}
-                className="flex flex-wrap items-center gap-2 text-sm"
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    window.location.href = route('workouts.index', { from: from || undefined, to: to || undefined });
-                }}
-            >
-                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="From" />
-                <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="To" />
+            {active && (
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-lime-400 bg-white p-4 dark:bg-zinc-900">
+                    <div>
+                        <p className="font-extrabold">
+                            {active.status === 'paused' ? 'Paused' : 'In progress'}: {active.name}
+                        </p>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(active.started_at).toLocaleString()}</p>
+                    </div>
+                    <Link href={route('workouts.show', active.id)} className={btn.primary}>
+                        Resume
+                    </Link>
+                </div>
+            )}
+
+            <form onSubmit={applyFilter} className="flex flex-wrap items-end gap-3">
+                <label className="text-sm">
+                    <span className="mb-1 block font-semibold text-zinc-600 dark:text-zinc-300">From</span>
+                    <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
+                </label>
+                <label className="text-sm">
+                    <span className="mb-1 block font-semibold text-zinc-600 dark:text-zinc-300">To</span>
+                    <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
+                </label>
                 <button className={btn.secondary}>Filter</button>
+                {filtered && (
+                    <Link href={route('workouts.index')} className={btn.ghost}>
+                        Clear
+                    </Link>
+                )}
             </form>
 
-            <div className="mt-4 space-y-3">
-                {workouts.data.length === 0 && (
-                    <EmptyState title="No workouts yet" hint="Your completed workouts will appear here." />
-                )}
-                {workouts.data.map((w) => (
-                    <Link
-                        key={w.id}
-                        href={route('workouts.show', w.id)}
-                        className="block rounded-2xl border border-zinc-200 bg-white p-4 hover:border-lime-400 dark:border-zinc-800 dark:bg-zinc-900"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="font-bold">{w.name}</p>
-                                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {new Date(w.started_at).toLocaleString()} · {w.exercises_count} exercises
-                                </p>
-                            </div>
-                            <div className="text-right text-sm tabular-nums">
-                                <p className="font-bold">{formatNumber(w.total_volume_kg)} kg</p>
-                                <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDuration(w.duration_seconds)}</p>
-                            </div>
-                        </div>
-                    </Link>
+            <div className="mt-6 space-y-8">
+                {workouts.data.length === 0 &&
+                    (filtered ? (
+                        <EmptyState title="No workouts in this range" hint="Try a wider date range, or clear the filter to see everything." />
+                    ) : (
+                        <EmptyState title="No workouts yet" hint="Finished workouts land here, newest first. Start one from a routine or from scratch." />
+                    ))}
+
+                {months.map((month) => (
+                    <section key={month.label} aria-label={month.label}>
+                        <h2 className="mb-2 text-sm font-bold text-zinc-500 dark:text-zinc-400">{month.label}</h2>
+                        <ul className="divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
+                            {month.rows.map((w) => (
+                                <li key={w.id}>
+                                    <WorkoutRow workout={w} />
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
                 ))}
             </div>
             <Pagination links={workouts.links} />

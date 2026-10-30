@@ -27,7 +27,7 @@ class ExerciseLookupTest extends TestCase
 
     public function test_multi_word_search_with_prefix_matches_first(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $this->exercise('Lever Pec Deck Fly');
         $this->exercise('Barbell Bench Press');
         $this->exercise('Bench Press');
@@ -45,8 +45,8 @@ class ExerciseLookupTest extends TestCase
 
     public function test_limited_to_twenty_and_excludes_other_users_custom_exercises(): void
     {
-        $me = User::factory()->create();
-        $other = User::factory()->create();
+        $me = User::factory()->createOne();
+        $other = User::factory()->createOne();
         for ($i = 1; $i <= 25; $i++) {
             $this->exercise("Curl Variation {$i}");
         }
@@ -65,7 +65,7 @@ class ExerciseLookupTest extends TestCase
         // The WorkoutX file must be on disk, otherwise the dataset copy (Gym visual) is served instead.
         Storage::fake('public');
         Storage::disk('public')->put('exercise-gifs/2137.gif', 'fake-gif-bytes');
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $used = $this->exercise('Hip Thrust', ['gif_url' => '/storage/exercise-dataset/videos/1409-x.gif', 'media_source' => 'gymvisual']);
         $this->exercise('Arnold Press', ['gif_url' => '/storage/exercise-gifs/2137.gif']);
         $workout = $user->workouts()->create(['name' => 'W', 'status' => 'completed', 'started_at' => now(), 'timezone' => 'Asia/Jakarta']);

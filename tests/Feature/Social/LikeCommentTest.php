@@ -15,8 +15,8 @@ class LikeCommentTest extends TestCase
 
     public function test_like_is_idempotent_and_can_be_removed(): void
     {
-        $owner = User::factory()->create();
-        $fan = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $fan = User::factory()->createOne();
         $post = $this->makePost($owner, 'public');
 
         $this->actingAs($fan)->post(route('posts.like', $post))->assertRedirect();
@@ -29,8 +29,8 @@ class LikeCommentTest extends TestCase
 
     public function test_cannot_like_or_comment_on_hidden_post(): void
     {
-        $owner = User::factory()->create();
-        $stranger = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $stranger = User::factory()->createOne();
         $post = $this->makePost($owner, 'private');
 
         $this->actingAs($stranger)->post(route('posts.like', $post))->assertForbidden();
@@ -41,7 +41,7 @@ class LikeCommentTest extends TestCase
 
     public function test_comment_validation(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->createOne();
         $post = $this->makePost($owner, 'public');
 
         $this->actingAs($owner)->post(route('posts.comments.store', $post), ['body' => ''])->assertSessionHasErrors('body');
@@ -52,9 +52,9 @@ class LikeCommentTest extends TestCase
 
     public function test_comment_delete_rules(): void
     {
-        $owner = User::factory()->create();
-        $author = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $author = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $post = $this->makePost($owner, 'public');
 
         $c1 = WorkoutComment::create(['workout_id' => $post->id, 'user_id' => $author->id, 'body' => 'one']);
@@ -68,8 +68,8 @@ class LikeCommentTest extends TestCase
 
     public function test_post_detail_includes_comments_and_like_state(): void
     {
-        $owner = User::factory()->create();
-        $fan = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $fan = User::factory()->createOne();
         $post = $this->makePost($owner, 'public');
         $post->likes()->create(['user_id' => $fan->id]);
         WorkoutComment::create(['workout_id' => $post->id, 'user_id' => $fan->id, 'body' => 'Nice']);

@@ -14,8 +14,8 @@ class ProfileUsernameTest extends TestCase
 
     public function test_usernames_are_generated_unique(): void
     {
-        $a = User::factory()->create(['name' => 'Syahid Amanullah']);
-        $b = User::factory()->create(['name' => 'Syahid Amanullah']);
+        $a = User::factory()->createOne(['name' => 'Syahid Amanullah']);
+        $b = User::factory()->createOne(['name' => 'Syahid Amanullah']);
 
         $this->assertSame('syahid_amanullah', $a->username);
         $this->assertSame('syahid_amanullah2', $b->username);
@@ -35,7 +35,7 @@ class ProfileUsernameTest extends TestCase
 
     public function test_username_and_bio_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->patch('/profile', [
             'name' => $user->name,
@@ -51,8 +51,8 @@ class ProfileUsernameTest extends TestCase
 
     public function test_username_must_be_valid_and_unique(): void
     {
-        $taken = User::factory()->create();
-        $user = User::factory()->create();
+        $taken = User::factory()->createOne();
+        $user = User::factory()->createOne();
 
         foreach (['Bad Name', 'ab', 'UPPER', $taken->username] as $bad) {
             $this->actingAs($user)->patch('/profile', [

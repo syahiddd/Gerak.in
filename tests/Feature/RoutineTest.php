@@ -14,7 +14,7 @@ class RoutineTest extends TestCase
 
     public function test_user_can_create_routine_with_exercises(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $muscle = Muscle::create(['name' => 'Chest', 'slug' => 'chest']);
         $ex = Exercise::create([
             'name' => 'Bench Press', 'slug' => 'bench-press',
@@ -38,7 +38,7 @@ class RoutineTest extends TestCase
 
     public function test_user_can_duplicate_routine(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $muscle = Muscle::create(['name' => 'Chest', 'slug' => 'chest']);
         $ex = Exercise::create([
             'name' => 'Bench Press', 'slug' => 'bench-press',
@@ -58,8 +58,8 @@ class RoutineTest extends TestCase
 
     public function test_user_cannot_view_another_users_routine(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $routine = $owner->routines()->create(['name' => 'Secret', 'status' => 'active']);
 
         $this->actingAs($other)->get(route('routines.show', $routine))->assertForbidden();

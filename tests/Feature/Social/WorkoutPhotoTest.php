@@ -45,7 +45,7 @@ class WorkoutPhotoTest extends TestCase
 
     public function test_png_is_resized_and_shown_on_the_post(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->createOne();
         $workout = $this->makePost($owner);
 
         $this->upload($owner, $workout, [UploadedFile::fake()->image('big.png', 3200, 2400)])
@@ -63,7 +63,7 @@ class WorkoutPhotoTest extends TestCase
 
     public function test_jpeg_location_metadata_is_removed(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->createOne();
         $workout = $this->makePost($owner);
 
         $this->upload($owner, $workout, [$this->jpegWithExif()])->assertSessionHasNoErrors();
@@ -75,7 +75,7 @@ class WorkoutPhotoTest extends TestCase
 
     public function test_limit_is_checked_before_anything_is_removed(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->createOne();
         $workout = $this->makePost($owner);
         $this->upload($owner, $workout, [
             UploadedFile::fake()->image('1.png'), UploadedFile::fake()->image('2.png'), UploadedFile::fake()->image('3.png'),
@@ -93,7 +93,7 @@ class WorkoutPhotoTest extends TestCase
 
     public function test_removing_a_photo_deletes_the_file(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->createOne();
         $workout = $this->makePost($owner);
         $this->upload($owner, $workout, [UploadedFile::fake()->image('a.png')]);
         $photo = $workout->photos()->firstOrFail();
@@ -106,7 +106,7 @@ class WorkoutPhotoTest extends TestCase
 
     public function test_deleting_the_workout_deletes_its_photos(): void
     {
-        $owner = User::factory()->create();
+        $owner = User::factory()->createOne();
         $workout = $this->makePost($owner);
         $this->upload($owner, $workout, [UploadedFile::fake()->image('a.png')]);
         $path = $workout->photos()->value('path');
@@ -118,8 +118,8 @@ class WorkoutPhotoTest extends TestCase
 
     public function test_rejects_non_images_large_files_and_other_users(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $workout = $this->makePost($owner);
 
         $this->upload($owner, $workout, [UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf')])->assertSessionHasErrors('photos.0');

@@ -294,6 +294,7 @@ export interface PublicProfile extends PublicUser {
     workouts_count: number;
     followers_count: number;
     following_count: number;
+    last_workout_at: string | null;
     is_me: boolean;
     is_following: boolean;
 }

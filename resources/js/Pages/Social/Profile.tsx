@@ -1,10 +1,12 @@
 import Avatar from '@/Components/social/Avatar';
 import FollowButton from '@/Components/social/FollowButton';
+import { timeAgo } from '@/Components/social/format';
 import PostList from '@/Components/social/PostList';
 import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CursorPage, FeedPost, PublicProfile } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { Dumbbell } from 'lucide-react';
 
 export default function Profile({ profile, posts }: { profile: PublicProfile; posts: CursorPage<FeedPost> }) {
     return (
@@ -34,43 +36,56 @@ export default function Profile({ profile, posts }: { profile: PublicProfile; po
 export function ProfileHeader({ profile, as: Heading = 'h1' }: { profile: PublicProfile; as?: 'h1' | 'h2' }) {
     const joined = profile.joined_at ? new Date(profile.joined_at).toLocaleDateString('en', { month: 'long', year: 'numeric' }) : null;
 
-    const stats = [
-        { label: 'Workouts', value: profile.workouts_count, href: route('users.show', profile.username) },
-        { label: 'Followers', value: profile.followers_count, href: route('users.followers', profile.username) },
-        { label: 'Following', value: profile.following_count, href: route('users.following', profile.username) },
+    const plural = (n: number, word: string) => `${word}${n === 1 ? '' : 's'}`;
+    const counts = [
+        { value: profile.workouts_count, label: plural(profile.workouts_count, 'workout'), href: route('users.show', profile.username) },
+        { value: profile.followers_count, label: plural(profile.followers_count, 'follower'), href: route('users.followers', profile.username) },
+        { value: profile.following_count, label: 'following', href: route('users.following', profile.username) },
     ];
 
+    // Beside the name on wider screens, full width under the details on phones.
+    const action = (className: string) =>
+        profile.is_me ? (
+            <Link href={route('profile.edit')} className={`${btn.secondary} ${className}`}>
+                Edit profile
+            </Link>
+        ) : (
+            <FollowButton username={profile.username} isFollowing={profile.is_following} reloadOnly={['profile', 'posts']} className={className} />
+        );
+
     return (
-        <header className="rounded-2xl bg-white p-6 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
-            <div className="flex flex-wrap items-center gap-5">
+        <header className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200 sm:p-6 dark:bg-zinc-900 dark:ring-zinc-800">
+            <div className="flex items-center gap-4 sm:gap-5">
                 <Avatar user={profile} size="lg" />
                 <div className="min-w-0 flex-1">
                     <Heading className="truncate text-2xl font-extrabold">{profile.name}</Heading>
-                    <p className="text-zinc-500 dark:text-zinc-400">@{profile.username}</p>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        @{profile.username}
+                        {joined && <> · Joined {joined}</>}
+                    </p>
                 </div>
-                {profile.is_me ? (
-                    <Link
-                        href={route('profile.edit')}
-                        className={`${btn.secondary} basis-full sm:basis-auto`}
-                    >
-                        Edit profile
-                    </Link>
-                ) : (
-                    <FollowButton username={profile.username} isFollowing={profile.is_following} reloadOnly={['profile', 'posts']} />
-                )}
+                {action('hidden shrink-0 sm:inline-flex')}
             </div>
 
             {profile.bio && <p className="mt-4 whitespace-pre-line text-[15px] text-zinc-700 dark:text-zinc-200">{profile.bio}</p>}
-            {joined && <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Joined {joined}</p>}
 
-            <div className="mt-5 grid grid-cols-3 divide-x divide-zinc-200 rounded-xl bg-zinc-50 dark:divide-zinc-800 dark:bg-zinc-950">
-                {stats.map((s) => (
-                    <Link key={s.label} href={s.href} className="rounded-xl px-3 py-3 text-center hover:bg-zinc-100 dark:hover:bg-zinc-800/60">
-                        <span className="block text-lg font-extrabold tabular-nums">{s.value}</span>
-                        <span className="block text-xs text-zinc-500 dark:text-zinc-400">{s.label}</span>
+            {/* Counts read as one line of text, not three equal stat boxes. */}
+            <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                {counts.map((c) => (
+                    <Link key={c.label} href={c.href} className="hover:text-zinc-900 hover:underline dark:hover:text-white">
+                        <span className="font-bold tabular-nums text-zinc-900 dark:text-white">{c.value}</span> {c.label}
                     </Link>
                 ))}
-            </div>
+            </p>
+
+            {profile.last_workout_at && (
+                <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                    <Dumbbell className="h-4 w-4" aria-hidden />
+                    Last trained {timeAgo(profile.last_workout_at)}
+                </p>
+            )}
+
+            {action('mt-4 w-full sm:hidden')}
         </header>
     );
 }

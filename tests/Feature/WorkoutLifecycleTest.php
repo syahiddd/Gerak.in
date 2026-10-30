@@ -25,7 +25,7 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_full_gym_flow_end_to_end(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $ex = $this->exercise();
         $service = app(WorkoutService::class);
 
@@ -57,7 +57,7 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_pause_excludes_time_from_duration(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($user, 'Timed');
 
@@ -78,7 +78,7 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_finish_while_paused_still_excludes_pause(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($user, 'Paused finish');
 
@@ -92,7 +92,7 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_invalid_transitions_are_rejected(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($user, 'Transitions');
         $we = $service->addExercise($workout, $this->exercise()->id);
@@ -117,7 +117,7 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_refresh_does_not_lose_workout_state(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($user, 'Refresh me');
         $we = $service->addExercise($workout, $this->exercise()->id);
@@ -141,8 +141,8 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_exercise_notes_update_and_authorization(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($owner, 'Notes');
         $we = $service->addExercise($workout, $this->exercise()->id);
@@ -163,7 +163,7 @@ class WorkoutLifecycleTest extends TestCase
 
     public function test_add_exercise_accepts_the_id_as_a_string_like_the_form_sends_it(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $ex = $this->exercise();
         $workout = app(WorkoutService::class)->startEmpty($user, 'Push Day');
 
@@ -172,5 +172,21 @@ class WorkoutLifecycleTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(1, $workout->exercises()->where('exercise_id', $ex->id)->count());
+    }
+
+    public function test_history_page_reports_the_running_workout_and_echoes_filters(): void
+    {
+        $user = User::factory()->createOne();
+
+        $this->actingAs($user)->get(route('workouts.index'))
+            ->assertInertia(fn ($page) => $page->where('active', null)->where('filters.from', null));
+
+        $workout = app(WorkoutService::class)->startEmpty($user, 'Leg Day');
+
+        $this->actingAs($user)->get(route('workouts.index', ['from' => '2026-10-01']))
+            ->assertInertia(fn ($page) => $page
+                ->where('active.id', $workout->id)
+                ->where('active.name', 'Leg Day')
+                ->where('filters.from', '2026-10-01'));
     }
 }

@@ -16,7 +16,7 @@ class WorkoutSaveTest extends TestCase
 
     public function test_finish_goes_to_save_screen_then_post(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $user->settings()->update(['default_workout_visibility' => 'followers']);
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($user, 'Push Day');
@@ -49,7 +49,7 @@ class WorkoutSaveTest extends TestCase
 
     public function test_save_screen_redirects_while_workout_is_active(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $workout = app(WorkoutService::class)->startEmpty($user, 'Active');
 
         $this->actingAs($user)->get(route('workouts.save', $workout))->assertRedirect(route('workouts.show', $workout));
@@ -57,7 +57,7 @@ class WorkoutSaveTest extends TestCase
 
     public function test_visibility_must_be_valid(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $workout = app(WorkoutService::class)->startEmpty($user, 'Active');
 
         $this->actingAs($user)->patch(route('workouts.update', $workout), ['visibility' => 'friends'])

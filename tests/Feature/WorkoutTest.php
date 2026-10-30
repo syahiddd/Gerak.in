@@ -26,7 +26,7 @@ class WorkoutTest extends TestCase
 
     public function test_start_workout_from_routine_copies_template(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $ex = $this->seedExercise();
         $routine = $user->routines()->create(['name' => 'Push Day', 'status' => 'active']);
         $re = $routine->exercises()->create(['exercise_id' => $ex->id, 'order' => 0]);
@@ -45,7 +45,7 @@ class WorkoutTest extends TestCase
 
     public function test_full_set_lifecycle_and_finish_computes_volume_and_pr(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $ex = $this->seedExercise();
         $service = app(WorkoutService::class);
 
@@ -70,7 +70,7 @@ class WorkoutTest extends TestCase
 
     public function test_second_active_workout_is_rejected(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $service->startEmpty($user, 'First');
 
@@ -80,7 +80,7 @@ class WorkoutTest extends TestCase
 
     public function test_active_workout_can_be_resumed(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($user, 'Active');
 
@@ -90,8 +90,8 @@ class WorkoutTest extends TestCase
 
     public function test_user_cannot_finish_another_users_workout(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $service = app(WorkoutService::class);
         $workout = $service->startEmpty($owner, 'Mine');
 

@@ -35,7 +35,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_edit_page_includes_exercise_details(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $routine = $this->routineWithExercise($user, $this->exercise('Bench Press'));
 
         // The edit UI renders each item's exercise name; without the eager load it crashed.
@@ -49,7 +49,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_update_meta_and_archive_toggle(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $routine = $user->routines()->create(['name' => 'Old', 'status' => 'active']);
         $folder = $user->routineFolders()->create(['name' => 'PPL']);
 
@@ -67,7 +67,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_add_exercise_creates_default_target_sets(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $ex = $this->exercise();
         $routine = $user->routines()->create(['name' => 'Push Day', 'status' => 'active']);
 
@@ -83,7 +83,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_update_exercise_config_and_sync_target_sets(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $routine = $this->routineWithExercise($user, $this->exercise());
         $re = $routine->exercises()->firstOrFail();
 
@@ -107,7 +107,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_remove_exercise_compacts_order(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $routine = $user->routines()->create(['name' => 'Push Day', 'status' => 'active']);
         $a = $routine->exercises()->create(['exercise_id' => $this->exercise('A')->id, 'order' => 0]);
         $b = $routine->exercises()->create(['exercise_id' => $this->exercise('B')->id, 'order' => 1]);
@@ -121,7 +121,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_reorder_exercises_and_reject_foreign_ids(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $routine = $user->routines()->create(['name' => 'Push Day', 'status' => 'active']);
         $a = $routine->exercises()->create(['exercise_id' => $this->exercise('A')->id, 'order' => 0]);
         $b = $routine->exercises()->create(['exercise_id' => $this->exercise('B')->id, 'order' => 1]);
@@ -142,7 +142,7 @@ class RoutineBuilderTest extends TestCase
 
     public function test_starting_workout_never_mutates_the_template(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $routine = $this->routineWithExercise($user, $this->exercise());
         $service = app(WorkoutService::class);
 
@@ -159,8 +159,8 @@ class RoutineBuilderTest extends TestCase
 
     public function test_cross_user_access_is_blocked_on_every_endpoint(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $routine = $this->routineWithExercise($owner, $this->exercise());
         $re = $routine->exercises()->firstOrFail();
         $ex = $this->exercise('Squat');

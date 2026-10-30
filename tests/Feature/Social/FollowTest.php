@@ -14,8 +14,8 @@ class FollowTest extends TestCase
 
     public function test_follow_and_unfollow(): void
     {
-        $me = User::factory()->create();
-        $other = User::factory()->create();
+        $me = User::factory()->createOne();
+        $other = User::factory()->createOne();
 
         $this->actingAs($me)->post(route('users.follow', $other->username))->assertRedirect();
         $this->actingAs($me)->post(route('users.follow', $other->username))->assertRedirect();
@@ -28,7 +28,7 @@ class FollowTest extends TestCase
 
     public function test_cannot_follow_yourself(): void
     {
-        $me = User::factory()->create();
+        $me = User::factory()->createOne();
 
         $this->actingAs($me)->post(route('users.follow', $me->username))->assertSessionHasErrors('follow');
         $this->assertDatabaseCount('follows', 0);
@@ -36,8 +36,8 @@ class FollowTest extends TestCase
 
     public function test_following_feed_includes_followed_users_posts(): void
     {
-        $me = User::factory()->create();
-        $other = User::factory()->create();
+        $me = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $post = $this->makePost($other, 'public');
 
         $this->assertNotContains($post->id, $this->feedIds($me));
@@ -48,8 +48,8 @@ class FollowTest extends TestCase
 
     public function test_follower_lists_and_search(): void
     {
-        $me = User::factory()->create(['name' => 'Searcher']);
-        $other = User::factory()->create(['name' => 'Rina Pratama']);
+        $me = User::factory()->createOne(['name' => 'Searcher']);
+        $other = User::factory()->createOne(['name' => 'Rina Pratama']);
         $other->following()->attach($me->id);
 
         $this->actingAs($me)->get(route('users.followers', $me->username))

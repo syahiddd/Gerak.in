@@ -37,7 +37,7 @@ class StatisticsTest extends TestCase
 
     public function test_overview_counts_reps_and_ignores_incomplete_sets(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $ex = $this->exercise('Bench Press');
         $w = $this->completedWorkout($user, 'Push', now()->subDay());
         $we = $w->exercises()->create(['exercise_id' => $ex->id, 'order' => 0]);
@@ -54,7 +54,7 @@ class StatisticsTest extends TestCase
 
     public function test_duration_sets_never_contribute_weight_volume(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $plank = $this->exercise('Plank', 'duration');
         $service = app(WorkoutService::class);
 
@@ -76,7 +76,7 @@ class StatisticsTest extends TestCase
 
     public function test_distance_pr_detected_for_cardio_sets(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $run = $this->exercise('Treadmill Run', 'distance_duration');
         $service = app(WorkoutService::class);
 
@@ -96,7 +96,7 @@ class StatisticsTest extends TestCase
 
     public function test_weekly_and_monthly_grouping(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $w1 = $this->completedWorkout($user, 'A', now()->subDays(2));
         $w1->update(['total_volume_kg' => 1000]);
         $w2 = $this->completedWorkout($user, 'B', now()->subMonths(2)->startOfMonth()->addDay());
@@ -114,14 +114,14 @@ class StatisticsTest extends TestCase
 
     public function test_streak_counts_consecutive_training_days(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $this->completedWorkout($user, 'A', now()->subDays(2));
         $this->completedWorkout($user, 'B', now()->subDay());
         $this->completedWorkout($user, 'C', now());
 
         $this->assertEquals(3, app(StatisticsService::class)->currentStreakDays($user));
 
-        $gapUser = User::factory()->create();
+        $gapUser = User::factory()->createOne();
         $this->completedWorkout($gapUser, 'A', now()->subDays(5));
         $this->completedWorkout($gapUser, 'B', now());
 
@@ -130,7 +130,7 @@ class StatisticsTest extends TestCase
 
     public function test_statistics_page_renders_with_monthly_props(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->get(route('statistics.index'))
             ->assertOk()

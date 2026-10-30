@@ -39,7 +39,7 @@ class ExerciseTest extends TestCase
     {
         [$chest] = $this->seedTaxonomy();
         $this->systemExercise('Bench Press', $chest->id);
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->get(route('exercises.index'))
             ->assertOk()
@@ -56,7 +56,7 @@ class ExerciseTest extends TestCase
         $row = $this->systemExercise('Barbell Row', $back->id);
         // Break the updated_at tie so "recent" ordering is deterministic.
         $row->forceFill(['updated_at' => now()->addMinutes(5)])->save();
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         // Search.
         $this->actingAs($user)->get(route('exercises.index', ['q' => 'bench']))
@@ -93,7 +93,7 @@ class ExerciseTest extends TestCase
 
         $this->seedTaxonomy();
         Equipment::create(['name' => 'Barbell', 'slug' => 'barbell']);
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         // First hit warms the cache rows, second hit reads them back.
         $this->actingAs($user)->get(route('exercises.index'))->assertOk();
@@ -112,7 +112,7 @@ class ExerciseTest extends TestCase
         [$chest] = $this->seedTaxonomy();
         $ex = $this->systemExercise('Bench Press', $chest->id);
         $ex->update(['video_url' => 'https://example.com/bench.mp4']);
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $workout = $user->workouts()->create([
             'name' => 'Push', 'status' => 'completed',
@@ -139,7 +139,7 @@ class ExerciseTest extends TestCase
     public function test_user_can_crud_own_custom_exercise(): void
     {
         [$chest] = $this->seedTaxonomy();
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $create = $this->actingAs($user)->post(route('exercises.store'), [
             'name' => 'My Cable Twist',
@@ -168,7 +168,7 @@ class ExerciseTest extends TestCase
     public function test_system_exercises_are_protected_from_normal_users(): void
     {
         $ex = $this->systemExercise();
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->get(route('exercises.edit', $ex))->assertForbidden();
         $this->actingAs($user)->patch(route('exercises.update', $ex), [
@@ -180,8 +180,8 @@ class ExerciseTest extends TestCase
 
     public function test_users_cannot_touch_each_others_custom_exercises(): void
     {
-        $owner = User::factory()->create();
-        $other = User::factory()->create();
+        $owner = User::factory()->createOne();
+        $other = User::factory()->createOne();
         $ex = Exercise::create([
             'name' => 'Secret Move', 'slug' => 'secret-move',
             'exercise_type' => 'weight_reps', 'is_system' => false,
@@ -196,7 +196,7 @@ class ExerciseTest extends TestCase
 
     public function test_custom_exercise_validation(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->post(route('exercises.store'), [
             'name' => '',

@@ -1,11 +1,11 @@
 import { btn, Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import ExercisePicker from '@/Components/ExercisePicker';
-import { VISIBILITY_LABEL } from '@/Components/social/format';
+import { humanDuration, VISIBILITY_LABEL } from '@/Components/social/format';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
-import { formatDuration, formatNumber, setLabel } from '@/lib/units';
+import { formatNumber, setLabel } from '@/lib/units';
 import { Exercise, ExerciseOption, Workout, WorkoutExercise, WorkoutSet } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Check, X } from 'lucide-react';
@@ -114,14 +114,14 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                     <div>
                         <h1 className="text-xl font-extrabold">{initial.name}</h1>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {new Date(initial.started_at).toLocaleString()}
-                            {initial.status === 'completed' && initial.duration_seconds ? (
+                            {initial.status === 'completed' ? (
                                 <>
-                                    {' '}· {formatDuration(initial.duration_seconds)} · {formatNumber(initial.total_volume_kg)} kg
+                                    {new Date(initial.started_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                     {' '}· Visible to {VISIBILITY_LABEL[initial.visibility ?? 'private']}
                                 </>
                             ) : (
                                 <>
+                                    {new Date(initial.started_at).toLocaleString()}
                                     {' '}· <span className="font-semibold text-lime-700 dark:text-lime-400">{initial.status.replace('_', ' ')}</span>
                                     {' '}· <span className="tabular-nums">{elapsed}</span>
                                 </>
@@ -196,7 +196,23 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                 </div>
             )}
 
-            <div className="space-y-4">
+            {!isActive && (
+                <dl className="mb-4 flex max-w-3xl flex-wrap gap-x-8 gap-y-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+                    {[
+                        ['Duration', humanDuration(initial.duration_seconds)],
+                        ['Volume', `${formatNumber(initial.total_volume_kg)} kg`],
+                        ['Sets', String(exercises.reduce((n, we) => n + we.sets.filter((s) => s.is_completed).length, 0))],
+                        ['Exercises', String(exercises.length)],
+                    ].map(([label, value]) => (
+                        <div key={label}>
+                            <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
+                            <dd className="text-lg font-extrabold tabular-nums">{value}</dd>
+                        </div>
+                    ))}
+                </dl>
+            )}
+
+            <div className={`space-y-4 ${isActive ? '' : 'max-w-3xl'}`}>
                 {exercises.map((we) => (
                     <Card key={we.id}>
                         <div className="flex items-center justify-between gap-3">
@@ -222,13 +238,17 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                             )}
                         </div>
 
-                        {lastTime(previous[we.id]) && (
+                        {/* Only useful mid-workout; afterwards it would repeat this session's own sets. */}
+                        {isActive && lastTime(previous[we.id]) && (
                             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                                 Last time:{' '}
                                 <span className="font-semibold text-zinc-700 dark:text-zinc-300">{lastTime(previous[we.id])}</span>
                             </p>
                         )}
 
+                        {!isActive ? (
+                            <CompletedSets sets={we.sets} />
+                        ) : (
                         <div className="mt-2 overflow-x-auto">
                             <table className="w-full text-sm tabular-nums [&_td]:pe-1 [&_th]:pe-1">
                                 <thead className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -238,7 +258,8 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                         <th className="text-left">Reps</th>
                                         <th className="text-left">RPE</th>
                                         <th className="text-left">Done</th>
-                                        {isActive && <th />}
+                                        <th />
+
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -247,7 +268,6 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                             <td className="py-1 font-bold" title={set.set_type.replace('_', ' ')}>
                                                 {setLabel(we.sets, i)}
                                             </td>
-                                            {isActive ? (
                                                 <>
                                                     <td>
                                                         <input type="number" step="0.5" min={0} value={set.weight_kg ?? ''} onChange={(e) => patchSet(we.id, set.id, { weight_kg: e.target.value === '' ? null : e.target.value })} className="h-11 w-14 rounded-xl border-zinc-300 px-2 sm:w-20 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Weight kg" />
@@ -274,19 +294,12 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                                         </button>
                                                     </td>
                                                 </>
-                                            ) : (
-                                                <>
-                                                    <td>{set.weight_kg ?? '-'}</td>
-                                                    <td>{set.reps ?? '-'}</td>
-                                                    <td>{set.rpe ?? '-'}</td>
-                                                    <td>{set.is_completed ? <Check className="h-4 w-4 text-lime-700 dark:text-lime-400" aria-label="Done" /> : '-'}</td>
-                                                </>
-                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
+                        )}
 
                         {isActive && (
                             <button onClick={() => addSet(we)} className={`${btn.secondary} mt-3`}>
@@ -355,7 +368,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
             )}
 
             {!isActive && initial.notes && (
-                <Card className="mt-4">
+                <Card className="mt-4 max-w-3xl">
                     <h2 className="text-sm font-bold">Notes</h2>
                     <p className="text-sm text-zinc-600 dark:text-zinc-300">{initial.notes}</p>
                 </Card>
@@ -415,5 +428,25 @@ function ExerciseNotesEditor({
                 </button>
             </div>
         </div>
+    );
+}
+
+/** Read-only sets of a finished workout: "77 kg × 8", RPE only when logged, skipped sets dimmed. */
+function CompletedSets({ sets }: { sets: WorkoutSet[] }) {
+    return (
+        <ol className="mt-3 divide-y divide-zinc-100 text-sm tabular-nums dark:divide-zinc-800">
+            {sets.map((set, i) => (
+                <li key={set.id} className={`flex items-baseline gap-4 py-2 ${set.is_completed ? '' : 'text-zinc-400 dark:text-zinc-500'}`}>
+                    <span className="w-6 font-bold" title={set.set_type.replace('_', ' ')}>
+                        {setLabel(sets, i)}
+                    </span>
+                    <span className="flex-1 font-semibold">
+                        {set.weight_kg ? `${formatNumber(set.weight_kg)} kg × ${set.reps ?? '-'}` : `${set.reps ?? '-'} reps`}
+                    </span>
+                    {set.rpe && <span className="text-zinc-500 dark:text-zinc-400">RPE {formatNumber(set.rpe)}</span>}
+                    {!set.is_completed && <span className="text-xs">Not done</span>}
+                </li>
+            ))}
+        </ol>
     );
 }

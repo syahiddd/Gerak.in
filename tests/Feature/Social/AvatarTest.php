@@ -42,7 +42,7 @@ class AvatarTest extends TestCase
 
     public function test_upload_stores_webp_without_metadata_and_shows_everywhere(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => $this->webpUpload()])
             ->assertSessionHasNoErrors()
@@ -56,7 +56,7 @@ class AvatarTest extends TestCase
 
         $url = '/storage/'.$path;
         $post = $this->makePost($user, 'public');
-        $viewer = User::factory()->create();
+        $viewer = User::factory()->createOne();
 
         $this->actingAs($viewer)->get(route('users.show', $user->username))
             ->assertInertia(fn ($page) => $page
@@ -69,7 +69,7 @@ class AvatarTest extends TestCase
 
     public function test_png_fallback_is_accepted(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->image('me.png', 800, 600)])
             ->assertSessionHasNoErrors();
@@ -82,7 +82,7 @@ class AvatarTest extends TestCase
 
     public function test_replacing_and_removing_delete_old_files(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => $this->webpUpload()]);
         $first = $user->fresh()->profile->avatar_path;
@@ -101,7 +101,7 @@ class AvatarTest extends TestCase
 
     public function test_rejects_non_images_and_large_files(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => UploadedFile::fake()->create('cv.pdf', 10, 'application/pdf')])
             ->assertSessionHasErrors('avatar');
@@ -113,7 +113,7 @@ class AvatarTest extends TestCase
 
     public function test_deleting_account_removes_avatar_file(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $this->actingAs($user)->post(route('profile.avatar.update'), ['avatar' => $this->webpUpload()]);
         $path = $user->fresh()->profile->avatar_path;
 

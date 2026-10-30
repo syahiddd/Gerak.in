@@ -24,8 +24,9 @@ use Inertia\Response;
 
 class WorkoutController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, WorkoutService $service): Response
     {
+        $active = $service->activeFor(auth()->user());
         $query = auth()->user()->workouts()->completed()
             ->withCount('exercises')
             ->latest('started_at');
@@ -37,7 +38,11 @@ class WorkoutController extends Controller
             $query->where('started_at', '<=', $request->date('to')->endOfDay());
         }
 
-        return Inertia::render('Workouts/Index', ['workouts' => $query->paginate(15)->withQueryString()]);
+        return Inertia::render('Workouts/Index', [
+            'workouts' => $query->paginate(15)->withQueryString(),
+            'active' => $active?->only(['id', 'name', 'started_at', 'status']),
+            'filters' => ['from' => $request->query('from'), 'to' => $request->query('to')],
+        ]);
     }
 
     public function active(WorkoutService $service): RedirectResponse|Response

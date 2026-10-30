@@ -1,7 +1,8 @@
 import { btn, Card, EmptyState, MuscleBars, StatCard } from '@/Components/ui';
 import VolumeChart from '@/Components/VolumeChart';
+import WorkoutRow from '@/Components/WorkoutRow';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { formatDuration, formatNumber } from '@/lib/units';
+import { formatNumber } from '@/lib/units';
 import { ProfileHeader } from '@/Pages/Social/Profile';
 import { PageProps, PersonalRecord, PublicProfile, Routine, Workout } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -142,24 +143,15 @@ export default function ProfileShow({
                                 <EmptyState title="No workouts yet" hint="Your completed workouts will appear here." />
                             </div>
                         )}
-                        {recentWorkouts.map((w) => (
-                            <Link
-                                key={w.id}
-                                href={route('workouts.show', w.id)}
-                                className="mt-3 flex items-center justify-between rounded-xl border border-zinc-200 px-4 py-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
-                            >
-                                <div>
-                                    <p className="font-bold">{w.name}</p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                        {new Date(w.started_at).toLocaleString()} · {w.exercises_count} exercises
-                                    </p>
-                                </div>
-                                <div className="text-right text-sm tabular-nums">
-                                    <p className="font-bold">{formatNumber(w.total_volume_kg)} kg</p>
-                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDuration(w.duration_seconds)}</p>
-                                </div>
-                            </Link>
-                        ))}
+                        {recentWorkouts.length > 0 && (
+                            <ul className="-mx-5 mt-3 divide-y divide-zinc-200 border-t border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                                {recentWorkouts.map((w) => (
+                                    <li key={w.id}>
+                                        <WorkoutRow workout={w} />
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </Card>
 
                     <Card>

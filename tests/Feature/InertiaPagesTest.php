@@ -18,7 +18,7 @@ class InertiaPagesTest extends TestCase
 
     public function test_authenticated_pages_render_expected_components(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $cases = [
             ['profile.show', 'Profile/Show'],
@@ -43,7 +43,7 @@ class InertiaPagesTest extends TestCase
 
     public function test_dashboard_redirects_to_profile_with_overview(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->get(route('dashboard'))->assertRedirect('/profile');
         $this->actingAs($user)->get(route('profile.show'))
@@ -56,7 +56,7 @@ class InertiaPagesTest extends TestCase
 
     public function test_workout_show_renders_with_props(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $workout = $user->workouts()->create([
             'name' => 'Test', 'status' => 'in_progress',
             'started_at' => now(), 'timezone' => 'Asia/Jakarta',

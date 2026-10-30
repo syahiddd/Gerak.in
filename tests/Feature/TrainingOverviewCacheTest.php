@@ -16,7 +16,7 @@ class TrainingOverviewCacheTest extends TestCase
 
     public function test_cached_overview_is_busted_on_finish(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $stats = app(StatisticsService::class);
         $service = app(WorkoutService::class);
 
@@ -42,7 +42,7 @@ class TrainingOverviewCacheTest extends TestCase
 
     public function test_cached_overview_is_busted_on_routine_create(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $stats = app(StatisticsService::class);
 
         $stats->trainingOverview($user);

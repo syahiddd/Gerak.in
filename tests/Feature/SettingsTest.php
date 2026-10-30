@@ -31,7 +31,7 @@ class SettingsTest extends TestCase
 
     public function test_new_users_get_profile_and_settings_rows(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->assertNotNull($user->profile()->first());
         $this->assertNotNull($user->settings()->first());
@@ -40,7 +40,7 @@ class SettingsTest extends TestCase
 
     public function test_settings_page_renders_with_current_values(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->get(route('settings.edit'))
             ->assertOk()
@@ -51,7 +51,7 @@ class SettingsTest extends TestCase
 
     public function test_user_can_update_settings_and_timezone(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $this->actingAs($user)->patch(route('settings.update'), $this->validPayload())
             ->assertRedirect()
@@ -70,7 +70,7 @@ class SettingsTest extends TestCase
 
     public function test_settings_validation_rejects_bad_values(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
 
         $response = $this->actingAs($user)->patch(route('settings.update'), [
             ...$this->validPayload(),
@@ -90,7 +90,7 @@ class SettingsTest extends TestCase
 
     public function test_update_creates_settings_row_when_missing(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->createOne();
         $user->settings()->delete();
 
         $this->actingAs($user)->patch(route('settings.update'), $this->validPayload())

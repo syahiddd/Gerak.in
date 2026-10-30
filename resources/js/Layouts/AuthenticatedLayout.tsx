@@ -10,11 +10,15 @@ import {
     ClipboardList,
     Dumbbell,
     Library,
+    LogOut,
     Menu,
     Moon,
     Newspaper,
+    Pencil,
+    Settings,
     ShieldCheck,
     User,
+    UserRound,
     X,
 } from 'lucide-react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
@@ -59,6 +63,15 @@ export default function Authenticated({
             <span className="ms-auto text-xs font-semibold text-zinc-500 dark:text-zinc-400">{isDark ? 'On' : 'Off'}</span>
         </button>
     );
+
+    // Shared by the desktop account dropdown and the mobile drawer.
+    const accountLinks = [
+        { label: 'My public profile', href: route('users.show', user.username), Icon: UserRound },
+        { label: 'Edit profile', href: route('profile.edit'), Icon: Pencil },
+        { label: 'Settings', href: route('settings.edit'), Icon: Settings },
+        ...(user.role === 'admin' ? [{ label: 'Admin', href: route('admin.dashboard'), Icon: ShieldCheck }] : []),
+        { label: 'Log out', href: route('logout'), Icon: LogOut, logout: true },
+    ];
 
     const [drawerOpen, setDrawerOpen] = useState(false);
     const closeDrawer = () => setDrawerOpen(false);
@@ -140,15 +153,17 @@ export default function Authenticated({
                             width="full"
                             contentClasses="py-1 bg-white dark:bg-zinc-800"
                         >
-                            <Dropdown.Link href={route('users.show', user.username)}>My public profile</Dropdown.Link>
-                            <Dropdown.Link href={route('profile.edit')}>Edit profile</Dropdown.Link>
-                            <Dropdown.Link href={route('settings.edit')}>Settings</Dropdown.Link>
-                            {user.role === 'admin' && (
-                                <Dropdown.Link href={route('admin.dashboard')}>Admin</Dropdown.Link>
-                            )}
-                            <Dropdown.Link href={route('logout')} method="post" as="button">
-                                Log Out
-                            </Dropdown.Link>
+                            {accountLinks.map(({ label, href, Icon, logout }) => (
+                                <Dropdown.Link
+                                    key={label}
+                                    href={href}
+                                    {...(logout ? { method: 'post' as const, as: 'button' } : {})}
+                                    className="flex items-center gap-3"
+                                >
+                                    <Icon className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" aria-hidden />
+                                    {label}
+                                </Dropdown.Link>
+                            ))}
                         </Dropdown.Content>
                     </Dropdown>
                 </div>
@@ -192,45 +207,22 @@ export default function Authenticated({
 
                         <div className="space-y-2 border-t border-zinc-200 p-4 text-sm dark:border-zinc-800">
                             {themeButton}
-                            <Link
-                                href={route('users.show', user.username)}
-                                onClick={closeDrawer}
-                                className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                            >
-                                My public profile
-                            </Link>
-                            <Link
-                                href={route('profile.edit')}
-                                onClick={closeDrawer}
-                                className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                            >
-                                Edit profile
-                            </Link>
-                            <Link
-                                href={route('settings.edit')}
-                                onClick={closeDrawer}
-                                className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                            >
-                                Settings
-                            </Link>
-                            {user.role === 'admin' && (
+                            {accountLinks.map(({ label, href, Icon, logout }) => (
                                 <Link
-                                    href={route('admin.dashboard')}
+                                    key={label}
+                                    href={href}
+                                    {...(logout ? { method: 'post' as const, as: 'button' } : {})}
                                     onClick={closeDrawer}
-                                    className="block rounded-xl px-3 py-2.5 font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                    className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left font-medium ${
+                                        logout
+                                            ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30'
+                                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                                    }`}
                                 >
-                                    Admin
+                                    <Icon className="h-5 w-5 shrink-0" aria-hidden />
+                                    {label}
                                 </Link>
-                            )}
-                            <Link
-                                href={route('logout')}
-                                method="post"
-                                as="button"
-                                onClick={closeDrawer}
-                                className="block w-full rounded-xl px-3 py-2.5 text-left font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            >
-                                Log Out
-                            </Link>
+                            ))}
                         </div>
                     </Dialog.Panel>
                 </div>
