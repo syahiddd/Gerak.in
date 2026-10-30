@@ -1,7 +1,7 @@
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import { Pagination } from '@/Components/ui';
+import { btn, Pagination } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { BodyMeasurement, Paginated } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -69,7 +69,7 @@ export default function Measurements({
                     <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                         <h2 className="font-bold">Body weight trend</h2>
                         {chart.length === 0 ? (
-                            <p className="mt-2 text-sm text-zinc-500">Start tracking your body measurements.</p>
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Start tracking your body measurements.</p>
                         ) : (
                             <div className="h-48">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -87,19 +87,19 @@ export default function Measurements({
                     <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                         <h2 className="font-bold">History</h2>
                         {measurements.data.length === 0 && (
-                            <p className="mt-2 text-sm text-zinc-500">No measurements yet.</p>
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">No measurements yet.</p>
                         )}
                         {measurements.data.map((m) => (
                             <div key={m.id} className="flex items-center justify-between border-t border-zinc-100 py-2 text-sm first:border-t-0 dark:border-zinc-800">
                                 <p>
                                     <strong>{TYPE_LABELS[m.type] ?? m.type}</strong>: {String(m.value)}{' '}
-                                    <span className="text-zinc-500">· {m.recorded_at ? new Date(m.recorded_at).toLocaleDateString() : ''}</span>
+                                    <span className="text-zinc-500 dark:text-zinc-400">· {m.recorded_at ? new Date(m.recorded_at).toLocaleDateString() : ''}</span>
                                 </p>
                                 <Link
                                     href={route('measurements.destroy', m.id)}
                                     method="delete"
                                     as="button"
-                                    className="text-xs font-semibold text-red-500"
+                                    className={`${btn.danger} -my-2 px-2`}
                                     onBefore={() => confirm('Delete?')}
                                 >
                                     Delete

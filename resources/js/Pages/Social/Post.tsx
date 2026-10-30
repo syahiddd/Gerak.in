@@ -4,8 +4,9 @@ import { timeAgo } from '@/Components/social/format';
 import LikeButton from '@/Components/social/LikeButton';
 import PostPhotos from '@/Components/social/PostPhotos';
 import { PostHeader, PostStats } from '@/Components/social/WorkoutPostCard';
+import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { displayWeight } from '@/lib/units';
+import { displayWeight, setLabel } from '@/lib/units';
 import { FeedPost, PageProps, PostComment, PostExercise } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Trophy } from 'lucide-react';
@@ -30,7 +31,7 @@ export default function Post({ post }: { post: FeedPost }) {
                             {post.is_owner && (
                                 <Link
                                     href={route('workouts.save', post.id)}
-                                    className="shrink-0 rounded-xl border border-zinc-300 px-3 py-1.5 text-xs font-bold hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                                    className={`${btn.secondary} shrink-0`}
                                 >
                                     Edit post
                                 </Link>
@@ -77,7 +78,7 @@ function ExerciseBlock({ pe }: { pe: PostExercise }) {
         if (s.reps !== null) parts.push(`${s.reps} reps`);
         if (s.duration_s) parts.push(`${Math.floor(s.duration_s / 60)}:${String(s.duration_s % 60).padStart(2, '0')}`);
         if (s.distance_m) parts.push(`${s.distance_m} m`);
-        return parts.join(' × ') || '—';
+        return parts.join(' × ') || '-';
     };
 
     return (
@@ -103,7 +104,7 @@ function ExerciseBlock({ pe }: { pe: PostExercise }) {
             {sets.length > 0 ? (
                 <table className="mt-4 w-full text-sm">
                     <thead>
-                        <tr className="text-left text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                        <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400">
                             <th className="w-14 pb-2 font-semibold">Set</th>
                             <th className="pb-2 font-semibold">Weight & reps</th>
                         </tr>
@@ -112,7 +113,7 @@ function ExerciseBlock({ pe }: { pe: PostExercise }) {
                         {sets.map((s, i) => (
                             <tr key={s.id} className="odd:bg-zinc-50 dark:odd:bg-zinc-800/50">
                                 <td className="rounded-l-lg py-2 pl-2 font-semibold tabular-nums">
-                                    {s.set_type === 'warmup' ? <span className="text-amber-500">W</span> : s.set_type === 'drop' ? <span className="text-sky-500">D</span> : s.set_type === 'failure' ? <span className="text-red-500">F</span> : i + 1}
+                                    <span title={s.set_type.replace('_', ' ')}>{setLabel(sets, i)}</span>
                                 </td>
                                 <td className="rounded-r-lg py-2 tabular-nums">{describe(s)}</td>
                             </tr>
@@ -120,7 +121,7 @@ function ExerciseBlock({ pe }: { pe: PostExercise }) {
                     </tbody>
                 </table>
             ) : (
-                <p className="mt-3 text-sm text-zinc-500">No completed sets.</p>
+                <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">No completed sets.</p>
             )}
         </div>
     );
@@ -168,11 +169,11 @@ function Comments({ post }: { post: FeedPost }) {
                         placeholder="Write a comment…"
                         className="block w-full resize-y rounded-xl border-zinc-300 text-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                     />
-                    {form.errors.body && <p className="mt-1 text-sm text-red-500">{form.errors.body}</p>}
+                    {form.errors.body && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{form.errors.body}</p>}
                     <div className="mt-2 flex justify-end">
                         <button
                             disabled={form.processing || !form.data.body.trim()}
-                            className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950 disabled:opacity-50"
+                            className={btn.primary}
                         >
                             Post comment
                         </button>
@@ -205,7 +206,7 @@ function CommentRow({ c }: { c: PostComment }) {
                 <p className="mt-0.5 whitespace-pre-line break-words text-sm text-zinc-700 dark:text-zinc-200">{c.body}</p>
             </div>
             {c.can_delete && (
-                <button type="button" onClick={remove} className="self-start text-xs font-semibold text-zinc-400 hover:text-red-500">
+                <button type="button" onClick={remove} className={`${btn.danger} -my-2 self-start px-2 font-semibold`}>
                     Delete
                 </button>
             )}

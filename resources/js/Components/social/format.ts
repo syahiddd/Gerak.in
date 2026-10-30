@@ -2,7 +2,7 @@ import { WorkoutVisibility } from '@/types';
 
 /** "45min", "1h 5min" — compact like Hevy's post stats. */
 export function humanDuration(totalSeconds: number | null | undefined): string {
-    if (!totalSeconds) return '—';
+    if (!totalSeconds) return '-';
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.round((totalSeconds % 3600) / 60);
     if (h === 0) return `${Math.max(m, 1)}min`;

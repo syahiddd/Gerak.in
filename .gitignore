@@ -25,3 +25,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Markdown notes and reports (tracked docs like README.md stay tracked)
+*.md

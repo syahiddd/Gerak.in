@@ -1,4 +1,4 @@
-import { StatCard } from '@/Components/ui';
+import { btn, StatCard } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { User } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -33,11 +33,11 @@ export default function AdminDashboard({
                 <StatCard label="Active users" value={activeUsers} />
             </div>
 
-            <div className="mt-4 flex gap-2 text-sm">
-                <Link href={route('admin.users')} className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+            <div className="mt-4 flex flex-wrap gap-2">
+                <Link href={route('admin.users')} className={btn.secondary}>
                     Manage users
                 </Link>
-                <Link href={route('admin.exercises')} className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+                <Link href={route('admin.exercises')} className={btn.secondary}>
                     Manage exercises
                 </Link>
             </div>

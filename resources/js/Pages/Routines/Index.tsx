@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import Modal from '@/Components/Modal';
+import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Routine, RoutineFolder } from '@/types';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
@@ -20,9 +21,9 @@ export default function RoutineIndex({ folders, ungrouped }: { folders: RoutineF
             <div className="mt-6 grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
                 {/* Actions first on mobile, right column on desktop — same as Hevy. */}
                 <aside className="rounded-2xl bg-white p-2 ring-1 ring-zinc-200 lg:sticky lg:top-6 lg:order-2 dark:bg-zinc-900 dark:ring-zinc-800">
-                    <ActionRow href={route('routines.create')} icon={<ClipboardIcon />} label="New Routine" />
+                    <ActionRow href={route('routines.create')} icon={<ClipboardIcon />} label="New routine" />
                     <div className="mx-4 h-px bg-zinc-200 dark:bg-zinc-800" />
-                    <ActionRow onClick={() => setDialog({ mode: 'create' })} icon={<FolderPlusIcon />} label="New Folder" />
+                    <ActionRow onClick={() => setDialog({ mode: 'create' })} icon={<FolderPlusIcon />} label="New folder" />
                 </aside>
 
                 <div className="min-w-0 space-y-6 lg:order-1">
@@ -144,7 +145,7 @@ function KebabMenu({ label, children }: { label: string; children: ReactNode }) 
         <Menu as="div" className="relative">
             <MenuButton
                 aria-label={label}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
             >
                 <svg viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
                     <circle cx="4" cy="10" r="1.6" />
@@ -168,7 +169,7 @@ function MenuAction({ onClick, danger = false, children }: { onClick: () => void
             <button
                 type="button"
                 onClick={onClick}
-                className={`block w-full rounded-lg px-3 py-2 text-left data-[focus]:bg-zinc-100 dark:data-[focus]:bg-zinc-700 ${
+                className={`block min-h-11 w-full rounded-lg px-3 py-2 text-left data-[focus]:bg-zinc-100 dark:data-[focus]:bg-zinc-700 ${
                     danger ? 'text-red-600 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-200'
                 }`}
             >
@@ -209,8 +210,8 @@ function EmptyCard({ text, showCta = false }: { text: string; showCta?: boolean 
         <div className="rounded-2xl border border-dashed border-zinc-300 px-6 py-8 text-center dark:border-zinc-700">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">{text}</p>
             {showCta && (
-                <Link href={route('routines.create')} className="mt-4 inline-block rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950">
-                    New Routine
+                <Link href={route('routines.create')} className={`${btn.primary} mt-4`}>
+                    New routine
                 </Link>
             )}
         </div>
@@ -263,10 +264,10 @@ function FolderModal({ dialog, onClose }: { dialog: FolderDialog; onClose: () =>
                 />
                 <InputError message={form.errors.name} className="mt-2" />
                 <div className="mt-6 flex justify-end gap-2">
-                    <button type="button" onClick={close} className="rounded-xl px-4 py-2 text-sm font-bold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                    <button type="button" onClick={close} className={btn.ghost}>
                         Cancel
                     </button>
-                    <button disabled={form.processing} className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950 disabled:opacity-60">
+                    <button disabled={form.processing} className={btn.primary}>
                         {renaming ? 'Save name' : 'Create folder'}
                     </button>
                 </div>

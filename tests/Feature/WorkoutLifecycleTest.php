@@ -160,4 +160,17 @@ class WorkoutLifecycleTest extends TestCase
         $this->actingAs($owner)->post(route('workouts.pause', $workout))->assertRedirect();
         $this->actingAs($other)->post(route('workouts.resume', $workout))->assertForbidden();
     }
+
+    public function test_add_exercise_accepts_the_id_as_a_string_like_the_form_sends_it(): void
+    {
+        $user = User::factory()->create();
+        $ex = $this->exercise();
+        $workout = app(WorkoutService::class)->startEmpty($user, 'Push Day');
+
+        $this->actingAs($user)
+            ->post(route('workouts.add-exercise', $workout), ['exercise_id' => (string) $ex->id])
+            ->assertRedirect();
+
+        $this->assertSame(1, $workout->exercises()->where('exercise_id', $ex->id)->count());
+    }
 }

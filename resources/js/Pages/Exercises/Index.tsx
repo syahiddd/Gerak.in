@@ -1,4 +1,4 @@
-import { EmptyState, Pagination } from '@/Components/ui';
+import { btn, EmptyState, Pagination } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { EXERCISE_TYPE_LABELS, Exercise, Paginated } from '@/types';
@@ -32,7 +32,7 @@ export default function ExerciseIndex({ exercises, filters = {} }: Props) {
                     className="min-w-0 flex-1 basis-48 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800"
                     aria-label="Search exercises"
                 />
-                <button disabled={processing} className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950 disabled:opacity-60">
+                <button disabled={processing} className={btn.secondary}>
                     {processing ? 'Searching…' : 'Search'}
                 </button>
             </form>
@@ -51,11 +51,11 @@ export default function ExerciseIndex({ exercises, filters = {} }: Props) {
                         >
                             <ExerciseMedia exercise={ex} variant="thumbnail" className="mb-3" playOnHover />
                             <p className="font-bold">{ex.name}</p>
-                            <p className="mt-1 text-xs text-zinc-500">
-                                {EXERCISE_TYPE_LABELS[ex.exercise_type] ?? ex.exercise_type} · {ex.primary_muscle?.name ?? '—'} · {ex.equipment?.name ?? '—'}
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                {EXERCISE_TYPE_LABELS[ex.exercise_type] ?? ex.exercise_type} · {ex.primary_muscle?.name ?? '-'} · {ex.equipment?.name ?? '-'}
                             </p>
                             {!ex.is_system && (
-                                <p className="mt-1 text-xs font-semibold text-lime-600 dark:text-lime-400">Custom</p>
+                                <p className="mt-1 text-xs font-semibold text-lime-700 dark:text-lime-400">Custom</p>
                             )}
                         </Link>
                     ))}

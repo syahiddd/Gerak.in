@@ -25,6 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // The real login page is the landing page at /, not Breeze's /login.
+        $middleware->redirectGuestsTo(fn () => route('home'));
+
         $middleware->alias(['admin' => EnsureAdmin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

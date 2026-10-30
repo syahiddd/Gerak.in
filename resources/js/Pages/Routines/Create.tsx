@@ -1,6 +1,7 @@
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import ExercisePicker from '@/Components/ExercisePicker';
 import { ExerciseOption } from '@/types';
@@ -45,7 +46,7 @@ export default function RoutineCreate() {
                 <div>
                     <InputLabel htmlFor="name" value="Routine name" />
                     <TextInput id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} className="mt-1 block w-full" required placeholder="Push Day" />
-                    {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                    {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>}
                 </div>
                 <div>
                     <InputLabel htmlFor="description" value="Description" />
@@ -66,14 +67,14 @@ export default function RoutineCreate() {
                                 value={row.exercise}
                                 onChange={(ex) => setRow(i, { exercise: ex, exercise_id: ex ? String(ex.id) : '' })}
                             />
-                            {rowError(i) && <p className="mt-1 text-xs text-red-500">Choose an exercise.</p>}
+                            {rowError(i) && <p className="mt-1 text-xs text-red-600 dark:text-red-400">Choose an exercise.</p>}
                         </div>
                         <div className="col-span-7 sm:col-span-3">
                             <label className="text-xs font-semibold">Rest (s)</label>
                             <input type="number" value={row.rest_seconds} onChange={(e) => setRow(i, { rest_seconds: Number(e.target.value) })} min={0} max={3600} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
                         </div>
                         <div className="col-span-5 sm:col-span-2">
-                            <button type="button" onClick={() => setData('exercises', data.exercises.filter((_, j) => j !== i))} className="w-full rounded-xl border border-red-300 px-2 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10">
+                            <button type="button" onClick={() => setData('exercises', data.exercises.filter((_, j) => j !== i))} className={`${btn.danger} w-full`}>
                                 Remove
                             </button>
                         </div>
@@ -82,15 +83,15 @@ export default function RoutineCreate() {
                 <button
                     type="button"
                     onClick={() => setData('exercises', [...data.exercises, emptyRow()])}
-                    className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700"
+                    className={btn.secondary}
                 >
-                    + Add exercise
+                    Add exercise
                 </button>
 
                 <div>
                     <PrimaryButton disabled={processing}>Create routine</PrimaryButton>
                 </div>
-                <p className="text-xs text-zinc-500">Target sets default to 3× normal. The routine stays a template — tune weight/reps per workout.</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Target sets default to 3× normal. The routine stays a template. Tune weight/reps per workout.</p>
             </form>
         </AuthenticatedLayout>
     );

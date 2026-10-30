@@ -1,6 +1,7 @@
-import { Card, Chip, StatCard } from "@/Components/ui";
+import { btn, Card, Chip, StatCard } from "@/Components/ui";
 import ExerciseMedia from "@/Components/ExerciseMedia";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { formatNumber } from "@/lib/units";
 import { EXERCISE_TYPE_LABELS, Exercise } from "@/types";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { useMemo } from "react";
@@ -27,6 +28,7 @@ interface Props {
     prs: {
         id: number;
         record_type: string;
+        record_type_label: string;
         value_primary: number | string;
         value_reps: number | null;
     }[];
@@ -73,8 +75,8 @@ export default function ExerciseShow({
                                 {EXERCISE_TYPE_LABELS[exercise.exercise_type] ??
                                     exercise.exercise_type}
                             </Chip>
-                            <Chip>{exercise.primary_muscle?.name ?? "—"}</Chip>
-                            <Chip>{exercise.equipment?.name ?? "—"}</Chip>
+                            <Chip>{exercise.primary_muscle?.name ?? "-"}</Chip>
+                            <Chip>{exercise.equipment?.name ?? "-"}</Chip>
                         </div>
                         {exercise.description && (
                             <p className="mt-3 text-sm">
@@ -85,7 +87,7 @@ export default function ExerciseShow({
                             <p className="mt-3 text-sm">{exercise.overview}</p>
                         )}
                         {exercise.instructions && (
-                            <p className="mt-2 whitespace-pre-line text-sm text-zinc-500">
+                            <p className="mt-2 whitespace-pre-line text-sm text-zinc-500 dark:text-zinc-400">
                                 {exercise.instructions}
                             </p>
                         )}
@@ -120,7 +122,7 @@ export default function ExerciseShow({
                         {canEdit && (
                             <Link
                                 href={route("exercises.edit", exercise.id)}
-                                className="mt-3 inline-block rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700"
+                                className={`${btn.secondary} mt-3`}
                             >
                                 Edit
                             </Link>
@@ -130,7 +132,7 @@ export default function ExerciseShow({
                     <Card>
                         <h2 className="font-bold">History</h2>
                         {history.length === 0 ? (
-                            <p className="mt-2 text-sm text-zinc-500">
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
                                 Complete a workout to see your progress.
                             </p>
                         ) : (
@@ -165,26 +167,26 @@ export default function ExerciseShow({
                             value={
                                 bestSet
                                     ? `${bestSet.weight_kg} × ${bestSet.reps}`
-                                    : "—"
+                                    : "-"
                             }
                         />
                         <StatCard
                             label="1RM (est.)"
-                            value={oneRm ?? "—"}
+                            value={oneRm ?? "-"}
                             sub="Epley, estimate only"
                         />
                     </div>
                     <Card>
                         <h2 className="font-bold">Personal records</h2>
                         {prs.length === 0 && (
-                            <p className="mt-2 text-sm text-zinc-500">
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
                                 No PRs for this exercise yet.
                             </p>
                         )}
                         {prs.map((pr) => (
                             <p key={pr.id} className="mt-2 text-sm">
-                                <strong>{pr.record_type}</strong>:{" "}
-                                {String(pr.value_primary)}
+                                <strong>{pr.record_type_label}</strong>:{" "}
+                                {formatNumber(pr.value_primary)}
                                 {pr.value_reps ? ` × ${pr.value_reps}` : ""}
                             </p>
                         ))}

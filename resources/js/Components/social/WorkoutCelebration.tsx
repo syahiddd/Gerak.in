@@ -1,3 +1,4 @@
+import { btn } from '@/Components/ui';
 import { displayWeight, formatNumber } from '@/lib/units';
 import { Celebration, FeedPost, PageProps } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -142,7 +143,7 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
                         </svg>
                     </div>
 
-                    <p className="mt-7 text-xs font-bold uppercase tracking-[0.25em] text-lime-400 motion-safe:animate-rise" style={{ animationDelay: '500ms' }}>
+                    <p className="mt-7 text-sm font-bold text-lime-400 motion-safe:animate-rise" style={{ animationDelay: '500ms' }}>
                         Workout #{celebrate.workout_number}
                     </p>
                     <h2 id="celebration-title" className="mt-2 text-4xl font-black tracking-tight motion-safe:animate-rise sm:text-5xl" style={{ animationDelay: '600ms' }}>
@@ -154,7 +155,7 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
 
                     <dl className="mt-8 grid grid-cols-3 gap-2 motion-safe:animate-rise" style={{ animationDelay: '800ms' }}>
                         <Stat label="Time" value={humanDuration(post.duration_seconds)} />
-                        <Stat label="Volume" value={post.volume_kg ? `${formatNumber(Math.round(volume))} ${vol.unit}` : '—'} />
+                        <Stat label="Volume" value={post.volume_kg ? `${formatNumber(Math.round(volume))} ${vol.unit}` : '-'} />
                         <Stat label="Sets" value={String(Math.round(sets))} />
                     </dl>
 
@@ -192,7 +193,7 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
                             ref={cta}
                             type="button"
                             onClick={onClose}
-                            className="w-full rounded-2xl bg-lime-400 px-6 py-3.5 text-base font-black text-zinc-950 hover:bg-lime-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-lime-400/40"
+                            className={`${btn.primary} w-full text-base`}
                         >
                             Add photos &amp; share
                         </button>

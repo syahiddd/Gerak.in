@@ -1,21 +1,11 @@
-import { Card, EmptyState, StatCard } from '@/Components/ui';
+import { btn, Card, EmptyState, MuscleBars, StatCard } from '@/Components/ui';
+import VolumeChart from '@/Components/VolumeChart';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { formatDuration, formatNumber } from '@/lib/units';
 import { ProfileHeader } from '@/Pages/Social/Profile';
 import { PageProps, PersonalRecord, PublicProfile, Routine, Workout } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { LogOut, Settings, ShieldCheck } from 'lucide-react';
-import {
-    Bar,
-    BarChart,
-    Cell,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from 'recharts';
 
 interface Props extends PageProps {
     profile: PublicProfile;
@@ -35,8 +25,6 @@ interface Props extends PageProps {
     greeting: string;
 }
 
-const PIE_COLORS = ['#a3e635', '#34d399', '#38bdf8', '#fbbf24', '#f472b6', '#a78bfa', '#94a3b8'];
-
 export default function ProfileShow({
     auth,
     profile,
@@ -50,17 +38,7 @@ export default function ProfileShow({
     greeting,
 }: Props) {
     const startEmpty = useForm({});
-    const weeklyData = weekly.labels.map((label, i) => ({
-        week: label,
-        volume: weekly.volumes[i] ?? 0,
-    }));
-    const muscleData = muscles.labels.map((label, i) => ({
-        name: label,
-        sets: muscles.sets[i] ?? 0,
-    }));
-
-    const iconBtn =
-        'flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white';
+    const linkCls = 'text-sm font-semibold text-lime-700 hover:underline dark:text-lime-400';
 
     return (
         <AuthenticatedLayout>
@@ -73,14 +51,14 @@ export default function ProfileShow({
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                     {auth.user.role === 'admin' && (
-                        <Link href={route('admin.dashboard')} className={iconBtn} aria-label="Admin" title="Admin">
+                        <Link href={route('admin.dashboard')} className={btn.icon} aria-label="Admin" title="Admin">
                             <ShieldCheck className="h-5 w-5" />
                         </Link>
                     )}
-                    <Link href={route('settings.edit')} className={iconBtn} aria-label="Settings" title="Settings">
+                    <Link href={route('settings.edit')} className={btn.icon} aria-label="Settings" title="Settings">
                         <Settings className="h-5 w-5" />
                     </Link>
-                    <Link href={route('logout')} method="post" as="button" className={iconBtn} aria-label="Log out" title="Log out">
+                    <Link href={route('logout')} method="post" as="button" className={btn.icon} aria-label="Log out" title="Log out">
                         <LogOut className="h-5 w-5" />
                     </Link>
                 </div>
@@ -91,15 +69,12 @@ export default function ProfileShow({
             </div>
 
             {activeWorkout && (
-                <div className="mb-4 flex items-center justify-between rounded-2xl bg-lime-400 p-4 text-zinc-950">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-lime-400 bg-white p-4 dark:bg-zinc-900">
                     <div>
-                        <p className="font-extrabold">Resume workout: {activeWorkout.name}</p>
-                        <p className="text-sm">Started {new Date(activeWorkout.started_at).toLocaleString()}</p>
+                        <p className="font-extrabold">Workout in progress: {activeWorkout.name}</p>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(activeWorkout.started_at).toLocaleString()}</p>
                     </div>
-                    <Link
-                        href={route('workouts.show', activeWorkout.id)}
-                        className="rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white"
-                    >
+                    <Link href={route('workouts.show', activeWorkout.id)} className={btn.primary}>
                         Resume
                     </Link>
                 </div>
@@ -112,21 +87,19 @@ export default function ProfileShow({
                         {routines.length > 0 ? (
                             <>
                                 <p className="mt-2 text-lg font-extrabold">{routines[0].name}</p>
-                                <p className="text-sm text-zinc-500">{routines[0].exercises_count} exercises</p>
-                                <div className="mt-3 flex gap-2">
+                                <p className="text-sm text-zinc-500 dark:text-zinc-400">{routines[0].exercises_count} exercises</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {/* A running workout's Resume above is the main action when there is one. */}
                                     <Link
                                         href={route('workouts.start-routine', routines[0].id)}
                                         method="post"
                                         as="button"
-                                        className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950"
+                                        className={activeWorkout ? btn.secondary : btn.primary}
                                     >
-                                        Start Workout
+                                        Start workout
                                     </Link>
-                                    <Link
-                                        href={route('routines.show', routines[0].id)}
-                                        className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700"
-                                    >
-                                        View
+                                    <Link href={route('routines.show', routines[0].id)} className={btn.secondary}>
+                                        View routine
                                     </Link>
                                 </div>
                             </>
@@ -136,25 +109,23 @@ export default function ProfileShow({
                                     title="No routines yet"
                                     hint="Create your first routine to get going."
                                     action={
-                                        <Link href={route('routines.create')} className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950">
+                                        <Link href={route('routines.create')} className={btn.primary}>
                                             Create routine
                                         </Link>
                                     }
                                 />
                             </div>
                         )}
-                        <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                            <button
-                                onClick={() => startEmpty.post(route('workouts.start-empty'))}
-                                className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold dark:border-zinc-700"
-                            >
+                        {/* Shortcuts: quieter than the routine buttons so they don't compete. */}
+                        <div className="-mx-2 mt-4 flex flex-wrap gap-1 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                            <button onClick={() => startEmpty.post(route('workouts.start-empty'))} className={`${btn.ghost} px-2`}>
                                 Start empty workout
                             </button>
-                            <Link href={route('exercises.index')} className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold dark:border-zinc-700">
+                            <Link href={route('exercises.index')} className={`${btn.ghost} px-2`}>
                                 Browse exercises
                             </Link>
-                            <Link href={route('measurements.index')} className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold dark:border-zinc-700">
-                                Add measurement
+                            <Link href={route('measurements.index')} className={`${btn.ghost} px-2`}>
+                                Log measurement
                             </Link>
                         </div>
                     </Card>
@@ -162,7 +133,7 @@ export default function ProfileShow({
                     <Card>
                         <div className="flex items-center justify-between">
                             <h2 className="font-bold">Recent workouts</h2>
-                            <Link href={route('workouts.index')} className="text-sm font-semibold text-lime-600 dark:text-lime-400">
+                            <Link href={route('workouts.index')} className={linkCls}>
                                 History
                             </Link>
                         </div>
@@ -179,13 +150,13 @@ export default function ProfileShow({
                             >
                                 <div>
                                     <p className="font-bold">{w.name}</p>
-                                    <p className="text-xs text-zinc-500">
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
                                         {new Date(w.started_at).toLocaleString()} · {w.exercises_count} exercises
                                     </p>
                                 </div>
                                 <div className="text-right text-sm tabular-nums">
                                     <p className="font-bold">{formatNumber(w.total_volume_kg)} kg</p>
-                                    <p className="text-xs text-zinc-500">{formatDuration(w.duration_seconds)}</p>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDuration(w.duration_seconds)}</p>
                                 </div>
                             </Link>
                         ))}
@@ -193,21 +164,12 @@ export default function ProfileShow({
 
                     <Card>
                         <div className="flex items-center justify-between">
-                            <h2 className="font-bold">Weekly activity</h2>
-                            <Link href={route('statistics.index')} className="text-sm font-semibold text-lime-600 dark:text-lime-400">
+                            <h2 className="font-bold">Volume lifted per week (kg)</h2>
+                            <Link href={route('statistics.index')} className={linkCls}>
                                 All statistics
                             </Link>
                         </div>
-                        <div className="h-48">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={weeklyData}>
-                                    <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-                                    <YAxis tick={{ fontSize: 11 }} />
-                                    <Tooltip />
-                                    <Bar dataKey="volume" fill="#a3e635" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <VolumeChart labels={weekly.labels} volumes={weekly.volumes} period="week" className="mt-2 h-48" />
                     </Card>
                 </div>
 
@@ -220,40 +182,29 @@ export default function ProfileShow({
                     </div>
 
                     <Card>
-                        <h2 className="font-bold">Muscle distribution (30d)</h2>
-                        {muscleData.length === 0 ? (
-                            <p className="mt-2 text-sm text-zinc-500">Complete a workout to see your muscle split.</p>
+                        <h2 className="font-bold">Sets per muscle, last 30 days</h2>
+                        {muscles.labels.length === 0 ? (
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Complete a workout to see your muscle split.</p>
                         ) : (
-                            <div className="h-56">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={muscleData} dataKey="sets" nameKey="name" outerRadius={80} label>
-                                            {muscleData.map((_, i) => (
-                                                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <MuscleBars labels={muscles.labels} sets={muscles.sets} />
                         )}
                     </Card>
 
                     <Card>
                         <div className="flex items-center justify-between">
                             <h2 className="font-bold">Recent PRs</h2>
-                            <Link href={route('records.index')} className="text-sm font-semibold text-lime-600 dark:text-lime-400">
+                            <Link href={route('records.index')} className={linkCls}>
                                 All
                             </Link>
                         </div>
                         {recentPrs.length === 0 && (
-                            <p className="mt-2 text-sm text-zinc-500">No PRs yet. Finish a workout to set one.</p>
+                            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">No PRs yet. Finish a workout to set one.</p>
                         )}
                         {recentPrs.map((pr) => (
                             <div key={pr.id} className="mt-2 text-sm">
                                 <p className="font-bold">{pr.exercise.name}</p>
-                                <p className="text-zinc-500">
-                                    {pr.record_type}: {formatNumber(pr.value_primary)}
+                                <p className="text-zinc-500 dark:text-zinc-400">
+                                    {pr.record_type_label}: {formatNumber(pr.value_primary)}
                                     {pr.value_reps ? ` × ${pr.value_reps}` : ''}
                                 </p>
                             </div>

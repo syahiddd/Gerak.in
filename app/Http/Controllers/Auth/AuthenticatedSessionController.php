@@ -47,6 +47,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        Inertia::clearHistory();
+
+        return redirect()->route('home');
     }
 }

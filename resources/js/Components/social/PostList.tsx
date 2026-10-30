@@ -1,3 +1,4 @@
+import { btn } from '@/Components/ui';
 import { CursorPage, FeedPost } from '@/types';
 import { router } from '@inertiajs/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
@@ -42,7 +43,7 @@ export default function PostList({ posts, empty }: { posts: CursorPage<FeedPost>
                         type="button"
                         onClick={loadMore}
                         disabled={loading}
-                        className="rounded-xl border border-zinc-300 px-5 py-2 text-sm font-bold hover:bg-white disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                        className={btn.secondary}
                     >
                         {loading ? 'Loading…' : 'Load more'}
                     </button>

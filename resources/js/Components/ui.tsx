@@ -1,5 +1,22 @@
 import { ReactNode } from 'react';
 
+// One button scale for the whole app. 44px min height because sets get logged mid-workout, on a phone.
+const btnBase =
+    'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-50';
+
+export const btn = {
+    // The one action the screen is for. Use once per view.
+    primary: `${btnBase} bg-lime-400 text-zinc-950 hover:bg-lime-300`,
+    secondary: `${btnBase} border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800`,
+    // Low-weight shortcuts that shouldn't compete with the buttons above them.
+    ghost: `${btnBase} text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white`,
+    // Destructive but secondary (cancel, delete): visible, never louder than the main action.
+    danger: `${btnBase} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40`,
+    // Final confirmation inside a destructive dialog.
+    dangerSolid: `${btnBase} bg-red-600 text-white hover:bg-red-500`,
+    icon: 'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white',
+};
+
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
     return (
         <div className={`rounded-2xl bg-white border border-zinc-200 p-5 dark:bg-zinc-900 dark:border-zinc-800 ${className}`}>
@@ -11,10 +28,31 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
 export function StatCard({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
     return (
         <div className="rounded-2xl bg-white border border-zinc-200 p-4 dark:bg-zinc-900 dark:border-zinc-800">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
             <p className="mt-1 text-2xl font-extrabold tabular-nums">{value}</p>
-            {sub && <p className="mt-1 text-xs text-zinc-500">{sub}</p>}
+            {sub && <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{sub}</p>}
         </div>
+    );
+}
+
+/** Ranked sets-per-muscle list. Answers "what did I train most" better than a multi-colour pie. */
+export function MuscleBars({ labels, sets }: { labels: string[]; sets: number[] }) {
+    const max = Math.max(1, ...sets);
+
+    return (
+        <ul className="mt-3 space-y-2">
+            {labels.map((name, i) => (
+                <li key={name} className="text-sm">
+                    <div className="flex justify-between gap-2">
+                        <span className="truncate">{name}</span>
+                        <span className="font-bold tabular-nums">{sets[i] ?? 0}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <div className="h-full rounded-full bg-lime-400" style={{ width: `${((sets[i] ?? 0) / max) * 100}%` }} />
+                    </div>
+                </li>
+            ))}
+        </ul>
     );
 }
 
@@ -30,7 +68,7 @@ export function EmptyState({
     return (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
             <p className="font-bold">{title}</p>
-            {hint && <p className="mt-1 text-sm text-zinc-500">{hint}</p>}
+            {hint && <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{hint}</p>}
             {action && <div className="mt-4">{action}</div>}
         </div>
     );
@@ -96,7 +134,7 @@ export function FlashMessages({ flash }: { flash: { success?: string | null; inf
                     <ul className="ms-5 mt-1 list-disc">
                         {flash.pr_events.map((pr, i) => (
                             <li key={i}>
-                                <strong>{pr.exercise}</strong> — {pr.type}: {pr.detail}
+                                <strong>{pr.exercise}</strong> ({pr.type}: {pr.detail})
                             </li>
                         ))}
                     </ul>

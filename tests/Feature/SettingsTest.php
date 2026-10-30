@@ -25,8 +25,8 @@ class SettingsTest extends TestCase
 
     public function test_guest_cannot_access_settings(): void
     {
-        $this->get(route('settings.edit'))->assertRedirect(route('login'));
-        $this->patch(route('settings.update'), $this->validPayload())->assertRedirect(route('login'));
+        $this->get(route('settings.edit'))->assertRedirect(route('home'));
+        $this->patch(route('settings.update'), $this->validPayload())->assertRedirect(route('home'));
     }
 
     public function test_new_users_get_profile_and_settings_rows(): void

@@ -163,6 +163,7 @@ export interface Workout {
 export interface PersonalRecord {
     id: number;
     record_type: string;
+    record_type_label: string;
     value_primary: string | number;
     value_reps: number | null;
     achieved_at: string | null;

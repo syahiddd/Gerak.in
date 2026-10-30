@@ -79,7 +79,7 @@ export default function Settings({ user, settings }: { user: User; settings: Use
                             <option value="followers">Followers</option>
                             <option value="private">Only you</option>
                         </select>
-                        <p className="mt-1 text-xs text-zinc-500">Pre-selected when you save a workout. You can change it each time.</p>
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Pre-selected when you save a workout. You can change it each time.</p>
                     </div>
                     <div>
                         <InputLabel htmlFor="timezone" value="Timezone" />

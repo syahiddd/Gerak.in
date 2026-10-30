@@ -23,7 +23,7 @@ export default function Register() {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout title="Create your account">
             <Head title="Register" />
 
             <form onSubmit={submit}>
@@ -103,19 +103,18 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
-                </div>
+                <PrimaryButton className="mt-6 w-full" disabled={processing}>
+                    Create account
+                </PrimaryButton>
             </form>
+
+            {/* The login page is the landing page (/), so link there rather than Breeze's /login. */}
+            <p className="mt-8 text-center text-sm text-zinc-400">
+                Already have an account?{' '}
+                <Link href={route('home')} className="font-bold text-zinc-100 underline decoration-lime-400 decoration-2 underline-offset-4 hover:text-lime-300">
+                    Log in
+                </Link>
+            </p>
         </GuestLayout>
     );
 }

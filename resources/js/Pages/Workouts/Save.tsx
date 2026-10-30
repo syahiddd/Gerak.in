@@ -1,6 +1,7 @@
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import WorkoutCelebration from '@/Components/social/WorkoutCelebration';
 import { PostStats } from '@/Components/social/WorkoutPostCard';
+import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { compressImage } from '@/lib/image';
 import { FeedPost, PageProps, PostPhoto, WorkoutVisibility } from '@/types';
@@ -98,7 +99,7 @@ export default function Save({
                             onChange={(e) => form.setData('name', e.target.value)}
                             className="mt-1 block w-full rounded-xl border-zinc-300 focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                         />
-                        {form.errors.name && <p className="mt-1 text-sm text-red-500">{form.errors.name}</p>}
+                        {form.errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{form.errors.name}</p>}
                     </div>
                     <div>
                         <label htmlFor="description" className="text-sm font-semibold">
@@ -113,7 +114,7 @@ export default function Save({
                             placeholder="How did it go? New PR, felt strong, tough day…"
                             className="mt-1 block w-full rounded-xl border-zinc-300 focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                         />
-                        {form.errors.description && <p className="mt-1 text-sm text-red-500">{form.errors.description}</p>}
+                        {form.errors.description && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{form.errors.description}</p>}
                     </div>
                 </section>
 
@@ -147,14 +148,14 @@ export default function Save({
                             );
                         })}
                     </div>
-                    {form.errors.visibility && <p className="mt-2 text-sm text-red-500">{form.errors.visibility}</p>}
+                    {form.errors.visibility && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{form.errors.visibility}</p>}
                 </fieldset>
 
                 <div className="flex items-center justify-end gap-3">
-                    <Link href={route('workouts.show', workout.id)} className="rounded-xl px-4 py-2 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                    <Link href={route('workouts.show', workout.id)} className={btn.ghost}>
                         Skip for now
                     </Link>
-                    <button disabled={form.processing} className="rounded-xl bg-lime-400 px-5 py-2.5 text-sm font-bold text-zinc-950 disabled:opacity-60">
+                    <button disabled={form.processing} className={btn.primary}>
                         Save workout
                     </button>
                 </div>
@@ -260,9 +261,9 @@ function PhotoPicker({
             </div>
             <input ref={input} type="file" accept="image/*" multiple onChange={pick} className="hidden" />
 
-            {(localError || error) && <p className="mt-2 text-sm text-red-500">{localError ?? error}</p>}
+            {(localError || error) && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{localError ?? error}</p>}
             {!localError && !error && kept.length + added.length === 0 && (
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Gym selfie, the whiteboard, your PR on the bar — up to {max} photos.</p>
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Gym selfie, the whiteboard, your PR on the bar. Up to {max} photos.</p>
             )}
         </section>
     );

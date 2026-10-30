@@ -1,7 +1,7 @@
 import BrandLogo from '@/Components/BrandLogo';
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { CheckCircle2, Dumbbell, Eye, EyeOff, Flame, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Dumbbell, Eye, EyeOff } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 export default function Welcome({
@@ -33,17 +33,13 @@ export default function Welcome({
     };
 
     const inputClass =
-        'w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-[15px] text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-lime-400/70 focus:ring-2 focus:ring-lime-400/20';
+        'w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-[15px] text-zinc-100 placeholder-zinc-400 outline-none transition focus:border-lime-400/70 focus:ring-2 focus:ring-lime-400/20';
 
     return (
         <>
             <Head title="Log in" />
-            <div
-                className="min-h-screen text-zinc-100 lg:grid lg:grid-cols-[1fr_1.1fr]"
-                style={{
-                    background: 'linear-gradient(105deg, #09090b 0%, #09090b 42%, #0d1008 68%, #141b0c 100%)',
-                }}
-            >
+            {/* Always dark: lime on near-black is the Gerak.in look, shared with GuestLayout. */}
+            <div className="min-h-screen bg-zinc-950 text-zinc-100 lg:grid lg:grid-cols-[1fr_1.1fr]">
                 {/* ===== Kolom kiri: form login ===== */}
                 <div className="flex min-h-screen flex-col px-6 py-6 sm:px-12">
                     <Link href="/" className="flex w-fit items-center gap-2.5">
@@ -111,7 +107,7 @@ export default function Welcome({
                                             type="button"
                                             onClick={() => setShowPassword((v) => !v)}
                                             aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-500 hover:text-zinc-200"
+                                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 hover:text-zinc-200"
                                         >
                                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                         </button>
@@ -147,41 +143,20 @@ export default function Welcome({
                                     </Link>
                                 </p>
                             )}
-
-                            {canLogin && (
-                                <p className="mt-3 text-center text-xs text-zinc-600">
-                                    Demo: demo@example.com / password
-                                </p>
-                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* ===== Kolom kanan: showcase produk ===== */}
-                <div className="relative hidden overflow-hidden lg:block">
-                    {/* pola titik + cahaya lembut */}
-                    <div
-                        className="absolute inset-0"
-                        aria-hidden="true"
-                        style={{
-                            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
-                            backgroundSize: '26px 26px',
-                            maskImage: 'radial-gradient(ellipse 90% 80% at 50% 40%, black 30%, transparent 75%)',
-                            WebkitMaskImage: 'radial-gradient(ellipse 90% 80% at 50% 40%, black 30%, transparent 75%)',
-                        }}
-                    />
-                    <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-lime-400/10 blur-3xl" aria-hidden="true" />
-
-                    <div className="relative flex min-h-screen flex-col items-center justify-center px-12 py-12">
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-400">
-                        </p>
-                        <h2 className="mt-3 max-w-md text-center text-3xl font-extrabold leading-snug tracking-tight">
-                            Your workouts, routines &amp; PRs — in one place.
+                <div className="hidden border-l border-zinc-800 bg-zinc-900 lg:block">
+                    <div className="flex min-h-screen flex-col items-center justify-center px-12 py-12">
+                        <h2 className="max-w-md text-center text-3xl font-extrabold leading-snug tracking-tight">
+                            Your workouts, routines &amp; PRs in one place.
                         </h2>
 
                         {/* mockup ponsel */}
-                        <div className="relative mt-10" aria-hidden="true">
-                            <div className="w-[290px] rounded-[2.5rem] border border-zinc-700 bg-black p-2.5 shadow-2xl shadow-black/60">
+                        <div className="mt-10" aria-hidden="true">
+                            <div className="w-[290px] rounded-[2.5rem] border border-zinc-700 bg-black p-2.5">
                                 <div className="rounded-[2rem] bg-zinc-950 p-4">
                                     <div className="mx-auto h-5 w-24 rounded-full bg-black ring-1 ring-zinc-800" />
                                     <div className="mt-3 flex items-center justify-between text-[13px]">
@@ -190,15 +165,15 @@ export default function Welcome({
                                     </div>
                                     <div className="mt-3 grid grid-cols-3 gap-1.5 text-center text-[11px]">
                                         <div className="rounded-lg bg-zinc-900 p-2">
-                                            <p className="text-zinc-500">Duration</p>
+                                            <p className="text-zinc-400">Duration</p>
                                             <p className="mt-0.5 font-bold">1h 13m</p>
                                         </div>
                                         <div className="rounded-lg bg-zinc-900 p-2">
-                                            <p className="text-zinc-500">Volume</p>
-                                            <p className="mt-0.5 font-bold">8.200kg</p>
+                                            <p className="text-zinc-400">Volume</p>
+                                            <p className="mt-0.5 font-bold">8,200 kg</p>
                                         </div>
                                         <div className="rounded-lg bg-zinc-900 p-2">
-                                            <p className="text-zinc-500">Sets</p>
+                                            <p className="text-zinc-400">Sets</p>
                                             <p className="mt-0.5 font-bold">28</p>
                                         </div>
                                     </div>
@@ -225,23 +200,10 @@ export default function Welcome({
                                     </div>
                                 </div>
                             </div>
-
-                            {/* chip melayang */}
-                            <div className="absolute -left-16 top-16 flex -rotate-6 items-center gap-2 rounded-2xl border border-zinc-700/80 bg-zinc-900/95 p-3 shadow-xl">
-                                <Flame className="h-5 w-5 text-lime-400" />
-                                <div className="text-[13px]">
-                                    <p className="font-extrabold leading-none">12 days</p>
-                                    <p className="mt-1 text-[11px] text-zinc-500">streak</p>
-                                </div>
-                            </div>
-                            <div className="absolute -right-14 bottom-20 flex rotate-3 items-center gap-2 rounded-2xl border border-zinc-700/80 bg-zinc-900/95 p-3 shadow-xl">
-                                <TrendingUp className="h-5 w-5 text-lime-400" />
-                                <div className="text-[13px]">
-                                    <p className="font-extrabold leading-none">+5kg PR</p>
-                                    <p className="mt-1 text-[11px] text-zinc-500">bench press</p>
-                                </div>
-                            </div>
                         </div>
+
+                        {/* Sample numbers: label them so they don't read as real user data. */}
+                        <p className="mt-8 text-sm text-zinc-400">Example screen with sample numbers, not real user data.</p>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import TextInput from '@/Components/TextInput';
-import { Pagination } from '@/Components/ui';
+import { btn, Pagination } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated, User } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -10,7 +10,7 @@ export default function AdminUsers({ users }: { users: Paginated<User & { is_sus
     const search = useForm({});
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Admin — Users</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Admin: Users</h1>}>
             <Head title="Admin users" />
 
             <form
@@ -31,16 +31,16 @@ export default function AdminUsers({ users }: { users: Paginated<User & { is_sus
                     <div key={u.id} className="flex items-center justify-between p-4 text-sm">
                         <div>
                             <p className="font-bold">
-                                {u.name} {u.is_suspended && <span className="text-red-500">(suspended)</span>}
+                                {u.name} {u.is_suspended && <span className="text-red-600 dark:text-red-400">(suspended)</span>}
                             </p>
-                            <p className="text-zinc-500">{u.email} · {String(u.role)}</p>
+                            <p className="text-zinc-500 dark:text-zinc-400">{u.email} · {String(u.role)}</p>
                         </div>
                         {u.is_suspended ? (
-                            <Link href={route('admin.users.activate', u.id)} method="post" as="button" className="rounded-xl border border-zinc-300 px-3 py-1 font-bold dark:border-zinc-700">
+                            <Link href={route('admin.users.activate', u.id)} method="post" as="button" className={btn.secondary}>
                                 Activate
                             </Link>
                         ) : (
-                            <Link href={route('admin.users.suspend', u.id)} method="post" as="button" className="rounded-xl border border-red-300 px-3 py-1 font-bold text-red-500">
+                            <Link href={route('admin.users.suspend', u.id)} method="post" as="button" className={btn.danger}>
                                 Suspend
                             </Link>
                         )}

@@ -1,6 +1,6 @@
 import Avatar from '@/Components/social/Avatar';
 import PostList from '@/Components/social/PostList';
-import UserSearchBox from '@/Components/social/UserSearchBox';
+import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CursorPage, FeedPost, PageProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -25,7 +25,7 @@ export default function Feed({ tab, posts, followingCount }: { tab: Tab; posts: 
                         : 'Workouts from you and the people you follow will appear here once they finish a session.'
                 }
                 action={
-                    <Link href={route('feed.index', { tab: 'discover' })} className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950">
+                    <Link href={route('feed.index', { tab: 'discover' })} className={btn.primary}>
                         Browse Discover
                     </Link>
                 }
@@ -35,7 +35,7 @@ export default function Feed({ tab, posts, followingCount }: { tab: Tab; posts: 
                 title="Nothing public yet"
                 body="Public workouts from everyone on Gerak.in show up here. Finish a workout and share it with Everyone to be first."
                 action={
-                    <Link href={route('workouts.index')} className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950">
+                    <Link href={route('workouts.index')} className={btn.primary}>
                         Start a workout
                     </Link>
                 }
@@ -87,11 +87,6 @@ export default function Feed({ tab, posts, followingCount }: { tab: Tab; posts: 
                             <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">View your profile</p>
                         </div>
                     </Link>
-                    <div className="rounded-2xl bg-white p-4 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
-                        <p className="font-bold">Find people</p>
-                        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Search by name or @username.</p>
-                        <UserSearchBox className="mt-3" />
-                    </div>
                 </aside>
             </div>
         </AuthenticatedLayout>

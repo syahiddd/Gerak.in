@@ -1,7 +1,7 @@
 import BrandLogo from '@/Components/BrandLogo';
 import Dropdown from '@/Components/Dropdown';
 import UserSearchBox from '@/Components/social/UserSearchBox';
-import { FlashMessages } from '@/Components/ui';
+import { btn, FlashMessages } from '@/Components/ui';
 import { applyTheme } from '@/hooks/workout';
 import { Link, usePage } from '@inertiajs/react';
 import { Dialog } from '@headlessui/react';
@@ -11,6 +11,7 @@ import {
     Dumbbell,
     Library,
     Menu,
+    Moon,
     Newspaper,
     ShieldCheck,
     User,
@@ -44,10 +45,20 @@ export default function Authenticated({
     const isActive = (patterns: string[]) =>
         patterns.some((p) => route().current(p));
 
+    const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
     const toggleTheme = () => {
-        const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-        applyTheme(next as 'light' | 'dark');
+        applyTheme(isDark ? 'light' : 'dark');
+        setIsDark(!isDark);
     };
+
+    // A labelled on/off toggle, so the current theme is visible instead of a generic "Toggle Theme".
+    const themeButton = (
+        <button onClick={toggleTheme} aria-pressed={isDark} className={`${btn.ghost} w-full justify-start border border-zinc-200 dark:border-zinc-700`}>
+            <Moon className="h-4 w-4" aria-hidden />
+            Dark mode
+            <span className="ms-auto text-xs font-semibold text-zinc-500 dark:text-zinc-400">{isDark ? 'On' : 'Off'}</span>
+        </button>
+    );
 
     const [drawerOpen, setDrawerOpen] = useState(false);
     const closeDrawer = () => setDrawerOpen(false);
@@ -109,18 +120,13 @@ export default function Authenticated({
                 {navLinks(() => {})}
 
                 <div className="space-y-2 border-t border-zinc-200 p-4 dark:border-zinc-800">
-                    <button
-                        onClick={toggleTheme}
-                        className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-left text-sm text-zinc-500 hover:text-zinc-900 dark:border-zinc-700 dark:hover:text-white"
-                    >
-                        Toggle Theme
-                    </button>
+                    {themeButton}
                     <Dropdown>
                         <Dropdown.Trigger>
                             <span className="inline-flex w-full rounded-xl">
                                 <button
                                     type="button"
-                                    className="inline-flex w-full items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 focus:outline-none dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                                    className="inline-flex w-full items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
                                 >
                                     <span className="truncate">{user.name}</span>
                                     <svg className="ms-1 h-4 w-4 shrink-0 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -153,7 +159,7 @@ export default function Authenticated({
                 {logo}
                 <button
                     onClick={() => setDrawerOpen(true)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-200 dark:hover:bg-zinc-800"
                     aria-label="Open navigation menu"
                     aria-expanded={drawerOpen}
                 >
@@ -170,7 +176,7 @@ export default function Authenticated({
                             {logo}
                             <button
                                 onClick={closeDrawer}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-200 dark:hover:bg-zinc-800"
                                 aria-label="Close navigation menu"
                             >
                                 <X className="h-6 w-6" />
@@ -179,18 +185,13 @@ export default function Authenticated({
 
                         <div className="px-3 pt-3">
                             <p className="truncate px-3 text-sm font-bold">{user.name}</p>
-                            <p className="truncate px-3 text-xs text-zinc-500">{user.email}</p>
+                            <p className="truncate px-3 text-xs text-zinc-500 dark:text-zinc-400">{user.email}</p>
                         </div>
 
                         {navLinks(closeDrawer)}
 
                         <div className="space-y-2 border-t border-zinc-200 p-4 text-sm dark:border-zinc-800">
-                            <button
-                                onClick={toggleTheme}
-                                className="w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-left font-medium text-zinc-600 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:text-white"
-                            >
-                                Toggle Theme
-                            </button>
+                            {themeButton}
                             <Link
                                 href={route('users.show', user.username)}
                                 onClick={closeDrawer}
@@ -248,7 +249,7 @@ export default function Authenticated({
                     {children}
 
                     {/* Required attribution for exercise animations (exercises-dataset / WorkoutX). */}
-                    <p className="mt-10 text-center text-[11px] text-zinc-400 dark:text-zinc-600">
+                    <p className="mt-10 text-center text-[11px] text-zinc-600 dark:text-zinc-400">
                         Exercise animations ©{' '}
                         <a href="https://gymvisual.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600 dark:hover:text-zinc-400">
                             Gym visual

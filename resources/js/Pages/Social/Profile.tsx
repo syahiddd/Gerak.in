@@ -1,6 +1,7 @@
 import Avatar from '@/Components/social/Avatar';
 import FollowButton from '@/Components/social/FollowButton';
 import PostList from '@/Components/social/PostList';
+import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { CursorPage, FeedPost, PublicProfile } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -13,7 +14,7 @@ export default function Profile({ profile, posts }: { profile: PublicProfile; po
                 <ProfileHeader profile={profile} />
 
                 <section aria-label="Workouts">
-                    <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Workouts</h2>
+                    <h2 className="mb-3 text-lg font-extrabold">Workouts</h2>
                     <PostList
                         posts={posts}
                         empty={
@@ -50,7 +51,7 @@ export function ProfileHeader({ profile, as: Heading = 'h1' }: { profile: Public
                 {profile.is_me ? (
                     <Link
                         href={route('profile.edit')}
-                        className="basis-full rounded-xl border border-zinc-300 px-4 py-2 text-center text-sm font-bold hover:bg-zinc-100 sm:basis-auto dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className={`${btn.secondary} basis-full sm:basis-auto`}
                     >
                         Edit profile
                     </Link>

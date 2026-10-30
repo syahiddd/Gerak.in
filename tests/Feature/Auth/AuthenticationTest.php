@@ -50,5 +50,12 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect('/');
+        // Wipes the encrypted Inertia history so Back can't show the signed-out user's pages.
+        $response->assertSessionHas('inertia.clear_history', true);
+    }
+
+    public function test_guests_are_sent_to_the_landing_page_not_the_breeze_login(): void
+    {
+        $this->get(route('profile.show'))->assertRedirect(route('home'));
     }
 }

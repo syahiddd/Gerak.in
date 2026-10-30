@@ -34,7 +34,7 @@ export function useRestTimer() {
     }, [left]);
 
     const display =
-        left === null ? '—' : left <= 0 ? 'GO' : formatDuration(left).slice(3);
+        left === null ? '-' : left <= 0 ? 'GO' : formatDuration(left).slice(3);
 
     return {
         display,

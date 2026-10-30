@@ -10,7 +10,7 @@ export default function AdminExercises({ exercises }: { exercises: Paginated<Exe
     const search = useForm({});
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Admin — Exercises</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Admin: Exercises</h1>}>
             <Head title="Admin exercises" />
 
             <form
@@ -30,8 +30,8 @@ export default function AdminExercises({ exercises }: { exercises: Paginated<Exe
                 {exercises.data.map((ex) => (
                     <div key={ex.id} className="p-4 text-sm">
                         <p className="font-bold">{ex.name}</p>
-                        <p className="text-zinc-500">
-                            {ex.slug} · {ex.primary_muscle?.name ?? '—'} · {ex.is_system ? 'system' : 'custom'}
+                        <p className="text-zinc-500 dark:text-zinc-400">
+                            {ex.slug} · {ex.primary_muscle?.name ?? '-'} · {ex.is_system ? 'system' : 'custom'}
                         </p>
                     </div>
                 ))}

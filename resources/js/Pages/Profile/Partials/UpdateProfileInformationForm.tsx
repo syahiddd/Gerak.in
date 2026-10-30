@@ -5,6 +5,7 @@ import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import Avatar from '@/Components/social/Avatar';
+import { btn } from '@/Components/ui';
 import { formatBytes, toSquareWebp } from '@/lib/image';
 import { Camera } from 'lucide-react';
 import { ChangeEvent, FormEventHandler, useEffect, useRef, useState } from 'react';
@@ -85,7 +86,7 @@ export default function UpdateProfileInformation({
                             aria-describedby="username-hint"
                         />
                     </div>
-                    <p id="username-hint" className="mt-1 text-xs text-zinc-500">
+                    <p id="username-hint" className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                         3–30 characters: lowercase letters, numbers, _ and . Your profile lives at{' '}
                         <Link href={route('users.show', user.username)} className="font-semibold underline">
                             /u/{user.username}
@@ -108,7 +109,7 @@ export default function UpdateProfileInformation({
                         placeholder="Training for my first powerlifting meet."
                         className="mt-1 block w-full rounded-xl border-zinc-300 text-sm shadow-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                     />
-                    <p className="mt-1 text-xs text-zinc-500">Shown on your public profile.</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Shown on your public profile.</p>
 
                     <InputError className="mt-2" message={errors.bio} />
                 </div>
@@ -254,7 +255,7 @@ function ProfilePhotoField() {
                         type="button"
                         onClick={() => input.current?.click()}
                         disabled={busy}
-                        className="inline-flex items-center gap-2 rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-lime-300 disabled:opacity-60"
+                        className={btn.secondary}
                     >
                         <Camera className="h-4 w-4" aria-hidden />
                         {hasPhoto ? 'Change photo' : 'Upload photo'}
@@ -264,7 +265,7 @@ function ProfilePhotoField() {
                             type="button"
                             onClick={remove}
                             disabled={busy}
-                            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-700 hover:border-red-400 hover:text-red-500 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200"
+                            className={btn.danger}
                         >
                             Remove
                         </button>
@@ -272,7 +273,7 @@ function ProfilePhotoField() {
                 </div>
                 <input ref={input} type="file" accept="image/*" onChange={pick} className="hidden" />
                 {error ? (
-                    <p className="mt-2 text-sm text-red-500">{error}</p>
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
                 ) : note ? (
                     <p className="mt-2 text-xs text-lime-600 dark:text-lime-400">{note}</p>
                 ) : (

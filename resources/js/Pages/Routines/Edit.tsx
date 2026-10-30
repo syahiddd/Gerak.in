@@ -1,12 +1,13 @@
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import { EmptyState } from '@/Components/ui';
+import { btn, EmptyState } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { api } from '@/lib/api';
 import ExercisePicker from '@/Components/ExercisePicker';
 import { ExerciseOption, Routine, RoutineExercise, RoutineFolder, RoutineTargetSet } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 
 const SET_TYPES = ['normal', 'warmup', 'drop', 'failure', 'assisted', 'myo_rep'];
@@ -37,10 +38,11 @@ const toEditable = (re: RoutineExercise): EditableExercise => ({
     draft_rest: String(re.rest_seconds ?? 90),
     draft_notes: re.notes ?? '',
     draft_sets: re.target_sets.map((s: RoutineTargetSet) => ({
-        target_weight_kg: s.target_weight_kg?.toString() ?? '',
+        // Number() drops the DB's trailing zeros ("80.00" -> "80").
+        target_weight_kg: s.target_weight_kg != null ? String(Number(s.target_weight_kg)) : '',
         target_reps_min: s.target_reps_min?.toString() ?? '',
         target_reps_max: (s.target_reps_max ?? s.target_reps_min)?.toString() ?? '',
-        target_rpe: s.target_rpe?.toString() ?? '',
+        target_rpe: s.target_rpe != null ? String(Number(s.target_rpe)) : '',
         set_type: s.set_type,
     })),
     saving: false,
@@ -163,7 +165,7 @@ export default function RoutineEdit({
 
             <div className="mt-6 flex items-center justify-between">
                 <h2 className="text-lg font-extrabold">Exercises ({items.length})</h2>
-                <Link href={route('routines.show', routine.id)} className="text-sm font-semibold text-lime-600 dark:text-lime-400">
+                <Link href={route('routines.show', routine.id)} className="text-sm font-semibold text-lime-700 hover:underline dark:text-lime-400">
                     Back to routine
                 </Link>
             </div>
@@ -181,10 +183,14 @@ export default function RoutineEdit({
                             <p className="font-bold">
                                 {idx + 1}. {it.exercise.name}
                             </p>
-                            <div className="flex gap-1 text-xs">
-                                <button onClick={() => move(idx, -1)} disabled={idx === 0} className="rounded-lg border border-zinc-300 px-2 py-1 font-bold disabled:opacity-40 dark:border-zinc-700" aria-label="Move up">↑</button>
-                                <button onClick={() => move(idx, 1)} disabled={idx === items.length - 1} className="rounded-lg border border-zinc-300 px-2 py-1 font-bold disabled:opacity-40 dark:border-zinc-700" aria-label="Move down">↓</button>
-                                <button onClick={() => removeExercise(it)} className="rounded-lg border border-red-300 px-2 py-1 font-bold text-red-500">Remove</button>
+                            <div className="flex shrink-0 items-center">
+                                <button onClick={() => move(idx, -1)} disabled={idx === 0} className={`${btn.icon} disabled:opacity-30`} aria-label="Move up">
+                                    <ChevronUp className="h-5 w-5" aria-hidden />
+                                </button>
+                                <button onClick={() => move(idx, 1)} disabled={idx === items.length - 1} className={`${btn.icon} disabled:opacity-30`} aria-label="Move down">
+                                    <ChevronDown className="h-5 w-5" aria-hidden />
+                                </button>
+                                <button onClick={() => removeExercise(it)} className={btn.danger}>Remove</button>
                             </div>
                         </div>
 
@@ -201,7 +207,7 @@ export default function RoutineEdit({
 
                         {/* Grid instead of a table so sets fit a phone: on narrow screens Type + remove wrap to a second line. */}
                         <div className="mt-3 text-sm tabular-nums">
-                            <div className={`${SET_GRID} pb-1 text-xs font-semibold text-zinc-500`}>
+                            <div className={`${SET_GRID} pb-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400`}>
                                 <span>Set</span>
                                 <span>
                                     <span className="sm:hidden">kg</span>
@@ -228,15 +234,15 @@ export default function RoutineEdit({
                                     <div className="col-span-4 col-start-2 flex items-center gap-1.5 sm:col-span-1 sm:col-start-auto">
                                         <select value={s.set_type} onChange={(e) => mutateSet(it.id, i, { set_type: e.target.value })} className="min-w-0 flex-1 rounded-lg border-zinc-300 py-1 pl-2 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label={`Set ${i + 1} type`}>
                                             {SET_TYPES.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
+                                                <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1).replace('_', '-')}</option>
                                             ))}
                                         </select>
                                         <button
                                             onClick={() => mutateItem(it.id, (x) => ({ ...x, saved: false, draft_sets: x.draft_sets.filter((_, j) => j !== i) }))}
-                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                            className={`${btn.icon} hover:text-red-600 dark:hover:text-red-400`}
                                             aria-label={`Remove set ${i + 1}`}
                                         >
-                                            ✕
+                                            <X className="h-4 w-4" aria-hidden />
                                         </button>
                                     </div>
                                 </div>
@@ -246,12 +252,13 @@ export default function RoutineEdit({
                         <div className="mt-3 flex items-center gap-2">
                             <button
                                 onClick={() => mutateItem(it.id, (x) => ({ ...x, saved: false, draft_sets: [...x.draft_sets, { target_weight_kg: '', target_reps_min: '', target_reps_max: '', target_rpe: '', set_type: 'normal' }] }))}
-                                className="rounded-xl border border-zinc-300 px-3 py-1 text-sm font-bold dark:border-zinc-700"
+                                className={btn.ghost}
                             >
-                                + Add set
+                                Add set
                             </button>
-                            <button onClick={() => saveExercise(it)} disabled={it.saving} className="rounded-xl bg-lime-400 px-4 py-1 text-sm font-bold text-zinc-950 disabled:opacity-60">
-                                {it.saving ? 'Saving…' : it.saved ? 'Saved ✓' : 'Save sets'}
+                            {/* One per exercise, so secondary: a lime button on every card would leave no main action. */}
+                            <button onClick={() => saveExercise(it)} disabled={it.saving} className={btn.secondary}>
+                                {it.saving ? 'Saving…' : it.saved ? 'Saved' : 'Save sets'}
                             </button>
                         </div>
                     </section>
@@ -260,7 +267,7 @@ export default function RoutineEdit({
 
             <form onSubmit={addExercise} className="mt-4 flex max-w-xl gap-2">
                 <ExercisePicker className="min-w-0 flex-1" value={newExercise} onChange={setNewExercise} placeholder="Add exercise…" />
-                <button disabled={adding || !newExercise} className="whitespace-nowrap rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-60 dark:bg-white dark:text-zinc-950">
+                <button disabled={adding || !newExercise} className={`${btn.secondary} whitespace-nowrap`}>
                     {adding ? 'Adding…' : 'Add'}
                 </button>
             </form>

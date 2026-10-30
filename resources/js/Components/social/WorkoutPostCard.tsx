@@ -45,7 +45,7 @@ export function PostStats({ post }: { post: FeedPost }) {
 
     const items: { label: string; value: ReactNode }[] = [
         { label: 'Time', value: humanDuration(post.duration_seconds) },
-        { label: 'Volume', value: post.volume_kg ? `${formatNumber(vol.value)} ${vol.unit}` : '—' },
+        { label: 'Volume', value: post.volume_kg ? `${formatNumber(vol.value)} ${vol.unit}` : '-' },
         { label: 'Sets', value: post.sets_count },
     ];
     if (post.records_count > 0) {

@@ -15,6 +15,9 @@ class PersonalRecord extends Model
         'value_reps', 'achieved_workout_id', 'achieved_at',
     ];
 
+    /** Human label ("Heaviest weight") so pages don't show the raw enum value. */
+    protected $appends = ['record_type_label'];
+
     protected function casts(): array
     {
         return [
@@ -22,6 +25,11 @@ class PersonalRecord extends Model
             'value_primary' => 'decimal:2',
             'achieved_at' => 'datetime',
         ];
+    }
+
+    protected function recordTypeLabel(): Attribute
+    {
+        return Attribute::get(fn () => $this->record_type?->label());
     }
 
     public function user(): BelongsTo

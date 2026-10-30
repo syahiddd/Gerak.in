@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Exercise } from '@/types';
+import { Dumbbell } from 'lucide-react';
 
 type Variant = 'thumbnail' | 'hero' | 'inline';
 
@@ -183,13 +184,14 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
     if (!src || failed) {
         return (
             <div
-                className={`flex items-center justify-center rounded-xl bg-zinc-100 text-sm text-zinc-400 dark:bg-zinc-800 ${
-                    variant === 'hero' ? 'aspect-video' : variant === 'inline' ? 'h-10 w-10 text-xs' : 'aspect-video'
+                className={`flex flex-col items-center justify-center gap-1 rounded-xl bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 ${
+                    variant === 'inline' ? 'h-10 w-10' : 'aspect-video'
                 } ${className}`}
                 role="img"
                 aria-label={`${exercise.name} (no demonstration media yet)`}
             >
-                {variant === 'inline' ? '🏋️' : 'Demonstration media placeholder'}
+                <Dumbbell className={variant === 'inline' ? 'h-5 w-5' : 'h-7 w-7'} aria-hidden />
+                {variant !== 'inline' && <span>No demo yet</span>}
             </div>
         );
     }

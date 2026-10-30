@@ -10,7 +10,7 @@ export function displayWeight(
     kg: number | string | null | undefined,
     system: 'metric' | 'imperial',
 ): { value: number | string; unit: string } {
-    if (kg === null || kg === undefined || kg === '') return { value: '—', unit: '' };
+    if (kg === null || kg === undefined || kg === '') return { value: '-', unit: '' };
     const n = Number(kg);
     if (system === 'imperial') {
         return { value: Math.round(kgToLb(n) * 10) / 10, unit: 'lb' };
@@ -19,7 +19,7 @@ export function displayWeight(
 }
 
 export function formatDuration(totalSeconds: number | null | undefined): string {
-    if (totalSeconds === null || totalSeconds === undefined) return '—';
+    if (totalSeconds === null || totalSeconds === undefined) return '-';
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = totalSeconds % 60;
@@ -28,6 +28,22 @@ export function formatDuration(totalSeconds: number | null | undefined): string 
 }
 
 export function formatNumber(value: number | string | null | undefined): string {
-    if (value === null || value === undefined || value === '') return '—';
+    if (value === null || value === undefined || value === '') return '-';
     return Number(value).toLocaleString('en-US', { maximumFractionDigits: 1 });
+}
+
+const SET_TYPE_SHORT: Record<string, string> = {
+    normal: 'N',
+    warmup: 'W',
+    drop: 'D',
+    failure: 'F',
+    assisted: 'A',
+    myo_rep: 'M',
+};
+
+/** Normal sets are numbered among themselves; other types show their letter (W, D, F...). */
+export function setLabel(sets: { set_type: string }[], i: number): string | number {
+    const type = sets[i].set_type;
+    if (type === 'normal') return sets.slice(0, i + 1).filter((s) => s.set_type === 'normal').length;
+    return SET_TYPE_SHORT[type] ?? type;
 }

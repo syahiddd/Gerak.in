@@ -54,7 +54,7 @@ export default function ExerciseCreate({ muscles, equipment }: { muscles: Muscle
                     <div>
                         <InputLabel htmlFor="primary_muscle_id" value="Primary muscle" />
                         <select id="primary_muscle_id" value={data.primary_muscle_id} onChange={(e) => setData('primary_muscle_id', e.target.value)} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800">
-                            <option value="">—</option>
+                            <option value="">None</option>
                             {muscles.map((m) => (
                                 <option key={m.id} value={m.id}>{m.name}</option>
                             ))}
@@ -63,7 +63,7 @@ export default function ExerciseCreate({ muscles, equipment }: { muscles: Muscle
                     <div>
                         <InputLabel htmlFor="equipment_id" value="Equipment" />
                         <select id="equipment_id" value={data.equipment_id} onChange={(e) => setData('equipment_id', e.target.value)} className="mt-1 block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800">
-                            <option value="">—</option>
+                            <option value="">None</option>
                             {equipment.map((e) => (
                                 <option key={e.id} value={e.id}>{e.name}</option>
                             ))}

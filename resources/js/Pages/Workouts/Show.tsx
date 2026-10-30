@@ -1,13 +1,14 @@
-import { Card } from '@/Components/ui';
+import { btn, Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import ExercisePicker from '@/Components/ExercisePicker';
 import { VISIBILITY_LABEL } from '@/Components/social/format';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useElapsed, useRestTimer } from '@/hooks/workout';
 import { api } from '@/lib/api';
-import { formatDuration, formatNumber } from '@/lib/units';
+import { formatDuration, formatNumber, setLabel } from '@/lib/units';
 import { Exercise, ExerciseOption, Workout, WorkoutExercise, WorkoutSet } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Check, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface PreviousSet {
@@ -20,14 +21,16 @@ interface Props {
     previous: Record<string, PreviousSet[]>;
 }
 
-const SET_TYPE_SHORT: Record<string, string> = {
-    normal: 'N',
-    warmup: 'W',
-    drop: 'D',
-    failure: 'F',
-    assisted: 'A',
-    myo_rep: 'M',
-};
+// Buttons on the dark rest-timer bar.
+const restBtn =
+    'min-h-11 rounded-xl bg-white/15 px-4 text-sm font-bold text-white hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400';
+
+// "77 kg × 8, 76.5 kg × 8". Sets logged without reps are skipped instead of printing "null reps".
+const lastTime = (sets: PreviousSet[] = []) =>
+    sets
+        .filter((p) => p.reps != null)
+        .map((p) => (p.weight_kg ? `${formatNumber(p.weight_kg)} kg × ${p.reps}` : `${p.reps} reps`))
+        .join(', ');
 
 export default function WorkoutShow({ workout: initial, previous }: Props) {
     const { auth } = usePage().props as unknown as {
@@ -110,55 +113,54 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-xl font-extrabold">{initial.name}</h1>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
                             {new Date(initial.started_at).toLocaleString()}
                             {initial.status === 'completed' && initial.duration_seconds ? (
                                 <>
                                     {' '}· {formatDuration(initial.duration_seconds)} · {formatNumber(initial.total_volume_kg)} kg
+                                    {' '}· Visible to {VISIBILITY_LABEL[initial.visibility ?? 'private']}
                                 </>
                             ) : (
                                 <>
-                                    {' '}· <span className="font-semibold text-lime-600 dark:text-lime-400">{initial.status.replace('_', ' ')}</span>
+                                    {' '}· <span className="font-semibold text-lime-700 dark:text-lime-400">{initial.status.replace('_', ' ')}</span>
                                     {' '}· <span className="tabular-nums">{elapsed}</span>
                                 </>
                             )}
                         </p>
                     </div>
                     {isActive ? (
-                        <div className="flex gap-2 text-sm">
+                        // While paused, resuming is the main action; otherwise finishing is.
+                        <div className="flex flex-wrap items-center gap-2">
                             {isPaused ? (
-                                <Link href={route('workouts.resume', initial.id)} method="post" as="button" className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
+                                <Link href={route('workouts.resume', initial.id)} method="post" as="button" className={btn.primary}>
                                     Resume
                                 </Link>
                             ) : (
-                                <Link href={route('workouts.pause', initial.id)} method="post" as="button" className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+                                <Link href={route('workouts.pause', initial.id)} method="post" as="button" className={btn.secondary}>
                                     Pause
                                 </Link>
                             )}
-                            <Link href={route('workouts.finish', initial.id)} method="post" as="button" className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
+                            <Link href={route('workouts.finish', initial.id)} method="post" as="button" className={isPaused ? btn.secondary : btn.primary}>
                                 Finish
                             </Link>
                             <Link
                                 href={route('workouts.cancel', initial.id)}
                                 method="post"
                                 as="button"
-                                className="rounded-xl border border-red-300 px-4 py-2 font-bold text-red-500"
+                                className={btn.danger}
                                 onBefore={() => confirm('Cancel this workout?')}
                             >
                                 Cancel
                             </Link>
                         </div>
                     ) : (
-                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <div className="flex flex-wrap items-center gap-2">
                             {initial.status === 'completed' && (
                                 <>
-                                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                        Visible to: {VISIBILITY_LABEL[initial.visibility ?? 'private']}
-                                    </span>
-                                    <Link href={route('posts.show', initial.id)} className="rounded-xl bg-lime-400 px-4 py-2 font-bold text-zinc-950">
+                                    <Link href={route('posts.show', initial.id)} className={btn.primary}>
                                         View post
                                     </Link>
-                                    <Link href={route('workouts.save', initial.id)} className="rounded-xl border border-zinc-300 px-4 py-2 font-bold dark:border-zinc-700">
+                                    <Link href={route('workouts.save', initial.id)} className={btn.secondary}>
                                         Edit sharing
                                     </Link>
                                 </>
@@ -167,7 +169,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                 href={route('workouts.destroy', initial.id)}
                                 method="delete"
                                 as="button"
-                                className="rounded-xl border border-red-300 px-4 py-2 font-bold text-red-500"
+                                className={btn.danger}
                                 onBefore={() => confirm('Delete this workout?')}
                             >
                                 Delete
@@ -180,15 +182,15 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
             <Head title={initial.name} />
 
             {isActive && (
-                <div className="mb-4 rounded-2xl bg-zinc-950 p-4 text-white dark:bg-lime-400 dark:text-zinc-950">
-                    <div className="flex items-center justify-between">
+                <div className="mb-4 rounded-2xl bg-zinc-950 p-4 text-white dark:bg-zinc-800">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm font-bold">
-                            REST <span className="ms-2 text-lg tabular-nums">{rest.display}</span>
+                            Rest <span className="ms-2 text-lg tabular-nums">{rest.display}</span>
                         </p>
-                        <div className="flex gap-2 text-sm">
-                            <button onClick={() => rest.start(90)} className="rounded-lg bg-white/20 px-3 py-1 font-bold dark:bg-zinc-950/10">1:30</button>
-                            <button onClick={() => rest.start(180)} className="rounded-lg bg-white/20 px-3 py-1 font-bold dark:bg-zinc-950/10">3:00</button>
-                            <button onClick={rest.stop} className="rounded-lg bg-white/20 px-3 py-1 font-bold dark:bg-zinc-950/10">Skip</button>
+                        <div className="flex gap-2">
+                            <button onClick={() => rest.start(90)} className={restBtn}>1:30</button>
+                            <button onClick={() => rest.start(180)} className={restBtn}>3:00</button>
+                            <button onClick={rest.stop} className={restBtn}>Skip</button>
                         </div>
                     </div>
                 </div>
@@ -204,7 +206,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                     <Link href={route('exercises.show', we.exercise.slug)} className="font-bold hover:underline">
                                         {we.exercise.name}
                                     </Link>
-                                    <p className="text-xs text-zinc-500">{we.exercise.primary_muscle?.name ?? ''}</p>
+                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{we.exercise.primary_muscle?.name ?? ''}</p>
                                 </div>
                             </div>
                             {isActive && (
@@ -212,7 +214,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                     href={route('workouts.remove-exercise', [initial.id, we.id])}
                                     method="delete"
                                     as="button"
-                                    className="text-xs font-semibold text-red-500"
+                                    className={btn.danger}
                                     onBefore={() => confirm('Remove exercise?')}
                                 >
                                     Remove
@@ -220,24 +222,18 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                             )}
                         </div>
 
-                        {(previous[we.id] ?? []).length > 0 && (
-                            <p className="mt-2 text-xs text-zinc-500">
-                                LAST TIME:{' '}
-                                {(previous[we.id] ?? []).map((p, i) => (
-                                    <span key={i} className="font-semibold text-zinc-700 dark:text-zinc-300">
-                                        {p.weight_kg ? `${p.weight_kg} kg × ${p.reps}` : `${p.reps} reps`}
-                                        {i < (previous[we.id] ?? []).length - 1 ? ', ' : ''}
-                                    </span>
-                                ))}
+                        {lastTime(previous[we.id]) && (
+                            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                                Last time:{' '}
+                                <span className="font-semibold text-zinc-700 dark:text-zinc-300">{lastTime(previous[we.id])}</span>
                             </p>
                         )}
 
                         <div className="mt-2 overflow-x-auto">
-                            <table className="w-full text-sm tabular-nums">
-                                <thead className="text-xs text-zinc-500">
+                            <table className="w-full text-sm tabular-nums [&_td]:pe-1 [&_th]:pe-1">
+                                <thead className="text-xs text-zinc-500 dark:text-zinc-400">
                                     <tr>
-                                        <th className="w-10 py-1 text-left">Set</th>
-                                        <th className="text-left">Type</th>
+                                        <th className="w-8 py-1 text-left">Set</th>
                                         <th className="text-left">Weight</th>
                                         <th className="text-left">Reps</th>
                                         <th className="text-left">RPE</th>
@@ -248,34 +244,42 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                 <tbody>
                                     {we.sets.map((set, i) => (
                                         <tr key={set.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                                            <td className="py-1 font-bold">{i + 1}</td>
-                                            <td>{SET_TYPE_SHORT[set.set_type] ?? set.set_type}</td>
+                                            <td className="py-1 font-bold" title={set.set_type.replace('_', ' ')}>
+                                                {setLabel(we.sets, i)}
+                                            </td>
                                             {isActive ? (
                                                 <>
                                                     <td>
-                                                        <input type="number" step="0.5" min={0} value={set.weight_kg ?? ''} onChange={(e) => patchSet(we.id, set.id, { weight_kg: e.target.value === '' ? null : e.target.value })} className="w-20 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Weight kg" />
+                                                        <input type="number" step="0.5" min={0} value={set.weight_kg ?? ''} onChange={(e) => patchSet(we.id, set.id, { weight_kg: e.target.value === '' ? null : e.target.value })} className="h-11 w-14 rounded-xl border-zinc-300 px-2 sm:w-20 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Weight kg" />
                                                     </td>
                                                     <td>
-                                                        <input type="number" min={0} value={set.reps ?? ''} onChange={(e) => patchSet(we.id, set.id, { reps: e.target.value === '' ? null : Number(e.target.value) })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); toggleSet(we, set); } }} className="w-16 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Reps" />
+                                                        <input type="number" min={0} value={set.reps ?? ''} onChange={(e) => patchSet(we.id, set.id, { reps: e.target.value === '' ? null : Number(e.target.value) })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); toggleSet(we, set); } }} className="h-11 w-12 rounded-xl border-zinc-300 px-2 sm:w-16 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Reps" />
                                                     </td>
                                                     <td>
-                                                        <input type="number" step="0.5" min={0} max={10} value={set.rpe ?? ''} onChange={(e) => patchSet(we.id, set.id, { rpe: e.target.value === '' ? null : e.target.value })} className="w-14 rounded-lg border-zinc-300 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="RPE" />
+                                                        <input type="number" step="0.5" min={0} max={10} value={set.rpe ?? ''} onChange={(e) => patchSet(we.id, set.id, { rpe: e.target.value === '' ? null : e.target.value })} className="h-11 w-11 rounded-xl border-zinc-300 px-2 sm:w-14 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="RPE" />
                                                     </td>
                                                     <td>
-                                                        <button onClick={() => toggleSet(we, set)} aria-label="Toggle set complete" className={`rounded-lg px-3 py-1 font-bold ${set.is_completed ? 'bg-lime-400 text-zinc-950' : 'border border-zinc-300 dark:border-zinc-700'}`}>
-                                                            {set.is_completed ? '✓' : '○'}
+                                                        <button
+                                                            onClick={() => toggleSet(we, set)}
+                                                            aria-label={set.is_completed ? 'Mark set not done' : 'Mark set done'}
+                                                            aria-pressed={set.is_completed}
+                                                            className={`inline-flex h-11 w-11 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 ${set.is_completed ? 'bg-lime-400 text-zinc-950 hover:bg-lime-300' : 'border border-zinc-300 text-zinc-400 hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-700 dark:hover:text-zinc-200'}`}
+                                                        >
+                                                            <Check className="h-5 w-5" strokeWidth={set.is_completed ? 3 : 2} aria-hidden />
                                                         </button>
                                                     </td>
                                                     <td>
-                                                        <button onClick={() => deleteSet(we, set)} className="text-xs text-red-500" aria-label="Delete set">✕</button>
+                                                        <button onClick={() => deleteSet(we, set)} className={`${btn.icon} hover:text-red-600 dark:hover:text-red-400`} aria-label="Delete set">
+                                                            <X className="h-4 w-4" aria-hidden />
+                                                        </button>
                                                     </td>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td>{set.weight_kg ?? '—'}</td>
-                                                    <td>{set.reps ?? '—'}</td>
-                                                    <td>{set.rpe ?? '—'}</td>
-                                                    <td>{set.is_completed ? '✓' : '—'}</td>
+                                                    <td>{set.weight_kg ?? '-'}</td>
+                                                    <td>{set.reps ?? '-'}</td>
+                                                    <td>{set.rpe ?? '-'}</td>
+                                                    <td>{set.is_completed ? <Check className="h-4 w-4 text-lime-700 dark:text-lime-400" aria-label="Done" /> : '-'}</td>
                                                 </>
                                             )}
                                         </tr>
@@ -285,8 +289,8 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                         </div>
 
                         {isActive && (
-                            <button onClick={() => addSet(we)} className="mt-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold dark:border-zinc-700">
-                                + Add set
+                            <button onClick={() => addSet(we)} className={`${btn.secondary} mt-3`}>
+                                Add set
                             </button>
                         )}
 
@@ -301,7 +305,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                 }
                             />
                         ) : (
-                            we.notes && <p className="mt-2 text-xs text-zinc-500">{we.notes}</p>
+                            we.notes && <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{we.notes}</p>
                         )}
                     </Card>
                 ))}
@@ -333,7 +337,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                         />
                         <button
                             disabled={!selectedExercise || addExerciseForm.processing}
-                            className="whitespace-nowrap rounded-xl bg-zinc-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-40 dark:bg-white dark:text-zinc-950"
+                            className={`${btn.secondary} whitespace-nowrap`}
                         >
                             Add
                         </button>
@@ -386,8 +390,8 @@ function ExerciseNotesEditor({
 
     if (!open) {
         return (
-            <button onClick={() => setOpen(true)} className="mt-2 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
-                {exercise.notes ? 'Edit exercise note' : '+ Add exercise note'}
+            <button onClick={() => setOpen(true)} className={`${btn.ghost} mt-3`}>
+                {exercise.notes ? 'Edit note' : 'Add note'}
             </button>
         );
     }
@@ -402,11 +406,11 @@ function ExerciseNotesEditor({
                 className="block w-full rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800"
                 aria-label="Exercise notes"
             />
-            <div className="mt-1 flex gap-2">
-                <button onClick={save} disabled={saving} className="rounded-lg bg-lime-400 px-3 py-1 text-xs font-bold text-zinc-950 disabled:opacity-60">
-                    {saving ? 'Saving…' : 'Save'}
+            <div className="mt-2 flex gap-2">
+                <button onClick={save} disabled={saving} className={btn.secondary}>
+                    {saving ? 'Saving…' : 'Save note'}
                 </button>
-                <button onClick={() => { setOpen(false); setNotes(exercise.notes ?? ''); }} className="rounded-lg border border-zinc-300 px-3 py-1 text-xs font-bold dark:border-zinc-700">
+                <button onClick={() => { setOpen(false); setNotes(exercise.notes ?? ''); }} className={btn.ghost}>
                     Cancel
                 </button>
             </div>

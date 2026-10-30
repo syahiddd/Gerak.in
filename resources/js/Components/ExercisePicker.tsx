@@ -71,9 +71,9 @@ export default function ExercisePicker({
                 {!loading && !error && options.length === 0 && (
                     <p className="px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400">No exercises match “{query}”.</p>
                 )}
-                {error && <p className="px-3 py-2 text-sm text-red-500">Couldn't load exercises. Check your connection and try again.</p>}
+                {error && <p className="px-3 py-2 text-sm text-red-600 dark:text-red-400">Couldn't load exercises. Check your connection and try again.</p>}
                 {query === '' && options.length > 0 && (
-                    <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Recent &amp; suggested</p>
+                    <p className="px-3 pb-1 pt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Recent &amp; suggested</p>
                 )}
                 {options.map((ex) => (
                     <ComboboxOption

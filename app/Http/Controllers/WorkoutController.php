@@ -216,7 +216,7 @@ class WorkoutController extends Controller
     {
         $this->authorize('update', $workout);
         $data = $request->validate(['exercise_id' => ['required', 'integer', 'exists:exercises,id']]);
-        $we = $service->addExercise($workout, $data['exercise_id']);
+        $we = $service->addExercise($workout, (int) $data['exercise_id']);
 
         if ($request->expectsJson()) {
             return response()->json(['exercise' => $we->load('sets', 'exercise')]);
