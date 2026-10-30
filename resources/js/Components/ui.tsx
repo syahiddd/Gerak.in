@@ -48,7 +48,10 @@ export function MuscleBars({ labels, sets }: { labels: string[]; sets: number[] 
                         <span className="font-bold tabular-nums">{sets[i] ?? 0}</span>
                     </div>
                     <div className="mt-1 h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <div className="h-full rounded-full bg-lime-400" style={{ width: `${((sets[i] ?? 0) / max) * 100}%` }} />
+                        <div
+                            className="h-full origin-left rounded-full bg-lime-400 motion-safe:animate-bar-grow"
+                            style={{ width: `${((sets[i] ?? 0) / max) * 100}%`, animationDelay: `${i * 60}ms` }}
+                        />
                     </div>
                 </li>
             ))}

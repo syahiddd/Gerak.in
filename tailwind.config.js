@@ -39,8 +39,14 @@ export default {
                     '60%': { opacity: '1', transform: 'scale(1.06)' },
                     '100%': { transform: 'scale(1)' },
                 },
+                // Statistics: bars grow from zero once, so the ranking reads in order.
+                'bar-grow': {
+                    from: { transform: 'scaleX(0)' },
+                    to: { transform: 'scaleX(1)' },
+                },
             },
             animation: {
+                'bar-grow': 'bar-grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
                 'ring-draw': 'ring-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) both',
                 confetti: 'confetti 1.6s cubic-bezier(0.12, 0.75, 0.3, 1) both',
                 rise: 'rise 0.5s ease-out both',

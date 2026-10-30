@@ -4,7 +4,7 @@ import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recha
 type Period = 'week' | 'month';
 
 /** "2026-40" (ISO week) -> "Sep 29" (its Monday); "2026-09" (month) -> "Sep". */
-function formatPeriod(label: string, period: Period): string {
+export function formatPeriod(label: string, period: Period): string {
     const [year, n] = label.split('-').map(Number);
     if (!year || !n) return label;
     if (period === 'month') {
