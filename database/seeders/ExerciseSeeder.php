@@ -67,6 +67,26 @@ class ExerciseSeeder extends Seeder
             ['Rowing Erg', 'back', 'Rower', 'distance_duration', 'Row for distance or time.'],
         ];
 
+        // Staples taken from exercises-dataset, keyed by its id so production rows created by
+        // `exercises:import-dataset` are reused instead of duplicated. [..., external_id, gif]
+        $datasetRows = [
+            ['Dumbbell Bench Press', 'chest', 'Dumbbell', 'weight_reps', 'Flat bench, press dumbbells from chest to lockout.', 'gv:0289', 'videos/0289-SpYC0Kp.gif'],
+            ['Pec Deck', 'chest', 'Machine', 'weight_reps', 'Seated machine fly, bring the pads together in front of the chest.', 'gv:0596', 'videos/0596-v3xmPAR.gif'],
+            ['Dumbbell Shoulder Press', 'shoulders', 'Dumbbell', 'weight_reps', 'Seated, press dumbbells from shoulders to overhead.', 'gv:0405', 'videos/0405-znQUdHY.gif'],
+            ['Rear Delt Fly', 'shoulders', 'Dumbbell', 'weight_reps', 'Hinge forward, raise dumbbells out to the sides.', 'gv:0383', 'videos/0383-EAs3xL9.gif'],
+            ['Back Extension', 'back', 'Bodyweight', 'bodyweight_reps', 'Hips on the pad, lower the torso and extend back to neutral.', 'gv:0489', 'videos/0489-zhMwOwE.gif'],
+            ['Cable Curl', 'biceps', 'Cable', 'weight_reps', 'Curl the cable bar with elbows pinned.', 'gv:0868', 'videos/0868-G08RZcQ.gif'],
+            ['Overhead Tricep Extension', 'triceps', 'Cable', 'weight_reps', 'Face away from the cable and extend the rope overhead.', 'gv:0194', 'videos/0194-2IxROQ1.gif'],
+            ['Hack Squat', 'quadriceps', 'Machine', 'weight_reps', 'Back on the sled pad, squat to depth.', 'gv:0743', 'videos/0743-Qa55kX1.gif'],
+            ['Walking Lunge', 'quadriceps', 'Bodyweight', 'bodyweight_reps', 'Step forward into a lunge, alternating legs as you walk.', 'gv:1460', 'videos/1460-IZVHb27.gif'],
+            ['Seated Leg Curl', 'hamstrings', 'Machine', 'weight_reps', 'Curl the pad down and back under the seat.', 'gv:0599', 'videos/0599-Zg3XY7P.gif'],
+            ['Seated Calf Raise', 'calves', 'Machine', 'weight_reps', 'Knees under the pad, raise the heels as high as possible.', 'gv:0594', 'videos/0594-bOOdeyc.gif'],
+            ['Crunch', 'core', 'Bodyweight', 'bodyweight_reps', 'Lie on your back and curl your shoulders toward your hips.', 'gv:0274', 'videos/0274-TFqbd8t.gif'],
+            ['Cable Crunch', 'core', 'Cable', 'weight_reps', 'Kneel at the cable and crunch the rope toward the floor.', 'gv:0175', 'videos/0175-WW95auq.gif'],
+            ['Ab Wheel Rollout', 'core', null, 'bodyweight_reps', 'From your knees, roll the wheel forward and pull back with your abs.', 'gv:0857', 'videos/0857-NAgVB3t.gif'],
+            ['Stationary Bike', 'quadriceps', 'Machine', 'distance_duration', 'Steady ride, log distance and time.', 'gv:0798', 'videos/0798-a8VDgLw.gif'],
+        ];
+
         $mediaMap = [
             'barbell-bench-press' => ['gif' => '/storage/exercise-gifs/0025.gif', 'video' => 'https://upload.wikimedia.org/wikipedia/commons/d/df/Bench_press_-_exercise_demonstration_video.webm', 'source' => 'gymvisual'],
             'incline-dumbbell-press' => ['gif' => '/storage/exercise-gifs/0314.gif', 'source' => 'gymvisual'],
@@ -140,6 +160,33 @@ class ExerciseSeeder extends Seeder
                     'updated_at' => now(),
                 ]
             );
+        }
+
+        foreach ($datasetRows as [$name, $muscle, $equip, $type, $desc, $externalId, $gif]) {
+            $existing = DB::table('exercises')->where('external_id', $externalId)->first()
+                ?? DB::table('exercises')->where('slug', Str::slug($name))->first();
+
+            $attrs = [
+                'name' => $name,
+                'description' => $desc,
+                'instructions' => $existing?->instructions ?? $desc,
+                'equipment_id' => $equipId($equip),
+                'primary_muscle_id' => $muscleId($muscle),
+                'exercise_type' => $type,
+                'external_id' => $externalId,
+                'gif_url' => $existing?->gif_url ?? '/storage/exercise-dataset/'.$gif,
+                'media_source' => $existing?->media_source ?? 'gymvisual',
+                'is_system' => true,
+                'created_by' => null,
+                'updated_at' => now(),
+            ];
+
+            if ($existing) {
+                // Keep the existing slug: it may already be linked to from routines and history.
+                DB::table('exercises')->where('id', $existing->id)->update($attrs);
+            } else {
+                DB::table('exercises')->insert($attrs + ['slug' => Str::slug($name), 'created_at' => now()]);
+            }
         }
     }
 }

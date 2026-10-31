@@ -8,18 +8,20 @@ use App\Models\Exercise;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ExerciseLookupTest extends TestCase
 {
     use RefreshDatabase;
 
+    private int $curated = 0;
+
+    /** System rows take a curated slug so the picker offers them; their names stay free-form. */
     private function exercise(string $name, array $extra = []): Exercise
     {
         return Exercise::create(array_merge([
             'name' => $name,
-            'slug' => Str::slug($name).'-'.Str::lower(Str::random(4)),
+            'slug' => Exercise::CURATED_SLUGS[$this->curated++],
             'exercise_type' => 'weight_reps',
             'is_system' => true,
         ], $extra));

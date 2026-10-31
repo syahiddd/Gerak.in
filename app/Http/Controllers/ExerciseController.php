@@ -41,9 +41,7 @@ class ExerciseController extends Controller
 
         $query = Exercise::query()
             ->with(['equipment', 'primaryMuscle'])
-            ->where(function ($q) {
-                $q->where('is_system', true)->orWhere('created_by', auth()->id());
-            });
+            ->availableTo($request->user());
 
         if (! empty($validated['q'])) {
             $query->search($validated['q']);

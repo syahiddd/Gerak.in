@@ -38,7 +38,7 @@ class ExerciseTest extends TestCase
     public function test_library_renders_with_taxonomies(): void
     {
         [$chest] = $this->seedTaxonomy();
-        $this->systemExercise('Bench Press', $chest->id);
+        $this->systemExercise('Barbell Bench Press', $chest->id);
         $user = User::factory()->createOne();
 
         $this->actingAs($user)->get(route('exercises.index'))
@@ -52,7 +52,7 @@ class ExerciseTest extends TestCase
     public function test_search_filters_and_sort_use_backend_queries(): void
     {
         [$chest, $back] = $this->seedTaxonomy();
-        $this->systemExercise('Bench Press', $chest->id);
+        $this->systemExercise('Barbell Bench Press', $chest->id);
         $row = $this->systemExercise('Barbell Row', $back->id);
         // Break the updated_at tie so "recent" ordering is deterministic.
         $row->forceFill(['updated_at' => now()->addMinutes(5)])->save();
@@ -63,7 +63,7 @@ class ExerciseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('exercises.data', 1)
-                ->where('exercises.data.0.name', 'Bench Press'));
+                ->where('exercises.data.0.name', 'Barbell Bench Press'));
 
         // Muscle filter.
         $this->actingAs($user)->get(route('exercises.index', ['muscle' => $back->id]))

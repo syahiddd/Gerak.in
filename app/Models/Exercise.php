@@ -18,6 +18,31 @@ class Exercise extends Model
 {
     use SoftDeletes;
 
+    /**
+     * The 60 system exercises offered in the library and picker; the rest of the imported
+     * dataset stays in the table so history, routines and PRs that use it keep working.
+     * Hand-seeded ones are matched by slug, dataset ones by external_id because their
+     * slugs depend on import order. Keep in sync with ExerciseSeeder.
+     */
+    public const CURATED_SLUGS = [
+        'barbell-bench-press', 'incline-barbell-press', 'incline-dumbbell-press', 'cable-fly', 'push-up', 'chest-dip',
+        'overhead-press', 'arnold-press', 'lateral-raise', 'face-pull',
+        'deadlift', 'pull-up', 'chin-up', 'lat-pulldown', 'barbell-row', 'one-arm-dumbbell-row', 'seated-cable-row', 't-bar-row',
+        'barbell-shrug', 'farmers-carry',
+        'barbell-curl', 'dumbbell-curl', 'hammer-curl', 'preacher-curl',
+        'tricep-pushdown', 'skullcrusher', 'close-grip-bench-press',
+        'back-squat', 'front-squat', 'goblet-squat', 'leg-press', 'bulgarian-split-squat', 'leg-extension',
+        'romanian-deadlift', 'lying-leg-curl', 'hip-thrust', 'glute-bridge', 'kettlebell-swing',
+        'standing-calf-raise',
+        'plank', 'side-plank', 'hanging-leg-raise', 'russian-twist',
+        'treadmill-run', 'rowing-erg',
+    ];
+
+    public const CURATED_EXTERNAL_IDS = [
+        'gv:0289', 'gv:0596', 'gv:0405', 'gv:0383', 'gv:0489', 'gv:0868', 'gv:0194', 'gv:0743',
+        'gv:1460', 'gv:0599', 'gv:0594', 'gv:0274', 'gv:0175', 'gv:0857', 'gv:0798',
+    ];
+
     protected $appends = ['media_credit'];
 
     protected $fillable = [
@@ -73,10 +98,14 @@ class Exercise extends Model
         return $q;
     }
 
-    /** Exercises the user may pick: system ones plus their own custom ones. */
+    /** Exercises the user may pick: the curated system ones plus their own custom ones. */
     public function scopeAvailableTo(Builder $q, User $user): Builder
     {
-        return $q->where(fn (Builder $w) => $w->where('is_system', true)->orWhere('created_by', $user->id));
+        return $q->where(fn (Builder $w) => $w
+            ->where(fn (Builder $s) => $s
+                ->where('is_system', true)
+                ->where(fn (Builder $c) => $c->whereIn('slug', self::CURATED_SLUGS)->orWhereIn('external_id', self::CURATED_EXTERNAL_IDS)))
+            ->orWhere('created_by', $user->id));
     }
 
     /**
