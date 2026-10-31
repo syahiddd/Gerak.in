@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -55,7 +56,7 @@ class WorkoutPhotoTest extends TestCase
         $this->assertSame(1600, $photo->width);
         $this->assertSame(1200, $photo->height);
         Storage::disk('public')->assertExists($photo->path);
-        $this->assertContains(getimagesizefromstring(Storage::disk('public')->get($photo->path))['mime'], ['image/jpeg', 'image/png']);
+        $this->assertContains(getimagesizefromstring(Storage::disk('public')->get($photo->path))['mime'], ['image/webp', 'image/jpeg', 'image/png']);
 
         $this->actingAs($owner)->get(route('posts.show', $workout))
             ->assertInertia(fn ($page) => $page->where('post.photos.0.url', '/storage/'.$photo->path));
@@ -70,7 +71,52 @@ class WorkoutPhotoTest extends TestCase
 
         $stored = Storage::disk('public')->get($workout->photos()->value('path'));
         $this->assertStringNotContainsString('GPS-LAT', $stored);
-        $this->assertSame('image/jpeg', getimagesizefromstring($stored)['mime']);
+        $this->assertContains(getimagesizefromstring($stored)['mime'], ['image/webp', 'image/jpeg']);
+    }
+
+    public function test_photos_are_converted_to_webp_when_gd_supports_it(): void
+    {
+        if (! function_exists('imagewebp') || ! (imagetypes() & IMG_WEBP)) {
+            $this->markTestSkipped('GD in this PHP build has no WebP support.');
+        }
+        $owner = User::factory()->createOne();
+        $workout = $this->makePost($owner);
+
+        $this->upload($owner, $workout, [UploadedFile::fake()->image('gym.png', 800, 600)])->assertSessionHasNoErrors();
+
+        $path = $workout->photos()->value('path');
+        $this->assertStringEndsWith('.webp', $path);
+        $this->assertSame('image/webp', getimagesizefromstring(Storage::disk('public')->get($path))['mime']);
+    }
+
+    public function test_photos_go_to_supabase_storage_when_configured(): void
+    {
+        config(['services.supabase' => ['media_disk' => 'supabase', 'url' => 'https://proj.supabase.co', 'key' => 'sb_secret_test', 'bucket' => 'media']]);
+        Http::fake(['proj.supabase.co/*' => Http::response(['Key' => 'media/x'])]);
+        $owner = User::factory()->createOne();
+        $workout = $this->makePost($owner);
+
+        $this->upload($owner, $workout, [UploadedFile::fake()->image('gym.png', 800, 600)])->assertSessionHasNoErrors();
+
+        $photo = $workout->photos()->firstOrFail();
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->url() === 'https://proj.supabase.co/storage/v1/object/media/'.$photo->path
+            && $request->hasHeader('apikey', 'sb_secret_test')
+            && ! $request->hasHeader('Authorization'));
+        $this->assertSame('https://proj.supabase.co/storage/v1/object/public/media/'.$photo->path, $photo->url());
+        Storage::disk('public')->assertMissing($photo->path);
+    }
+
+    public function test_storage_failure_returns_a_form_error_instead_of_a_500(): void
+    {
+        config(['services.supabase' => ['media_disk' => 'supabase', 'url' => 'https://proj.supabase.co', 'key' => 'sb_secret_test', 'bucket' => 'media']]);
+        Http::fake(['proj.supabase.co/*' => Http::response(['error' => 'Bucket not found'], 404)]);
+        $owner = User::factory()->createOne();
+        $workout = $this->makePost($owner);
+
+        $this->upload($owner, $workout, [UploadedFile::fake()->image('gym.png', 800, 600)])
+            ->assertSessionHasErrors('photos');
+        $this->assertSame(0, $workout->photos()->count());
     }
 
     public function test_limit_is_checked_before_anything_is_removed(): void

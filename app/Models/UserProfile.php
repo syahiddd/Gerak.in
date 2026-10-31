@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\MediaStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -22,10 +23,9 @@ class UserProfile extends Model
         return ['height_cm' => 'decimal:1', 'is_public' => 'boolean'];
     }
 
-    /** Relative URL so it works whatever APP_URL/host the app is served from. */
     public function avatarUrl(): ?string
     {
-        return $this->avatar_path ? '/storage/'.$this->avatar_path : null;
+        return $this->avatar_path ? MediaStorage::url($this->avatar_path) : null;
     }
 
     public function user(): BelongsTo

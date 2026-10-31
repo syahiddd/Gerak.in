@@ -6,8 +6,8 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Support\ImageMetadata;
+use App\Support\MediaStorage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -40,7 +40,7 @@ class AvatarService
             : $this->passThrough($bytes, $type);
 
         $path = "avatars/{$user->id}/".Str::random(24).'.'.$ext;
-        Storage::disk('public')->put($path, $data);
+        MediaStorage::put($path, $data, ['webp' => 'image/webp', 'jpg' => 'image/jpeg', 'png' => 'image/png'][$ext], 'avatar');
 
         // Swap only after the new file is safely stored.
         $profile = $user->profile()->firstOrCreate([]);
@@ -48,7 +48,7 @@ class AvatarService
         $profile->update(['avatar_path' => $path]);
         $user->setRelation('profile', $profile);
         if ($old) {
-            Storage::disk('public')->delete($old);
+            MediaStorage::delete($old);
         }
 
         return $path;
@@ -59,7 +59,7 @@ class AvatarService
         // Query fresh: $user->profile may be a stale copy cached earlier in the request.
         $profile = $user->profile()->first();
         if ($profile?->avatar_path) {
-            Storage::disk('public')->delete($profile->avatar_path);
+            MediaStorage::delete($profile->avatar_path);
             $profile->update(['avatar_path' => null]);
         }
         $user->setRelation('profile', $profile);

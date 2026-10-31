@@ -48,6 +48,14 @@ return [
         'base_url' => env('EXERCISE_DATASET_URL', 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main'),
     ],
 
+    // User uploads. MEDIA_DISK=supabase on Vercel (read-only filesystem); see App\Support\MediaStorage.
+    'supabase' => [
+        'media_disk' => env('MEDIA_DISK', 'public'),
+        'url' => env('SUPABASE_URL'),
+        'key' => env('SUPABASE_SECRET_KEY'),
+        'bucket' => env('SUPABASE_STORAGE_BUCKET', 'media'),
+    ],
+
     'workoutx' => [
         'base_url' => env('WORKOUTX_BASE_URL', 'https://api.workoutxapp.com'),
         'key' => env('WORKOUTX_API_KEY'),

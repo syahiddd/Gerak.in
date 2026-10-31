@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\MediaStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class WorkoutPhoto extends Model
 {
@@ -15,7 +15,7 @@ class WorkoutPhoto extends Model
     protected static function booted(): void
     {
         // The row and the file live and die together.
-        static::deleted(fn (WorkoutPhoto $photo) => Storage::disk('public')->delete($photo->path));
+        static::deleted(fn (WorkoutPhoto $photo) => MediaStorage::delete($photo->path));
     }
 
     public function workout(): BelongsTo
@@ -23,9 +23,8 @@ class WorkoutPhoto extends Model
         return $this->belongsTo(Workout::class);
     }
 
-    /** Relative URL so it works whatever APP_URL/host the app is served from. */
     public function url(): string
     {
-        return '/storage/'.$this->path;
+        return MediaStorage::url($this->path);
     }
 }

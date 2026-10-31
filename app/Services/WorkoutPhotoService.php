@@ -7,20 +7,19 @@ namespace App\Services;
 use App\Models\Workout;
 use App\Models\WorkoutPhoto;
 use App\Support\ImageMetadata;
+use App\Support\MediaStorage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Stores workout photos on the public disk without leaking metadata.
+ * Stores workout photos (see MediaStorage) without leaking metadata.
  *
- * Phone photos carry EXIF (including GPS location). When GD can decode and
- * encode the format, the photo is resized and re-encoded, which drops all
- * metadata. Some PHP builds (e.g. php.new / Herd Lite) ship GD without JPEG
- * support; JPEGs are then kept as-is apart from their metadata segments,
- * which are cut out byte-wise. The browser already downsizes photos before
- * upload (resources/js/lib/image.ts), so size stays bounded either way.
+ * Phone photos carry EXIF (including GPS location). When GD can decode the
+ * format, the photo is resized and re-encoded as WebP (JPEG/PNG if GD lacks
+ * WebP), which drops all metadata and keeps the bucket small. Some PHP builds
+ * (e.g. php.new / Herd Lite) ship GD without JPEG support; JPEGs are then kept
+ * as-is apart from their metadata segments, which are cut out byte-wise.
  */
 class WorkoutPhotoService
 {
@@ -29,6 +28,10 @@ class WorkoutPhotoService
     private const MAX_EDGE = 1600;
 
     private const JPEG_QUALITY = 85;
+
+    private const WEBP_QUALITY = 80;
+
+    private const MIME = ['webp' => 'image/webp', 'jpg' => 'image/jpeg', 'png' => 'image/png'];
 
     /**
      * @param  UploadedFile[]  $files
@@ -69,7 +72,7 @@ class WorkoutPhotoService
             : [ImageMetadata::stripJpeg($bytes), 'jpg', (int) $info[0], (int) $info[1]];
 
         $path = "workout-photos/{$workout->id}/".Str::random(24).'.'.$ext;
-        Storage::disk('public')->put($path, $data);
+        MediaStorage::put($path, $data, self::MIME[$ext], 'photos');
 
         return $workout->photos()->create([
             'path' => $path,
@@ -85,7 +88,7 @@ class WorkoutPhotoService
             return false;
         }
         $read = $type === IMAGETYPE_JPEG ? IMG_JPG : IMG_PNG;
-        $write = (imagetypes() & IMG_JPG) || (imagetypes() & IMG_PNG);
+        $write = (imagetypes() & IMG_WEBP) || (imagetypes() & IMG_JPG) || (imagetypes() & IMG_PNG);
 
         return (bool) (imagetypes() & $read) && $write;
     }
@@ -107,13 +110,22 @@ class WorkoutPhotoService
         imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
         imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
 
+        $ext = match (true) {
+            function_exists('imagewebp') && (bool) (imagetypes() & IMG_WEBP) => 'webp',
+            (bool) (imagetypes() & IMG_JPG) => 'jpg',
+            default => 'png',
+        };
+
         ob_start();
-        $jpeg = (bool) (imagetypes() & IMG_JPG);
-        $jpeg ? imagejpeg($dst, null, self::JPEG_QUALITY) : imagepng($dst, null, 8);
+        match ($ext) {
+            'webp' => imagewebp($dst, null, self::WEBP_QUALITY),
+            'jpg' => imagejpeg($dst, null, self::JPEG_QUALITY),
+            'png' => imagepng($dst, null, 8),
+        };
         $out = (string) ob_get_clean();
         imagedestroy($src);
         imagedestroy($dst);
 
-        return [$out, $jpeg ? 'jpg' : 'png', $nw, $nh];
+        return [$out, $ext, $nw, $nh];
     }
 }
