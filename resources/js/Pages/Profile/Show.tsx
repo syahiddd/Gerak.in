@@ -6,7 +6,7 @@ import { formatNumber } from '@/lib/units';
 import { ProfileHeader } from '@/Pages/Social/Profile';
 import { PageProps, PersonalRecord, PublicProfile, Routine, Workout } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { LogOut, Settings, ShieldCheck } from 'lucide-react';
+import { LogOut, Play, Plus, Settings, ShieldCheck } from 'lucide-react';
 
 interface Props extends PageProps {
     profile: PublicProfile;
@@ -76,6 +76,7 @@ export default function ProfileShow({
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(activeWorkout.started_at).toLocaleString()}</p>
                     </div>
                     <Link href={route('workouts.show', activeWorkout.id)} className={btn.primary}>
+                        <Play className="h-4 w-4" aria-hidden />
                         Resume
                     </Link>
                 </div>
@@ -120,6 +121,7 @@ export default function ProfileShow({
                         {/* Shortcuts: quieter than the routine buttons so they don't compete. */}
                         <div className="-mx-2 mt-4 flex flex-wrap gap-1 border-t border-zinc-200 pt-3 dark:border-zinc-800">
                             <button onClick={() => startEmpty.post(route('workouts.start-empty'))} className={`${btn.ghost} px-2`}>
+                                <Plus className="h-4 w-4" aria-hidden />
                                 Start empty workout
                             </button>
                             <Link href={route('exercises.index')} className={`${btn.ghost} px-2`}>

@@ -3,6 +3,7 @@ import WorkoutRow from '@/Components/WorkoutRow';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated, Workout } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Play, Plus } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 
 interface Props {
@@ -45,6 +46,7 @@ export default function WorkoutIndex({ workouts, active, filters }: Props) {
                     </div>
                     {!active && (
                         <button onClick={() => startEmpty.post(route('workouts.start-empty'))} disabled={startEmpty.processing} className={btn.primary}>
+                            <Plus className="h-4 w-4" aria-hidden />
                             Start empty workout
                         </button>
                     )}
@@ -62,6 +64,7 @@ export default function WorkoutIndex({ workouts, active, filters }: Props) {
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(active.started_at).toLocaleString()}</p>
                     </div>
                     <Link href={route('workouts.show', active.id)} className={btn.primary}>
+                        <Play className="h-4 w-4" aria-hidden />
                         Resume
                     </Link>
                 </div>
