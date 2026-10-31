@@ -27,7 +27,7 @@ import { PropsWithChildren, ReactNode, useState } from 'react';
 // The old dashboard now lives on the Profile page.
 const PROFILE_MATCH = ['profile.*', 'settings.*', 'measurements.*'];
 
-// Single source of truth for main navigation (desktop sidebar + mobile drawer).
+// Single source of truth for main navigation (desktop sidebar + mobile bottom bar).
 const NAV = [
     { label: 'Feed', href: 'feed.index', match: ['feed.*', 'posts.*', 'users.*'], Icon: Newspaper },
     { label: 'Workout', href: 'workouts.index', match: ['workouts.*'], Icon: Dumbbell },
@@ -36,6 +36,24 @@ const NAV = [
     { label: 'Statistics', href: 'statistics.index', match: ['statistics.*', 'records.*'], Icon: BarChart3 },
     { label: 'Profile', href: 'profile.show', match: PROFILE_MATCH, Icon: User },
 ];
+
+// On a phone the first four are thumb-reach tabs; the rest sit behind the Menu tab.
+const TABS = NAV.slice(0, 4);
+const MORE = NAV.slice(4);
+
+const tabClass = (active: boolean) =>
+    `flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lime-400 ${
+        active ? 'font-bold text-zinc-900 dark:text-white' : 'font-medium text-zinc-500 dark:text-zinc-400'
+    }`;
+// Same lime pill as the active sidebar row, sized to sit behind the icon.
+const tabIconClass = (active: boolean) =>
+    `flex h-7 w-12 items-center justify-center rounded-full transition-colors ${active ? 'bg-lime-400 text-zinc-950' : ''}`;
+const sheetLinkClass = (active: boolean) =>
+    `flex min-h-11 items-center gap-3 rounded-xl px-3 transition ${
+        active
+            ? 'bg-lime-400 font-bold text-zinc-950'
+            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white'
+    }`;
 
 export default function Authenticated({
     header,
@@ -65,7 +83,7 @@ export default function Authenticated({
         </button>
     );
 
-    // Shared by the desktop account dropdown and the mobile drawer.
+    // Shared by the desktop account dropdown and the mobile menu sheet.
     const accountLinks = [
         { label: 'My public profile', href: route('users.show', user.username), Icon: UserRound },
         { label: 'Edit profile', href: route('profile.edit'), Icon: Pencil },
@@ -74,10 +92,12 @@ export default function Authenticated({
         { label: 'Log out', href: route('logout'), Icon: LogOut, logout: true },
     ];
 
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const closeDrawer = () => setDrawerOpen(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const closeMenu = () => setMenuOpen(false);
+    // The Menu tab lights up when the current page lives inside it.
+    const menuActive = isActive([...MORE.flatMap((n) => n.match), 'admin.*']);
 
-    const navLinks = (onNavigate: () => void) => (
+    const navLinks = (
         <nav className="flex-1 space-y-1 px-3 py-4 text-sm font-medium">
             <UserSearchBox className="mb-3" />
 
@@ -90,7 +110,6 @@ export default function Authenticated({
                         href={route(n.href)}
                         prefetch
                         cacheFor="30s"
-                        onClick={onNavigate}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
                             active
                                 ? 'bg-lime-400 font-bold text-zinc-950 dark:bg-lime-400 dark:text-zinc-950'
@@ -105,7 +124,6 @@ export default function Authenticated({
             {user.role === 'admin' && (
                 <Link
                     href={route('admin.dashboard')}
-                    onClick={onNavigate}
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
                         route().current('admin.*')
                             ? 'bg-zinc-900 font-bold text-white dark:bg-white dark:text-zinc-900'
@@ -131,7 +149,7 @@ export default function Authenticated({
             <aside className="hidden w-64 shrink-0 flex-col border-r border-zinc-200 bg-white sm:flex dark:border-zinc-800 dark:bg-zinc-900 sm:fixed sm:inset-y-0 sm:z-30">
                 <div className="flex h-16 items-center px-5">{logo}</div>
 
-                {navLinks(() => {})}
+                {navLinks}
 
                 <div className="space-y-2 border-t border-zinc-200 p-4 dark:border-zinc-800">
                     {themeButton}
@@ -170,67 +188,93 @@ export default function Authenticated({
                 </div>
             </aside>
 
-            {/* ===== Topbar Mobile + hamburger ===== */}
-            <div className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 sm:hidden dark:border-zinc-800 dark:bg-zinc-900">
+            {/* ===== Topbar Mobile (logo only; navigation lives in the bottom bar) ===== */}
+            <div className="flex h-14 items-center border-b border-zinc-200 bg-white px-4 sm:hidden dark:border-zinc-800 dark:bg-zinc-900">
                 {logo}
-                <button
-                    onClick={() => setDrawerOpen(true)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                    aria-label="Open navigation menu"
-                    aria-expanded={drawerOpen}
-                >
-                    <Menu className="h-6 w-6" />
-                </button>
             </div>
 
-            {/* ===== Drawer navigasi mobile (semua tombol navbar) ===== */}
-            <Dialog open={drawerOpen} onClose={closeDrawer} className="relative z-50 sm:hidden">
-                <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-                <div className="fixed inset-y-0 right-0 flex w-80 max-w-[85vw]">
-                    <Dialog.Panel className="flex w-full flex-col overflow-y-auto bg-white pb-[env(safe-area-inset-bottom)] dark:bg-zinc-900">
-                        <div className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
-                            {logo}
-                            <button
-                                onClick={closeDrawer}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                                aria-label="Close navigation menu"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
+            {/* ===== Bottom bar mobile: four tabs + Menu ===== */}
+            <nav
+                aria-label="Main"
+                className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden dark:border-zinc-800 dark:bg-zinc-900"
+            >
+                {TABS.map((n) => {
+                    const active = isActive(n.match);
+                    return (
+                        <Link
+                            key={n.href}
+                            href={route(n.href)}
+                            prefetch
+                            cacheFor="30s"
+                            aria-current={active ? 'page' : undefined}
+                            className={tabClass(active)}
+                        >
+                            <span className={tabIconClass(active)}>
+                                <n.Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} aria-hidden />
+                            </span>
+                            {n.label}
+                        </Link>
+                    );
+                })}
+                <button type="button" onClick={() => setMenuOpen(true)} aria-expanded={menuOpen} aria-haspopup="dialog" className={tabClass(menuActive)}>
+                    <span className={tabIconClass(menuActive)}>
+                        <Menu className="h-5 w-5" strokeWidth={menuActive ? 2.5 : 2} aria-hidden />
+                    </span>
+                    Menu
+                </button>
+            </nav>
+
+            {/* ===== Menu sheet mobile: everything that isn't a tab ===== */}
+            <Dialog open={menuOpen} onClose={closeMenu} className="relative z-50 sm:hidden">
+                <div className="fixed inset-0 bg-zinc-950/60" aria-hidden="true" />
+                <Dialog.Panel className="fixed inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] motion-safe:animate-rise dark:bg-zinc-900">
+                    <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+                        <div className="min-w-0 flex-1">
+                            <Dialog.Title className="truncate text-sm font-bold">{user.name}</Dialog.Title>
+                            <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{user.email}</p>
                         </div>
+                        <button onClick={closeMenu} className={btn.icon} aria-label="Close menu">
+                            <X className="h-5 w-5" />
+                        </button>
+                    </div>
 
-                        <div className="px-3 pt-3">
-                            <p className="truncate px-3 text-sm font-bold">{user.name}</p>
-                            <p className="truncate px-3 text-xs text-zinc-500 dark:text-zinc-400">{user.email}</p>
-                        </div>
-
-                        {navLinks(closeDrawer)}
-
-                        <div className="space-y-2 border-t border-zinc-200 p-4 text-sm dark:border-zinc-800">
-                            {themeButton}
-                            {accountLinks.map(({ label, href, Icon, logout }) => (
-                                <Link
-                                    key={label}
-                                    href={href}
-                                    {...(logout ? { method: 'post' as const, as: 'button' } : {})}
-                                    onClick={closeDrawer}
-                                    className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left font-medium ${
-                                        logout
-                                            ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30'
-                                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                                    }`}
-                                >
-                                    <Icon className="h-5 w-5 shrink-0" aria-hidden />
-                                    {label}
+                    <div className="space-y-1 p-4 text-sm font-medium">
+                        <UserSearchBox className="mb-3" />
+                        {MORE.map((n) => {
+                            const active = isActive(n.match);
+                            return (
+                                <Link key={n.href} href={route(n.href)} onClick={closeMenu} aria-current={active ? 'page' : undefined} className={sheetLinkClass(active)}>
+                                    <n.Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.5 : 2} aria-hidden />
+                                    {n.label}
                                 </Link>
-                            ))}
-                        </div>
-                    </Dialog.Panel>
-                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="space-y-1 border-t border-zinc-200 p-4 text-sm dark:border-zinc-800">
+                        <div className="mb-2">{themeButton}</div>
+                        {accountLinks.map(({ label, href, Icon, logout }) => (
+                            <Link
+                                key={label}
+                                href={href}
+                                {...(logout ? { method: 'post' as const, as: 'button' } : {})}
+                                onClick={closeMenu}
+                                className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left font-medium ${
+                                    logout
+                                        ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30'
+                                        : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                                }`}
+                            >
+                                <Icon className="h-5 w-5 shrink-0" aria-hidden />
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
+                </Dialog.Panel>
             </Dialog>
 
-            {/* ===== Konten kanan ===== */}
-            <div className="flex min-h-screen flex-1 flex-col pb-[env(safe-area-inset-bottom)] sm:pl-64">
+            {/* ===== Konten kanan (mobile leaves room for the bottom bar) ===== */}
+            <div className="flex min-h-screen flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0 sm:pl-64">
                 {header && (
                     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">{header}</div>
