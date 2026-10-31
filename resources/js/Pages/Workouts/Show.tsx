@@ -1,4 +1,5 @@
 import { confirmAction } from '@/Components/ConfirmDialog';
+import Dropdown from '@/Components/Dropdown';
 import { btn, Card } from '@/Components/ui';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import ExercisePicker from '@/Components/ExercisePicker';
@@ -9,7 +10,7 @@ import { api } from '@/lib/api';
 import { formatNumber, setLabel } from '@/lib/units';
 import { Exercise, ExerciseOption, Workout, WorkoutExercise, WorkoutSet } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Check, X } from 'lucide-react';
+import { Check, ClipboardList, Flag, MoreVertical, NotebookPen, Pause, Play, Plus, Timer, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface PreviousSet {
@@ -26,12 +27,26 @@ interface Props {
 const restBtn =
     'min-h-11 rounded-xl bg-white/15 px-4 text-sm font-bold text-white hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400';
 
-// "77 kg × 8, 76.5 kg × 8". Sets logged without reps are skipped instead of printing "null reps".
-const lastTime = (sets: PreviousSet[] = []) =>
-    sets
-        .filter((p) => p.reps != null)
-        .map((p) => (p.weight_kg ? `${formatNumber(p.weight_kg)} kg × ${p.reps}` : `${p.reps} reps`))
-        .join(', ');
+// Small rounded actions under an exercise name (rest, note).
+const chip =
+    'inline-flex min-h-11 items-center gap-2 rounded-xl bg-zinc-100 px-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700';
+
+// Number inputs without browser spinners: the column is too narrow for them on a phone.
+const setInput =
+    'h-11 w-full rounded-xl border-zinc-300 px-1 text-center text-sm font-semibold [appearance:textfield] dark:border-zinc-700 dark:bg-zinc-900 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
+
+const setGrid = 'grid grid-cols-[2.5rem_minmax(0,1fr)_4rem_4rem_2.75rem] items-center gap-2';
+
+// The API sends decimals as "12.00", which a number input shows as "12,00" in some locales.
+const withPlainWeights = (list: WorkoutExercise[] = []) =>
+    list.map((we) => ({ ...we, sets: we.sets.map((s) => ({ ...s, weight_kg: s.weight_kg == null ? null : Number(s.weight_kg) })) }));
+
+// 90 -> "1:30", 120 -> "2:00".
+const formatRest = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
+// "77kg × 8" for the Previous column; bodyweight sets show reps only.
+const previousLabel = (p?: PreviousSet) =>
+    !p || p.reps == null ? '-' : p.weight_kg ? `${formatNumber(p.weight_kg)}kg × ${p.reps}` : `${p.reps} reps`;
 
 export default function WorkoutShow({ workout: initial, previous }: Props) {
     const { auth } = usePage().props as unknown as {
@@ -40,16 +55,23 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
     const defaultRest = auth.user.settings?.default_rest_seconds ?? 90;
     const isActive = initial.status === 'in_progress' || initial.status === 'paused';
 
-    const [exercises, setExercises] = useState<WorkoutExercise[]>(initial.exercises ?? []);
+    const [exercises, setExercises] = useState<WorkoutExercise[]>(() => withPlainWeights(initial.exercises));
     // Inertia keeps this component mounted across visits, so take the server's list after add/remove;
     // otherwise a removed exercise stays on screen and a second Remove hits a 404.
-    useEffect(() => setExercises(initial.exercises ?? []), [initial.exercises]);
+    useEffect(() => setExercises(withPlainWeights(initial.exercises)), [initial.exercises]);
     const elapsed = useElapsed(initial.started_at, initial.paused_seconds_total ?? 0, initial.paused_at ?? null);
     const isPaused = initial.status === 'paused';
     const rest = useRestTimer();
     const addExerciseForm = useForm({ exercise_id: '' });
     const [selectedExercise, setSelectedExercise] = useState<ExerciseOption | null>(null);
     const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+    const doneSets = exercises.reduce((n, we) => n + we.sets.filter((s) => s.is_completed).length, 0);
+    // Same rule as the server total: only completed sets count.
+    const liveVolume = exercises.reduce(
+        (sum, we) => sum + we.sets.reduce((s, set) => (set.is_completed ? s + Number(set.weight_kg ?? 0) * (set.reps ?? 0) : s), 0),
+        0,
+    );
 
     // Draft backup so a refresh never loses context (server is source of truth).
     useEffect(() => {
@@ -137,14 +159,17 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                         <div className="flex flex-wrap items-center gap-2">
                             {isPaused ? (
                                 <Link href={route('workouts.resume', initial.id)} method="post" as="button" className={btn.primary}>
+                                    <Play className="h-4 w-4" aria-hidden />
                                     Resume
                                 </Link>
                             ) : (
                                 <Link href={route('workouts.pause', initial.id)} method="post" as="button" className={btn.secondary}>
+                                    <Pause className="h-4 w-4" aria-hidden />
                                     Pause
                                 </Link>
                             )}
                             <Link href={route('workouts.finish', initial.id)} method="post" as="button" className={isPaused ? btn.secondary : btn.primary}>
+                                <Flag className="h-4 w-4" aria-hidden />
                                 Finish
                             </Link>
                             <button
@@ -159,6 +184,7 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                                     if (ok) router.post(route('workouts.cancel', initial.id));
                                 }}
                             >
+                                <X className="h-4 w-4" aria-hidden />
                                 Cancel
                             </button>
                         </div>
@@ -195,11 +221,13 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
         >
             <Head title={initial.name} />
 
-            {isActive && (
-                <div className="mb-4 rounded-2xl bg-zinc-950 p-4 text-white dark:bg-zinc-800">
+            {/* Only while counting down, so it doesn't sit on screen as an empty "Rest -" bar. */}
+            {isActive && rest.display !== '-' && (
+                <div className="sticky top-0 z-30 mb-4 rounded-2xl bg-zinc-950 p-4 text-white dark:bg-zinc-800">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm font-bold">
-                            Rest <span className="ms-2 text-lg tabular-nums">{rest.display}</span>
+                        <p className="flex items-center gap-2 text-sm font-bold">
+                            <Timer className="h-5 w-5 text-lime-400" aria-hidden />
+                            Rest <span className="text-lg tabular-nums">{rest.display}</span>
                         </p>
                         <div className="flex gap-2">
                             <button onClick={() => rest.start(90)} className={restBtn}>1:30</button>
@@ -210,133 +238,168 @@ export default function WorkoutShow({ workout: initial, previous }: Props) {
                 </div>
             )}
 
-            {!isActive && (
-                <dl className="mb-4 flex max-w-3xl flex-wrap gap-x-8 gap-y-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    {[
-                        ['Duration', humanDuration(initial.duration_seconds)],
-                        ['Volume', `${formatNumber(initial.total_volume_kg)} kg`],
-                        ['Sets', String(exercises.reduce((n, we) => n + we.sets.filter((s) => s.is_completed).length, 0))],
-                        ['Exercises', String(exercises.length)],
-                    ].map(([label, value]) => (
-                        <div key={label}>
-                            <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
-                            <dd className="text-lg font-extrabold tabular-nums">{value}</dd>
-                        </div>
-                    ))}
-                </dl>
-            )}
+            <dl className="mb-4 flex max-w-3xl flex-wrap gap-x-8 gap-y-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900">
+                {[
+                    ['Duration', isActive ? elapsed : humanDuration(initial.duration_seconds)],
+                    ['Volume', `${formatNumber(isActive ? liveVolume : initial.total_volume_kg)} kg`],
+                    ['Sets', String(doneSets)],
+                    ...(isActive ? [] : [['Exercises', String(exercises.length)]]),
+                ].map(([label, value], i) => (
+                    <div key={label}>
+                        <dt className="text-sm text-zinc-500 dark:text-zinc-400">{label}</dt>
+                        {/* The running clock is the one number that changes on its own, so it gets the accent. */}
+                        <dd className={`text-lg font-extrabold tabular-nums ${isActive && i === 0 ? 'text-lime-700 dark:text-lime-400' : ''}`}>{value}</dd>
+                    </div>
+                ))}
+            </dl>
 
-            <div className={`space-y-4 ${isActive ? '' : 'max-w-3xl'}`}>
+            <div className="max-w-3xl space-y-4">
                 {exercises.map((we) => (
                     <Card key={we.id}>
                         <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
                                 <ExerciseMedia exercise={we.exercise} variant="inline" />
-                                <div>
-                                    <Link href={route('exercises.show', we.exercise.slug)} className="font-bold hover:underline">
+                                <div className="min-w-0">
+                                    <Link
+                                        href={route('exercises.show', we.exercise.slug)}
+                                        className="block truncate font-bold text-lime-700 hover:underline dark:text-lime-400"
+                                    >
                                         {we.exercise.name}
                                     </Link>
                                     <p className="text-xs text-zinc-500 dark:text-zinc-400">{we.exercise.primary_muscle?.name ?? ''}</p>
                                 </div>
                             </div>
                             {isActive && (
-                                <button
-                                    type="button"
-                                    className={btn.danger}
-                                    onClick={async () => {
-                                        const ok = await confirmAction({
-                                            title: `Remove ${we.exercise.name}?`,
-                                            confirmLabel: 'Remove',
-                                        });
-                                        if (ok) router.delete(route('workouts.remove-exercise', [initial.id, we.id]));
-                                    }}
-                                >
-                                    Remove
-                                </button>
+                                <Dropdown>
+                                    <Dropdown.Trigger>
+                                        <button type="button" className={btn.icon} aria-label={`Options for ${we.exercise.name}`}>
+                                            <MoreVertical className="h-5 w-5" aria-hidden />
+                                        </button>
+                                    </Dropdown.Trigger>
+                                    <Dropdown.Content contentClasses="py-1 bg-white dark:bg-zinc-800">
+                                        <button
+                                            type="button"
+                                            className="flex min-h-11 w-full items-center gap-2 px-4 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                                            onClick={async () => {
+                                                const ok = await confirmAction({
+                                                    title: `Remove ${we.exercise.name}?`,
+                                                    confirmLabel: 'Remove',
+                                                });
+                                                if (ok) router.delete(route('workouts.remove-exercise', [initial.id, we.id]));
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                            Remove exercise
+                                        </button>
+                                    </Dropdown.Content>
+                                </Dropdown>
                             )}
                         </div>
 
-                        {/* Only useful mid-workout; afterwards it would repeat this session's own sets. */}
-                        {isActive && lastTime(previous[we.id]) && (
-                            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                                Last time:{' '}
-                                <span className="font-semibold text-zinc-700 dark:text-zinc-300">{lastTime(previous[we.id])}</span>
-                            </p>
-                        )}
-
                         {!isActive ? (
-                            <CompletedSets sets={we.sets} />
+                            <>
+                                <CompletedSets sets={we.sets} />
+                                {we.notes && <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{we.notes}</p>}
+                            </>
                         ) : (
-                        <div className="mt-2 overflow-x-auto">
-                            <table className="w-full text-sm tabular-nums [&_td]:pe-1 [&_th]:pe-1">
-                                <thead className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    <tr>
-                                        <th className="w-8 py-1 text-left">Set</th>
-                                        <th className="text-left">Weight</th>
-                                        <th className="text-left">Reps</th>
-                                        <th className="text-left">RPE</th>
-                                        <th className="text-left">Done</th>
-                                        <th />
+                            <>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    <button type="button" onClick={() => rest.start(defaultRest)} className={chip}>
+                                        <Timer className="h-4 w-4" aria-hidden />
+                                        Rest: {formatRest(defaultRest)}
+                                    </button>
+                                    <ExerciseNotesEditor
+                                        workoutId={initial.id}
+                                        exercise={we}
+                                        onSaved={(notes) =>
+                                            setExercises((prev) => prev.map((e) => (e.id === we.id ? { ...e, notes } : e)))
+                                        }
+                                    />
+                                </div>
 
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                <div className={`${setGrid} mt-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400`}>
+                                    <span className="text-center">Set</span>
+                                    <span>Previous</span>
+                                    <span className="text-center">kg</span>
+                                    <span className="text-center">Reps</span>
+                                    <Check className="mx-auto h-4 w-4" aria-label="Done" />
+                                </div>
+
+                                <ul className="mt-1 space-y-1 tabular-nums">
                                     {we.sets.map((set, i) => (
-                                        <tr key={set.id} className="border-t border-zinc-100 dark:border-zinc-800">
-                                            <td className="py-1 font-bold" title={set.set_type.replace('_', ' ')}>
-                                                {setLabel(we.sets, i)}
-                                            </td>
-                                                <>
-                                                    <td>
-                                                        <input type="number" step="0.5" min={0} value={set.weight_kg ?? ''} onChange={(e) => patchSet(we.id, set.id, { weight_kg: e.target.value === '' ? null : e.target.value })} className="h-11 w-14 rounded-xl border-zinc-300 px-2 sm:w-20 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Weight kg" />
-                                                    </td>
-                                                    <td>
-                                                        <input type="number" min={0} value={set.reps ?? ''} onChange={(e) => patchSet(we.id, set.id, { reps: e.target.value === '' ? null : Number(e.target.value) })} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); toggleSet(we, set); } }} className="h-11 w-12 rounded-xl border-zinc-300 px-2 sm:w-16 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="Reps" />
-                                                    </td>
-                                                    <td>
-                                                        <input type="number" step="0.5" min={0} max={10} value={set.rpe ?? ''} onChange={(e) => patchSet(we.id, set.id, { rpe: e.target.value === '' ? null : e.target.value })} className="h-11 w-11 rounded-xl border-zinc-300 px-2 sm:w-14 text-sm dark:border-zinc-700 dark:bg-zinc-800" aria-label="RPE" />
-                                                    </td>
-                                                    <td>
-                                                        <button
-                                                            onClick={() => toggleSet(we, set)}
-                                                            aria-label={set.is_completed ? 'Mark set not done' : 'Mark set done'}
-                                                            aria-pressed={set.is_completed}
-                                                            className={`inline-flex h-11 w-11 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 ${set.is_completed ? 'bg-lime-400 text-zinc-950 hover:bg-lime-300' : 'border border-zinc-300 text-zinc-400 hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-700 dark:hover:text-zinc-200'}`}
-                                                        >
-                                                            <Check className="h-5 w-5" strokeWidth={set.is_completed ? 3 : 2} aria-hidden />
-                                                        </button>
-                                                    </td>
-                                                    <td>
-                                                        <button onClick={() => deleteSet(we, set)} className={`${btn.icon} hover:text-red-600 dark:hover:text-red-400`} aria-label="Delete set">
-                                                            <X className="h-4 w-4" aria-hidden />
-                                                        </button>
-                                                    </td>
-                                                </>
-                                        </tr>
+                                        <li
+                                            key={set.id}
+                                            className={`${setGrid} -mx-2 rounded-xl px-2 py-1 transition-colors ${set.is_completed ? 'bg-lime-400/15' : ''}`}
+                                        >
+                                            {/* Tapping the set number opens its menu, which keeps a delete button out of every row. */}
+                                            <Dropdown>
+                                                <Dropdown.Trigger>
+                                                    <button
+                                                        type="button"
+                                                        title={set.set_type.replace('_', ' ')}
+                                                        aria-label={`Set ${setLabel(we.sets, i)} options`}
+                                                        className={`flex h-11 w-10 items-center justify-center rounded-xl bg-zinc-100 text-sm font-extrabold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:bg-zinc-800 ${set.set_type === 'warmup' ? 'text-amber-600 dark:text-amber-400' : ''}`}
+                                                    >
+                                                        {setLabel(we.sets, i)}
+                                                    </button>
+                                                </Dropdown.Trigger>
+                                                <Dropdown.Content align="left" contentClasses="py-1 bg-white dark:bg-zinc-800">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteSet(we, set)}
+                                                        className="flex min-h-11 w-full items-center gap-2 px-4 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" aria-hidden />
+                                                        Delete set
+                                                    </button>
+                                                </Dropdown.Content>
+                                            </Dropdown>
+                                            <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">{previousLabel(previous[we.id]?.[i])}</span>
+                                            <input
+                                                type="number"
+                                                inputMode="decimal"
+                                                step="0.5"
+                                                min={0}
+                                                value={set.weight_kg ?? ''}
+                                                onChange={(e) => patchSet(we.id, set.id, { weight_kg: e.target.value === '' ? null : e.target.value })}
+                                                className={setInput}
+                                                aria-label={`Set ${setLabel(we.sets, i)} weight in kg`}
+                                            />
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                min={0}
+                                                value={set.reps ?? ''}
+                                                onChange={(e) => patchSet(we.id, set.id, { reps: e.target.value === '' ? null : Number(e.target.value) })}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        toggleSet(we, set);
+                                                    }
+                                                }}
+                                                className={setInput}
+                                                aria-label={`Set ${setLabel(we.sets, i)} reps`}
+                                            />
+                                            <button
+                                                onClick={() => toggleSet(we, set)}
+                                                aria-label={set.is_completed ? 'Mark set not done' : 'Mark set done'}
+                                                aria-pressed={set.is_completed}
+                                                className={`inline-flex h-11 w-11 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 ${set.is_completed ? 'bg-lime-400 text-zinc-950 hover:bg-lime-300' : 'bg-zinc-100 text-zinc-400 hover:text-zinc-700 dark:bg-zinc-800 dark:hover:text-zinc-200'}`}
+                                            >
+                                                <Check className="h-5 w-5" strokeWidth={set.is_completed ? 3 : 2} aria-hidden />
+                                            </button>
+                                        </li>
                                     ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        )}
+                                </ul>
 
-                        {isActive && (
-                            <button onClick={() => addSet(we)} className={`${btn.secondary} mt-3`}>
-                                Add set
-                            </button>
-                        )}
-
-                        {isActive ? (
-                            <ExerciseNotesEditor
-                                workoutId={initial.id}
-                                exercise={we}
-                                onSaved={(notes) =>
-                                    setExercises((prev) =>
-                                        prev.map((e) => (e.id === we.id ? { ...e, notes } : e)),
-                                    )
-                                }
-                            />
-                        ) : (
-                            we.notes && <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{we.notes}</p>
+                                <button
+                                    onClick={() => addSet(we)}
+                                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-100 text-sm font-bold hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                                >
+                                    <Plus className="h-4 w-4" aria-hidden />
+                                    Add set
+                                </button>
+                            </>
                         )}
                     </Card>
                 ))}
@@ -419,16 +482,26 @@ function ExerciseNotesEditor({
         }
     };
 
+    // Lives in the chip row: the chip stays inline, the note text and editor wrap onto their own line.
     if (!open) {
         return (
-            <button onClick={() => setOpen(true)} className={`${btn.ghost} mt-3`}>
-                {exercise.notes ? 'Edit note' : 'Add note'}
-            </button>
+            <>
+                <button onClick={() => setOpen(true)} className={chip}>
+                    <NotebookPen className="h-4 w-4" aria-hidden />
+                    {exercise.notes ? 'Edit note' : 'Note'}
+                </button>
+                {exercise.notes && (
+                    <p className="flex basis-full items-start gap-2 pt-1 text-sm text-zinc-600 dark:text-zinc-300">
+                        <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+                        {exercise.notes}
+                    </p>
+                )}
+            </>
         );
     }
 
     return (
-        <div className="mt-2">
+        <div className="basis-full">
             <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -449,7 +522,7 @@ function ExerciseNotesEditor({
     );
 }
 
-/** Read-only sets of a finished workout: "77 kg × 8", RPE only when logged, skipped sets dimmed. */
+/** Read-only sets of a finished workout: "77 kg × 8", skipped sets dimmed. */
 function CompletedSets({ sets }: { sets: WorkoutSet[] }) {
     return (
         <ol className="mt-3 divide-y divide-zinc-100 text-sm tabular-nums dark:divide-zinc-800">
@@ -461,7 +534,6 @@ function CompletedSets({ sets }: { sets: WorkoutSet[] }) {
                     <span className="flex-1 font-semibold">
                         {set.weight_kg ? `${formatNumber(set.weight_kg)} kg × ${set.reps ?? '-'}` : `${set.reps ?? '-'} reps`}
                     </span>
-                    {set.rpe && <span className="text-zinc-500 dark:text-zinc-400">RPE {formatNumber(set.rpe)}</span>}
                     {!set.is_completed && <span className="text-xs">Not done</span>}
                 </li>
             ))}
