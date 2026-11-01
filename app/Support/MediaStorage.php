@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -19,22 +22,50 @@ use Throwable;
  */
 class MediaStorage
 {
+    /** Failures become a form error that names the cause (never a key), so a broken setup is diagnosable. */
     public static function put(string $path, string $bytes, string $mime, string $field): void
     {
-        try {
-            if (self::usesSupabase()) {
-                self::supabase()
-                    ->withBody($bytes, $mime)
-                    ->withHeaders(['x-upsert' => 'true', 'cache-control' => 'max-age=31536000'])
-                    ->post(self::objectUrl($path))
-                    ->throw();
-            } else {
-                Storage::disk('public')->put($path, $bytes);
+        $fail = function (string $reason, ?Throwable $e = null) use ($field): never {
+            if ($e) {
+                report($e);
             }
-        } catch (Throwable $e) {
-            report($e);
 
-            throw ValidationException::withMessages([$field => 'The photo could not be saved. Please try again.']);
+            throw ValidationException::withMessages([$field => "The photo could not be saved: {$reason}"]);
+        };
+
+        if (! self::usesSupabase()) {
+            try {
+                $stored = Storage::disk('public')->put($path, $bytes);
+            } catch (Throwable $e) {
+                $fail('the server disk is read-only. Set MEDIA_DISK=supabase and redeploy.', $e);
+            }
+            $stored || $fail('the server disk refused the file.');
+
+            return;
+        }
+
+        $missing = array_keys(array_filter([
+            'SUPABASE_URL' => config('services.supabase.url'),
+            'SUPABASE_SECRET_KEY' => config('services.supabase.key'),
+            'SUPABASE_STORAGE_BUCKET' => config('services.supabase.bucket'),
+        ], fn ($v) => blank($v)));
+        if ($missing !== []) {
+            $fail('Supabase Storage is not configured ('.implode(', ', $missing).' is empty).');
+        }
+
+        try {
+            $response = self::supabase()
+                ->withBody($bytes, $mime)
+                ->withHeaders(['x-upsert' => 'true', 'cache-control' => 'max-age=31536000'])
+                ->post(self::objectUrl($path));
+        } catch (ConnectionException $e) {
+            $fail('Supabase Storage could not be reached. Check SUPABASE_URL.', $e);
+        }
+
+        if ($response->failed()) {
+            $detail = Str::limit((string) ($response->json('message') ?? $response->json('error') ?? $response->body()), 120);
+            report(new RuntimeException("Supabase Storage upload failed ({$response->status()}): {$detail}"));
+            $fail("Supabase Storage replied \"{$detail}\" (HTTP {$response->status()}).");
         }
     }
 

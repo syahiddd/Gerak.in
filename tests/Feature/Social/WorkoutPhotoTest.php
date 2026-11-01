@@ -115,8 +115,31 @@ class WorkoutPhotoTest extends TestCase
         $workout = $this->makePost($owner);
 
         $this->upload($owner, $workout, [UploadedFile::fake()->image('gym.png', 800, 600)])
-            ->assertSessionHasErrors('photos');
+            ->assertSessionHasErrors(['photos' => 'The photo could not be saved: Supabase Storage replied "Bucket not found" (HTTP 404).']);
         $this->assertSame(0, $workout->photos()->count());
+    }
+
+    public function test_missing_supabase_settings_are_named_in_the_error(): void
+    {
+        config(['services.supabase' => ['media_disk' => 'supabase', 'url' => 'https://proj.supabase.co', 'key' => null, 'bucket' => 'media']]);
+        Http::fake();
+        $owner = User::factory()->createOne();
+        $workout = $this->makePost($owner);
+
+        $this->upload($owner, $workout, [UploadedFile::fake()->image('gym.png', 800, 600)])
+            ->assertSessionHasErrors(['photos' => 'The photo could not be saved: Supabase Storage is not configured (SUPABASE_SECRET_KEY is empty).']);
+        Http::assertNothingSent();
+    }
+
+    public function test_read_only_disk_points_to_media_disk_setting(): void
+    {
+        Storage::shouldReceive('disk')->with('public')->andReturnSelf();
+        Storage::shouldReceive('put')->andThrow(new \RuntimeException('Unable to create directory'));
+        $owner = User::factory()->createOne();
+        $workout = $this->makePost($owner);
+
+        $this->upload($owner, $workout, [UploadedFile::fake()->image('gym.png', 800, 600)])
+            ->assertSessionHasErrors(['photos' => 'The photo could not be saved: the server disk is read-only. Set MEDIA_DISK=supabase and redeploy.']);
     }
 
     public function test_limit_is_checked_before_anything_is_removed(): void
