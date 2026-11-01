@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Announce } from '@/Components/ui';
 import Avatar from '@/Components/social/Avatar';
 import { btn } from '@/Components/ui';
 import { formatBytes, toSquareWebp } from '@/lib/image';
@@ -41,13 +42,9 @@ export default function UpdateProfileInformation({
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Profile Information
-                </h2>
+                <h2 className="text-lg font-bold">Profile</h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                    Update your account's profile information and email address.
-                </p>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Your name, username, bio and photo appear on your public profile. Your email stays private.</p>
             </header>
 
             <ProfilePhotoField />
@@ -62,18 +59,17 @@ export default function UpdateProfileInformation({
                         value={data.name}
                         onChange={(e) => setData('name', e.target.value)}
                         required
-                        isFocused
                         autoComplete="name"
                     />
 
-                    <InputError className="mt-2" message={errors.name} />
+                    <InputError htmlFor="name" className="mt-2" message={errors.name} />
                 </div>
 
                 <div>
                     <InputLabel htmlFor="username" value="Username" />
 
                     <div className="relative mt-1">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">@</span>
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500 dark:text-zinc-400" aria-hidden>@</span>
                         <TextInput
                             id="username"
                             className="block w-full pl-7"
@@ -95,11 +91,11 @@ export default function UpdateProfileInformation({
                         .
                     </p>
 
-                    <InputError className="mt-2" message={errors.username} />
+                    <InputError htmlFor="username" className="mt-2" message={errors.username} />
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="bio" value="Bio" />
+                    <InputLabel htmlFor="bio" value="Bio (optional)" />
 
                     <textarea
                         id="bio"
@@ -108,11 +104,11 @@ export default function UpdateProfileInformation({
                         value={data.bio}
                         onChange={(e) => setData('bio', e.target.value)}
                         placeholder="Training for my first powerlifting meet."
-                        className="mt-1 block w-full rounded-xl border-zinc-300 text-sm shadow-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                        className="mt-1 block w-full rounded-xl border-zinc-500 text-base sm:text-sm shadow-sm dark:border-zinc-500 dark:bg-zinc-800 dark:text-white focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                     />
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Shown on your public profile.</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Shown on your public profile. Up to 500 characters.</p>
 
-                    <InputError className="mt-2" message={errors.bio} />
+                    <InputError htmlFor="bio" className="mt-2" message={errors.bio} />
                 </div>
 
                 <div>
@@ -128,34 +124,33 @@ export default function UpdateProfileInformation({
                         autoComplete="username"
                     />
 
-                    <InputError className="mt-2" message={errors.email} />
+                    <InputError htmlFor="email" className="mt-2" message={errors.email} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
                     <div>
-                        <p className="mt-2 text-sm text-gray-800 dark:text-zinc-200">
-                            Your email address is unverified.
+                        <p className="mt-2 text-sm text-zinc-800 dark:text-zinc-200">
+                            Your email isn't verified yet.{' '}
                             <Link
                                 href={route('verification.send')}
                                 method="post"
                                 as="button"
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                className="rounded font-semibold underline hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:hover:text-white dark:focus-visible:ring-lime-400"
                             >
-                                Click here to re-send the verification email.
+                                Send a new verification link
                             </Link>
                         </p>
 
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
+                            <p role="status" className="mt-2 text-sm font-semibold text-lime-700 dark:text-lime-400">
+                                New link sent. Check your inbox.
+                            </p>
                         )}
                     </div>
                 )}
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton disabled={processing}>{processing ? 'Saving…' : 'Save profile'}</PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
@@ -164,10 +159,9 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600 dark:text-zinc-400">
-                            Saved.
-                        </p>
+                        <p className="text-sm font-semibold text-lime-700 dark:text-lime-400">Profile saved</p>
                     </Transition>
+                    <Announce text={recentlySuccessful ? 'Profile saved' : null} />
                 </div>
             </form>
         </section>
@@ -220,7 +214,7 @@ function ProfilePhotoField() {
             {
                 forceFormData: true,
                 preserveScroll: true,
-                onSuccess: () => setNote(`Saved`),
+                onSuccess: () => setNote('Photo saved'),
                 onError: (errs) => {
                     setPreview(null);
                     setError(errs.avatar ?? 'Upload failed. Try again.');
@@ -231,10 +225,14 @@ function ProfilePhotoField() {
     };
 
     const remove = async () => {
-        if (!(await confirmAction({ title: 'Remove your profile photo?', confirmLabel: 'Remove photo' }))) return;
+        if (!(await confirmAction({ title: 'Remove your profile photo?', body: 'Your initials show instead. You can upload a new photo any time.', confirmLabel: 'Remove photo' }))) return;
         setPreview(null);
         setNote(null);
-        router.delete(route('profile.avatar.destroy'), { preserveScroll: true });
+        router.delete(route('profile.avatar.destroy'), {
+            preserveScroll: true,
+            onSuccess: () => setNote('Photo removed'),
+            onError: () => setError("Couldn't remove the photo. Try again."),
+        });
     };
 
     const hasPhoto = !!(preview || user.avatar_url);
@@ -273,10 +271,11 @@ function ProfilePhotoField() {
                     )}
                 </div>
                 <input ref={input} type="file" accept="image/*" onChange={pick} className="hidden" />
+                <Announce text={error ?? note} />
                 {error ? (
                     <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
                 ) : note ? (
-                    <p className="mt-2 text-xs text-lime-600 dark:text-lime-400">{note}</p>
+                    <p className="mt-2 text-xs font-semibold text-lime-700 dark:text-lime-400">{note}</p>
                 ) : (
                     <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Cropped to a square from the center and saved as WebP.</p>
                 )}

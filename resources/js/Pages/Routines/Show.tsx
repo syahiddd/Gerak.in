@@ -2,12 +2,13 @@ import { confirmAction } from '@/Components/ConfirmDialog';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import { btn, EmptyState } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { formatNumber, setLabel } from '@/lib/units';
+import { formatWeight, setLabel, useUnitSystem } from '@/lib/units';
 import { Routine } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 
 export default function RoutineShow({ routine }: { routine: Routine }) {
     const exercises = routine.exercises ?? [];
+    const system = useUnitSystem();
 
     return (
         <AuthenticatedLayout
@@ -16,7 +17,9 @@ export default function RoutineShow({ routine }: { routine: Routine }) {
                     <div>
                         <h1 className="text-xl font-extrabold">{routine.name}</h1>
                         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {exercises.length} exercises{routine.folder ? ` · ${routine.folder.name}` : ''}
+                            {exercises.length} {exercises.length === 1 ? 'exercise' : 'exercises'}
+                            {routine.folder ? ` · ${routine.folder.name}` : ''}
+                            {routine.status === 'archived' ? ' · Archived' : ''}
                         </p>
                     </div>
                     <Link href={route('workouts.start-routine', routine.id)} method="post" as="button" className={btn.primary}>
@@ -27,20 +30,28 @@ export default function RoutineShow({ routine }: { routine: Routine }) {
         >
             <Head title={routine.name} />
 
-            {routine.description && <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">{routine.description}</p>}
+            {routine.description && <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">{routine.description}</p>}
 
             <div className="space-y-3">
                 {exercises.length === 0 && (
-                    <EmptyState title="No exercises in this routine" hint="Edit the routine or add exercises when you start a workout." />
+                    <EmptyState
+                        title="No exercises in this routine"
+                        hint="Add exercises so every workout from this routine starts ready to log."
+                        action={
+                            <Link href={route('routines.edit', routine.id)} className={btn.secondary}>
+                                Add exercises
+                            </Link>
+                        }
+                    />
                 )}
                 {exercises.map((re) => (
                     <div key={re.id} className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
                         <div className="flex items-start gap-3">
                             <ExerciseMedia exercise={re.exercise} variant="inline" />
                             <div>
-                                <p className="font-bold">{re.exercise.name}</p>
+                                <h2 className="font-bold">{re.exercise.name}</h2>
                                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                    {re.exercise.primary_muscle?.name ?? ''} · rest {re.rest_seconds ?? 90}s
+                                    {[re.exercise.primary_muscle?.name, `Rest ${re.rest_seconds ?? 90}s`].filter(Boolean).join(' · ')}
                                 </p>
                             </div>
                         </div>
@@ -59,7 +70,7 @@ export default function RoutineShow({ routine }: { routine: Routine }) {
                                                 {setLabel(re.target_sets, i)}
                                             </td>
                                             <td>
-                                                {ts.target_weight_kg ? `${formatNumber(ts.target_weight_kg)} kg × ` : ''}
+                                                {ts.target_weight_kg ? `${formatWeight(ts.target_weight_kg, system)} × ` : ''}
                                                 {ts.target_reps_max ?? ts.target_reps_min ?? '-'} reps
                                             </td>
                                         </tr>
@@ -86,7 +97,7 @@ export default function RoutineShow({ routine }: { routine: Routine }) {
                     type="button"
                     className={btn.danger}
                     onClick={async () => {
-                        const ok = await confirmAction({ title: `Delete "${routine.name}"?`, body: 'This can’t be undone.', confirmLabel: 'Delete routine' });
+                        const ok = await confirmAction({ title: `Delete "${routine.name}"?`, body: 'The template and its target sets are deleted. Workouts you already logged from it stay in your history. This can’t be undone.', confirmLabel: 'Delete routine' });
                         if (ok) router.delete(route('routines.destroy', routine.id));
                     }}
                 >

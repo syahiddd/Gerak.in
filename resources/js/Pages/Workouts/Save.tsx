@@ -1,12 +1,13 @@
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import WorkoutCelebration from '@/Components/social/WorkoutCelebration';
 import { PostStats } from '@/Components/social/WorkoutPostCard';
+import InputError from '@/Components/InputError';
 import { btn } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { compressImage } from '@/lib/image';
 import { FeedPost, PageProps, PostPhoto, WorkoutVisibility } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { Camera, Globe, Lock, LucideIcon, Users, X } from 'lucide-react';
+import { Camera, CheckCircle2, Globe, Lock, LucideIcon, Users, X } from 'lucide-react';
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 const OPTIONS: { value: WorkoutVisibility; label: string; hint: string; Icon: LucideIcon }[] = [
@@ -69,7 +70,7 @@ export default function Save({
                             <li key={pe.id} className="flex items-center gap-2 rounded-xl bg-zinc-50 py-1 pl-1 pr-3 text-sm dark:bg-zinc-800/60">
                                 {pe.exercise && <ExerciseMedia exercise={pe.exercise} variant="inline" className="!h-8 !w-8" />}
                                 <span className="font-semibold tabular-nums">{pe.sets}×</span>
-                                <span className="max-w-[12rem] truncate">{pe.exercise?.name}</span>
+                                <span className="break-words">{pe.exercise?.name}</span>
                             </li>
                         ))}
                     </ul>
@@ -97,13 +98,13 @@ export default function Save({
                             maxLength={120}
                             value={form.data.name}
                             onChange={(e) => form.setData('name', e.target.value)}
-                            className="mt-1 block w-full rounded-xl border-zinc-300 focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                            className="mt-1 block w-full rounded-xl border-zinc-500 dark:border-zinc-500 dark:bg-zinc-800 dark:text-white focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                         />
-                        {form.errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{form.errors.name}</p>}
+                        <InputError htmlFor="title" message={form.errors.name} className="mt-1" />
                     </div>
                     <div>
                         <label htmlFor="description" className="text-sm font-semibold">
-                            Description <span className="font-normal text-zinc-400">(optional)</span>
+                            Description <span className="font-normal text-zinc-500 dark:text-zinc-400">(optional)</span>
                         </label>
                         <textarea
                             id="description"
@@ -112,25 +113,22 @@ export default function Save({
                             value={form.data.description}
                             onChange={(e) => form.setData('description', e.target.value)}
                             placeholder="How did it go? New PR, felt strong, tough day…"
-                            className="mt-1 block w-full rounded-xl border-zinc-300 focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                            className="mt-1 block w-full rounded-xl border-zinc-500 dark:border-zinc-500 dark:bg-zinc-800 dark:text-white focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                         />
-                        {form.errors.description && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{form.errors.description}</p>}
+                        <InputError htmlFor="description" message={form.errors.description} className="mt-1" />
                     </div>
                 </section>
 
                 <fieldset className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
-                    <legend className="sr-only">Who can see this workout</legend>
-                    <p className="text-sm font-semibold" aria-hidden>
-                        Who can see this workout
-                    </p>
+                    <legend className="text-sm font-semibold">Who can see this workout</legend>
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">
                         {OPTIONS.map(({ value, label, hint, Icon }) => {
                             const checked = form.data.visibility === value;
                             return (
                                 <label
                                     key={value}
-                                    className={`relative flex cursor-pointer flex-col gap-1 rounded-xl p-4 ring-1 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-lime-400 ${
-                                        checked ? 'bg-lime-400/10 ring-lime-400' : 'ring-zinc-200 hover:bg-zinc-50 dark:ring-zinc-700 dark:hover:bg-zinc-800/60'
+                                    className={`relative flex cursor-pointer flex-col gap-1 rounded-xl p-4 ring-1 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-zinc-900 dark:has-[:focus-visible]:ring-lime-400 ${
+                                        checked ? 'bg-lime-400/10 ring-2 ring-lime-600 dark:ring-lime-400' : 'ring-zinc-300 hover:bg-zinc-50 dark:ring-zinc-700 dark:hover:bg-zinc-800/60'
                                     }`}
                                 >
                                     <input
@@ -141,14 +139,16 @@ export default function Save({
                                         onChange={() => form.setData('visibility', value)}
                                         className="sr-only"
                                     />
-                                    <Icon className={`h-5 w-5 ${checked ? 'text-lime-500' : 'text-zinc-400'}`} aria-hidden />
+                                    <Icon className={`h-5 w-5 ${checked ? 'text-lime-700 dark:text-lime-400' : 'text-zinc-500 dark:text-zinc-400'}`} aria-hidden />
+                                    {/* A check mark, not just the colour, marks the chosen option. */}
+                                    {checked && <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-lime-700 dark:text-lime-400" aria-hidden />}
                                     <span className="font-bold">{label}</span>
                                     <span className="text-xs text-zinc-500 dark:text-zinc-400">{hint}</span>
                                 </label>
                             );
                         })}
                     </div>
-                    {form.errors.visibility && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{form.errors.visibility}</p>}
+                    <InputError message={form.errors.visibility} className="mt-2" />
                 </fieldset>
 
                 <div className="flex items-center justify-end gap-3">
@@ -156,7 +156,7 @@ export default function Save({
                         Skip for now
                     </Link>
                     <button disabled={form.processing} className={btn.primary}>
-                        Save workout
+                        {form.processing ? 'Saving…' : 'Save workout'}
                     </button>
                 </div>
             </form>
@@ -198,19 +198,27 @@ function PhotoPicker({
         const files = Array.from(e.target.files ?? []);
         e.target.value = '';
         setLocalError(null);
-        if (files.length > slots) setLocalError(`You can add ${slots} more ${slots === 1 ? 'photo' : 'photos'}; extra ones were skipped.`);
+        // Collect every problem so one message doesn't overwrite another.
+        const problems: string[] = [];
+        if (files.length > slots) problems.push(`You can add ${slots} more ${slots === 1 ? 'photo' : 'photos'}, so the extra ones were skipped.`);
 
         setPreparing(true);
         try {
             const ready: File[] = [];
+            const unreadable: string[] = [];
             for (const f of files.slice(0, slots)) {
-                if (!f.type.startsWith('image/')) continue;
+                if (!f.type.startsWith('image/')) {
+                    unreadable.push(f.name);
+                    continue;
+                }
                 try {
                     ready.push(await compressImage(f));
                 } catch {
-                    setLocalError(`"${f.name}" couldn't be read. Try a JPG or PNG.`);
+                    unreadable.push(f.name);
                 }
             }
+            if (unreadable.length) problems.push(`Couldn't read ${unreadable.map((n) => `"${n}"`).join(', ')}. Try a JPG or PNG.`);
+            if (problems.length) setLocalError(problems.join(' '));
             if (ready.length) onAdd(ready);
         } finally {
             setPreparing(false);
@@ -219,7 +227,7 @@ function PhotoPicker({
 
     const tile = 'relative aspect-square overflow-hidden rounded-xl';
     const removeBtn =
-        'absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-950/70 text-white hover:bg-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400';
+        'absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-950/70 text-white hover:bg-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400';
 
     return (
         <section className="rounded-2xl bg-white p-5 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-800">
@@ -235,7 +243,7 @@ function PhotoPicker({
                     <div key={p.id} className={tile}>
                         <img src={p.url} alt={`Workout photo ${i + 1}`} className="h-full w-full object-cover" />
                         <button type="button" onClick={() => onRemoveExisting(p.id)} className={removeBtn} aria-label={`Remove photo ${i + 1}`}>
-                            <X className="h-4 w-4" />
+                            <X className="h-4 w-4" aria-hidden />
                         </button>
                     </div>
                 ))}
@@ -243,7 +251,7 @@ function PhotoPicker({
                     <div key={url} className={tile}>
                         <img src={url} alt={`New photo ${i + 1}`} className="h-full w-full object-cover" />
                         <button type="button" onClick={() => onRemoveNew(i)} className={removeBtn} aria-label={`Remove new photo ${i + 1}`}>
-                            <X className="h-4 w-4" />
+                            <X className="h-4 w-4" aria-hidden />
                         </button>
                     </div>
                 ))}
@@ -252,7 +260,7 @@ function PhotoPicker({
                         type="button"
                         onClick={() => input.current?.click()}
                         disabled={preparing}
-                        className={`${tile} flex flex-col items-center justify-center gap-1 border-2 border-dashed border-zinc-300 text-zinc-500 hover:border-lime-400 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-white`}
+                        className={`${tile} flex flex-col items-center justify-center gap-1 border-2 border-dashed border-zinc-300 text-zinc-500 hover:border-lime-400 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-white`}
                     >
                         <Camera className="h-6 w-6" aria-hidden />
                         <span className="text-xs font-semibold">{preparing ? 'Preparing…' : 'Add photo'}</span>
@@ -261,7 +269,7 @@ function PhotoPicker({
             </div>
             <input ref={input} type="file" accept="image/*" multiple onChange={pick} className="hidden" />
 
-            {(localError || error) && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{localError ?? error}</p>}
+            {(localError || error) && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{localError ?? error}</p>}
             {!localError && !error && kept.length + added.length === 0 && (
                 <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Gym selfie, the whiteboard, your PR on the bar. Up to {max} photos.</p>
             )}

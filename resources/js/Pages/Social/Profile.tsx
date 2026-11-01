@@ -20,7 +20,7 @@ export default function Profile({ profile, posts }: { profile: PublicProfile; po
                     <PostList
                         posts={posts}
                         empty={
-                            <div className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                            <div className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
                                 {profile.is_me
                                     ? 'Your finished workouts appear here. Choose who can see each one when you save it.'
                                     : `No workouts you can see yet.${profile.is_following ? '' : ' Follow to see workouts shared with followers.'}`}
@@ -34,7 +34,7 @@ export default function Profile({ profile, posts }: { profile: PublicProfile; po
 }
 
 export function ProfileHeader({ profile, as: Heading = 'h1' }: { profile: PublicProfile; as?: 'h1' | 'h2' }) {
-    const joined = profile.joined_at ? new Date(profile.joined_at).toLocaleDateString('en', { month: 'long', year: 'numeric' }) : null;
+    const joined = profile.joined_at ? new Date(profile.joined_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
 
     const plural = (n: number, word: string) => `${word}${n === 1 ? '' : 's'}`;
     const counts = [
@@ -58,8 +58,8 @@ export function ProfileHeader({ profile, as: Heading = 'h1' }: { profile: Public
             <div className="flex items-center gap-4 sm:gap-5">
                 <Avatar user={profile} size="lg" />
                 <div className="min-w-0 flex-1">
-                    <Heading className="truncate text-2xl font-extrabold">{profile.name}</Heading>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <Heading className="break-words text-2xl font-extrabold">{profile.name}</Heading>
+                    <p className="break-all text-sm text-zinc-500 dark:text-zinc-400">
                         @{profile.username}
                         {joined && <> · Joined {joined}</>}
                     </p>

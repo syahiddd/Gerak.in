@@ -1,8 +1,9 @@
-import { ReactNode } from 'react';
+import { Link } from '@inertiajs/react';
+import { ReactNode, useEffect, useState } from 'react';
 
 // One button scale for the whole app. 44px min height because sets get logged mid-workout, on a phone.
 const btnBase =
-    'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-50';
+    'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-50';
 
 export const btn = {
     // The one action the screen is for. Use once per view.
@@ -14,7 +15,7 @@ export const btn = {
     danger: `${btnBase} text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40`,
     // Final confirmation inside a destructive dialog.
     dangerSolid: `${btnBase} bg-red-600 text-white hover:bg-red-500`,
-    icon: 'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white',
+    icon: 'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white',
 };
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -85,54 +86,75 @@ export function Chip({ children }: { children: ReactNode }) {
     );
 }
 
-export function PrimaryLink({ href, children, method }: { href: string; children: ReactNode; method?: 'post' | 'delete' | 'patch' }) {
-    // Rendered via Inertia Link by callers; this is a styled anchor fallback.
-    return (
-        <a
-            href={href}
-            data-method={method}
-            className="rounded-xl bg-lime-400 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-lime-300"
-        >
-            {children}
-        </a>
-    );
-}
+// Laravel's paginator labels carry HTML entities ("&laquo; Previous").
+const pageLabel = (label: string) => label.replace('&laquo;', '‹').replace('&raquo;', '›');
 
 export function Pagination({ links }: { links: { url: string | null; label: string; active: boolean }[] }) {
     if (links.length <= 3) return null;
     return (
-        <div className="mt-4 flex flex-wrap gap-1">
+        <nav aria-label="Pagination" className="mt-4 flex flex-wrap gap-1">
             {links.map((l, i) =>
                 l.url ? (
-                    <a
+                    <Link
                         key={i}
                         href={l.url}
-                        className={`rounded-lg px-3 py-1 text-sm ${l.active ? 'bg-lime-400 font-bold text-zinc-950' : 'border border-zinc-300 dark:border-zinc-700'}`}
-                        dangerouslySetInnerHTML={{ __html: l.label }}
-                    />
+                        preserveScroll={false}
+                        aria-current={l.active ? 'page' : undefined}
+                        className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 ${l.active ? 'bg-lime-400 font-bold text-zinc-950' : 'border border-zinc-300 hover:bg-white dark:border-zinc-700 dark:hover:bg-zinc-800'}`}
+                    >
+                        {pageLabel(l.label)}
+                    </Link>
                 ) : (
-                    <span key={i} className="px-3 py-1 text-sm text-zinc-400" dangerouslySetInnerHTML={{ __html: l.label }} />
+                    <span key={i} className="inline-flex min-h-11 items-center px-3 text-sm text-zinc-500 dark:text-zinc-400" aria-disabled="true">
+                        {pageLabel(l.label)}
+                    </span>
                 ),
             )}
-        </div>
+        </nav>
+    );
+}
+
+/**
+ * Screen-reader announcement. The region mounts empty and fills a beat later, because
+ * a live region that appears together with its text is often not read out.
+ */
+export function Announce({ text }: { text: string | null | undefined }) {
+    const [said, setSaid] = useState('');
+
+    useEffect(() => {
+        setSaid('');
+        const t = setTimeout(() => setSaid(text ?? ''), 150);
+        return () => clearTimeout(t);
+    }, [text]);
+
+    return (
+        <p role="status" className="sr-only">
+            {said}
+        </p>
     );
 }
 
 export function FlashMessages({ flash }: { flash: { success?: string | null; info?: string | null; pr_events?: { exercise: string; type: string; detail: string }[] | null } }) {
+    const prCount = flash.pr_events?.length ?? 0;
+    const spoken = [flash.success, flash.info, prCount ? `${prCount} new personal ${prCount === 1 ? 'record' : 'records'}` : null]
+        .filter(Boolean)
+        .join('. ');
+
     return (
         <>
+            <Announce text={spoken} />
             {flash.success && (
-                <div className="mb-4 rounded-xl border border-lime-300 bg-lime-100 px-4 py-3 text-sm text-lime-900 dark:border-lime-800 dark:bg-lime-950 dark:text-lime-200" role="status">
+                <div className="mb-4 rounded-xl border border-lime-300 bg-lime-100 px-4 py-3 text-sm text-lime-900 dark:border-lime-800 dark:bg-lime-950 dark:text-lime-200">
                     {flash.success}
                 </div>
             )}
             {flash.info && (
-                <div className="mb-4 rounded-xl border border-sky-300 bg-sky-100 px-4 py-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200" role="status">
+                <div className="mb-4 rounded-xl border border-sky-300 bg-sky-100 px-4 py-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200">
                     {flash.info}
                 </div>
             )}
             {flash.pr_events && flash.pr_events.length > 0 && (
-                <div className="mb-4 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200" role="status">
+                <div className="mb-4 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                     <p className="font-bold">New Personal Record{flash.pr_events.length > 1 ? 's' : ''}!</p>
                     <ul className="ms-5 mt-1 list-disc">
                         {flash.pr_events.map((pr, i) => (

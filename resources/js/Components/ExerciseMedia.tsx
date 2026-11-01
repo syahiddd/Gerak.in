@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Exercise } from '@/types';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Pause, Play } from 'lucide-react';
 
 type Variant = 'thumbnail' | 'hero' | 'inline';
 
@@ -36,14 +36,23 @@ function pickPoster(ex: Props['exercise']): string | null {
 
 function pickThumb(ex: Props['exercise']): string | null {
     const urls = asImageUrls(ex.image_urls);
-    return ex.gif_url ?? urls['360p'] ?? urls['480p'] ?? ex.image_url ?? ex.gif_url ?? ex.image_path ?? null;
+    return ex.gif_url ?? urls['360p'] ?? urls['480p'] ?? ex.image_url ?? ex.image_path ?? null;
 }
 
-/** Draws the first frame of a GIF to a data URL; null until ready or if the image is cross-origin. */
-function useStillFrame(src: string, onError: () => void): string | null | 'tainted' {
+/** A static picture of the exercise, used while its GIF is paused. */
+function pickStill(ex: Props['exercise']): string | null {
+    const urls = asImageUrls(ex.image_urls);
+    return urls['480p'] ?? urls['360p'] ?? urls['720p'] ?? ex.image_url ?? ex.image_path ?? null;
+}
+
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Draws the first frame of a GIF to a data URL; null until ready, 'tainted' if the image is cross-origin. */
+function useStillFrame(src: string | null, onError: () => void): string | null | 'tainted' {
     const [still, setStill] = useState<string | null | 'tainted'>(null);
 
     useEffect(() => {
+        if (!src) return;
         let cancelled = false;
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -61,7 +70,7 @@ function useStillFrame(src: string, onError: () => void): string | null | 'taint
         };
         img.onerror = () => {
             if (cancelled) return;
-            // If CORS anonymous failed, try standard load and treat as tainted so GIF still plays
+            // CORS refused: check the plain image loads, then fall back to the placeholder while paused.
             if (img.crossOrigin) {
                 const fallback = new Image();
                 fallback.onload = () => {
@@ -87,19 +96,39 @@ function useStillFrame(src: string, onError: () => void): string | null | 'taint
 }
 
 /**
- * GIF that stays on its first frame and only plays while the surrounding
- * card (closest link/button) is hovered or keyboard-focused.
+ * A GIF that never loops on its own (WCAG 2.2.2): `still` shows one frame, `hover` plays while the
+ * surrounding card is hovered or focused, `toggle` has a Play/Pause button and starts paused when
+ * the user prefers reduced motion.
  */
-function HoverGif({ src, name, className, onError }: { src: string; name: string; className: string; onError: () => void }) {
+function Gif({
+    src,
+    poster,
+    name,
+    mode,
+    decorative,
+    box,
+    onError,
+}: {
+    src: string;
+    poster: string | null;
+    name: string;
+    mode: 'still' | 'hover' | 'toggle';
+    decorative: boolean;
+    box: string;
+    onError: () => void;
+}) {
     const ref = useRef<HTMLDivElement>(null);
-    const [active, setActive] = useState(false);
-    const still = useStillFrame(src, onError);
+    const [hovered, setHovered] = useState(false);
+    const [toggled, setToggled] = useState(() => mode === 'toggle' && !prefersReducedMotion());
+    const frame = useStillFrame(poster ? null : src, onError);
+    const stillSrc = poster ?? (frame && frame !== 'tainted' ? frame : null);
 
     useEffect(() => {
+        if (mode !== 'hover') return;
         const trigger = ref.current?.closest<HTMLElement>('a, button') ?? ref.current;
         if (!trigger) return;
-        const on = () => setActive(true);
-        const off = () => setActive(false);
+        const on = () => setHovered(true);
+        const off = () => setHovered(false);
         trigger.addEventListener('mouseenter', on);
         trigger.addEventListener('mouseleave', off);
         trigger.addEventListener('focus', on);
@@ -111,37 +140,49 @@ function HoverGif({ src, name, className, onError }: { src: string; name: string
             trigger.removeEventListener('focus', on);
             trigger.removeEventListener('blur', off);
         };
-    }, []);
+    }, [mode]);
 
-    // Cross-origin GIFs can't be frozen via canvas; show them animated as before.
-    const playing = active || still === 'tainted';
+    const playing = mode === 'hover' ? hovered : mode === 'toggle' ? toggled : false;
 
     return (
-        <div ref={ref} className={`relative aspect-video overflow-hidden rounded-xl bg-white ${className}`}>
-            {still && still !== 'tainted' && (
-                <img src={still} alt={`${name} demonstration`} className="absolute inset-0 h-full w-full object-contain" />
-            )}
-            {/* Mounted only while playing so the animation restarts from the first frame. */}
-            {playing && (
-                <img
-                    src={src}
-                    alt={still === 'tainted' ? `${name} demonstration` : ''}
-                    aria-hidden={still !== 'tainted'}
-                    onError={onError}
-                    className="absolute inset-0 h-full w-full object-contain"
-                />
-            )}
-            {still !== 'tainted' && (
-                <span
-                    aria-hidden
-                    className={`absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-950/80 text-lime-400 transition-opacity duration-200 ${
-                        active ? 'opacity-0' : 'opacity-100'
-                    }`}
+        <div ref={ref} className={`relative ${box}`}>
+            <div
+                role={decorative ? undefined : 'img'}
+                aria-label={decorative ? undefined : `${name} demonstration`}
+                aria-hidden={decorative || undefined}
+                className="absolute inset-0 overflow-hidden rounded-[inherit] bg-white"
+            >
+                {stillSrc ? (
+                    <img src={stillSrc} alt="" className="absolute inset-0 h-full w-full object-contain" />
+                ) : (
+                    !playing && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                            <Dumbbell className="h-1/3 max-h-7 w-1/3 max-w-7" />
+                        </span>
+                    )
+                )}
+                {/* Mounted only while playing so the animation restarts from the first frame. */}
+                {playing && <img src={src} alt="" onError={onError} className="absolute inset-0 h-full w-full object-contain" />}
+                {mode === 'hover' && (
+                    <span
+                        className={`absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-950/80 text-lime-400 transition-opacity duration-200 ${
+                            playing ? 'opacity-0' : 'opacity-100'
+                        }`}
+                    >
+                        <Play className="ml-0.5 h-3 w-3 fill-current" />
+                    </span>
+                )}
+            </div>
+            {mode === 'toggle' && (
+                <button
+                    type="button"
+                    onClick={() => setToggled((p) => !p)}
+                    aria-pressed={playing}
+                    aria-label={`Play ${name} animation`}
+                    className="absolute bottom-2 left-2 flex h-11 w-11 items-center justify-center rounded-full bg-zinc-950/80 text-lime-400 hover:bg-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 focus-visible:ring-offset-2"
                 >
-                    <svg viewBox="0 0 12 12" className="ml-0.5 h-3 w-3 fill-current">
-                        <path d="M2 1.2v9.6L10.4 6z" />
-                    </svg>
-                </span>
+                    {playing ? <Pause className="h-4 w-4 fill-current" aria-hidden /> : <Play className="ml-0.5 h-4 w-4 fill-current" aria-hidden />}
+                </button>
             )}
         </div>
     );
@@ -150,6 +191,8 @@ function HoverGif({ src, name, className, onError }: { src: string; name: string
 export default function ExerciseMedia({ exercise, variant = 'thumbnail', className = '', playOnHover = false }: Props) {
     const [failed, setFailed] = useState(false);
     const [videoFailed, setVideoFailed] = useState(false);
+    // Inline and thumbnail media always sit next to the exercise name, so they add no text of their own.
+    const decorative = variant !== 'hero';
 
     const videoUrl = exercise.video_url ?? undefined;
     const showVideo = variant === 'hero' && !!videoUrl && !videoFailed;
@@ -171,7 +214,7 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
                     className="aspect-video w-full rounded-xl bg-zinc-100 object-cover dark:bg-zinc-800"
                     aria-label={`${exercise.name} demonstration video`}
                 />
-                <p className="mt-1 text-[11px] text-zinc-400">Demo video{exercise.media_source === 'exercisedb' ? ' · ExerciseDB' : ''}</p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Demo video{exercise.media_source === 'exercisedb' ? ' · ExerciseDB' : ''}</p>
             </div>
         );
     }
@@ -180,15 +223,17 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
     const isGif = !!exercise.gif_url && src === exercise.gif_url;
     // WorkoutX GIFs have a white background; contain them so limbs aren't cropped.
     const fit = isGif ? 'bg-white object-contain' : 'bg-zinc-100 object-cover dark:bg-zinc-800';
+    const box = variant === 'inline' ? `h-10 w-10 shrink-0 rounded-lg ${className}` : 'aspect-video w-full rounded-xl';
 
     if (!src || failed) {
         return (
             <div
                 className={`flex flex-col items-center justify-center gap-1 rounded-xl bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 ${
-                    variant === 'inline' ? 'h-10 w-10' : 'aspect-video'
+                    variant === 'inline' ? 'h-10 w-10 shrink-0' : 'aspect-video'
                 } ${className}`}
-                role="img"
-                aria-label={`${exercise.name} (no demonstration media yet)`}
+                role={decorative ? undefined : 'img'}
+                aria-label={decorative ? undefined : `${exercise.name} (no demonstration media yet)`}
+                aria-hidden={decorative || undefined}
             >
                 <Dumbbell className={variant === 'inline' ? 'h-5 w-5' : 'h-7 w-7'} aria-hidden />
                 {variant !== 'inline' && <span>No demo yet</span>}
@@ -196,32 +241,33 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
         );
     }
 
-    if (variant === 'inline') {
+    if (isGif) {
+        const mode = variant === 'inline' ? 'still' : playOnHover ? 'hover' : 'toggle';
+        const gif = <Gif src={src} poster={pickStill(exercise)} name={exercise.name} mode={mode} decorative={decorative} box={box} onError={() => setFailed(true)} />;
+
+        if (variant === 'inline') return gif;
+
         return (
-            <img
-                src={src}
-                alt={`${exercise.name} demo`}
-                loading="lazy"
-                onError={() => setFailed(true)}
-                className={`h-10 w-10 rounded-lg ${fit} ${className}`}
-            />
+            <div className={className}>
+                {gif}
+                {variant === 'hero' && <MediaCredit credit={exercise.media_credit} />}
+            </div>
         );
     }
 
-    if (playOnHover && isGif) {
-        return <HoverGif src={src} name={exercise.name} className={className} onError={() => setFailed(true)} />;
+    if (variant === 'inline') {
+        return <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} className={`h-10 w-10 shrink-0 rounded-lg ${fit} ${className}`} />;
     }
 
     return (
         <div className={className}>
             <img
                 src={src}
-                alt={`${exercise.name} demonstration`}
+                alt={decorative ? '' : `${exercise.name} demonstration`}
                 loading="lazy"
                 onError={() => setFailed(true)}
                 className={`aspect-video w-full rounded-xl ${fit}`}
             />
-            {variant === 'hero' && isGif && <MediaCredit credit={exercise.media_credit} />}
         </div>
     );
 }
@@ -233,14 +279,14 @@ export default function ExerciseMedia({ exercise, variant = 'thumbnail', classNa
 export function MediaCredit({ credit }: { credit?: 'gymvisual' | 'workoutx' | null }) {
     if (credit === 'gymvisual') {
         return (
-            <p className="mt-1 text-[11px] text-zinc-400">
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Animation ©{' '}
-                <a href="https://gymvisual.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600 dark:hover:text-zinc-200">
+                <a href="https://gymvisual.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-900 dark:hover:text-white">
                     Gym visual
                 </a>
             </p>
         );
     }
 
-    return <p className="mt-1 text-[11px] text-zinc-400">Animation · WorkoutX</p>;
+    return <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Animation · WorkoutX</p>;
 }

@@ -2,7 +2,7 @@ import { btn, Card, EmptyState, MuscleBars, StatCard } from '@/Components/ui';
 import VolumeChart from '@/Components/VolumeChart';
 import WorkoutRow from '@/Components/WorkoutRow';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { formatNumber } from '@/lib/units';
+import { formatRecord, formatWeight, useUnitSystem, weightUnit } from '@/lib/units';
 import { ProfileHeader } from '@/Pages/Social/Profile';
 import { PageProps, PersonalRecord, PublicProfile, Routine, Workout } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -38,6 +38,7 @@ export default function ProfileShow({
     recentPrs,
     greeting,
 }: Props) {
+    const system = useUnitSystem();
     const startEmpty = useForm({});
     const linkCls = 'text-sm font-semibold text-lime-700 hover:underline dark:text-lime-400';
 
@@ -53,14 +54,14 @@ export default function ProfileShow({
                 <div className="flex shrink-0 items-center gap-1">
                     {auth.user.role === 'admin' && (
                         <Link href={route('admin.dashboard')} className={btn.icon} aria-label="Admin" title="Admin">
-                            <ShieldCheck className="h-5 w-5" />
+                            <ShieldCheck className="h-5 w-5" aria-hidden />
                         </Link>
                     )}
                     <Link href={route('settings.edit')} className={btn.icon} aria-label="Settings" title="Settings">
-                        <Settings className="h-5 w-5" />
+                        <Settings className="h-5 w-5" aria-hidden />
                     </Link>
                     <Link href={route('logout')} method="post" as="button" className={btn.icon} aria-label="Log out" title="Log out">
-                        <LogOut className="h-5 w-5" />
+                        <LogOut className="h-5 w-5" aria-hidden />
                     </Link>
                 </div>
             </div>
@@ -73,7 +74,7 @@ export default function ProfileShow({
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-lime-400 bg-white p-4 dark:bg-zinc-900">
                     <div>
                         <p className="font-extrabold">Workout in progress: {activeWorkout.name}</p>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(activeWorkout.started_at).toLocaleString()}</p>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(activeWorkout.started_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</p>
                     </div>
                     <Link href={route('workouts.show', activeWorkout.id)} className={btn.primary}>
                         <Play className="h-4 w-4" aria-hidden />
@@ -85,11 +86,21 @@ export default function ProfileShow({
             <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
                     <Card>
-                        <h2 className="font-bold">Today's workout</h2>
+                        <h2 className="font-bold">{routines.length > 0 ? 'Next up' : 'Start training'}</h2>
                         {routines.length > 0 ? (
                             <>
                                 <p className="mt-2 text-lg font-extrabold">{routines[0].name}</p>
-                                <p className="text-sm text-zinc-500 dark:text-zinc-400">{routines[0].exercises_count} exercises</p>
+                                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                    {routines[0].exercises_count} {routines[0].exercises_count === 1 ? 'exercise' : 'exercises'}
+                                    {routines.length > 1 && (
+                                        <>
+                                            {' · '}
+                                            <Link href={route('routines.index')} className="font-semibold text-lime-700 hover:underline dark:text-lime-400">
+                                                See all routines
+                                            </Link>
+                                        </>
+                                    )}
+                                </p>
                                 <div className="mt-3 flex flex-wrap gap-2">
                                     {/* A running workout's Resume above is the main action when there is one. */}
                                     <Link
@@ -120,7 +131,7 @@ export default function ProfileShow({
                         )}
                         {/* Shortcuts: quieter than the routine buttons so they don't compete. */}
                         <div className="-mx-2 mt-4 flex flex-wrap gap-1 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-                            <button onClick={() => startEmpty.post(route('workouts.start-empty'))} className={`${btn.ghost} px-2`}>
+                            <button type="button" onClick={() => startEmpty.post(route('workouts.start-empty'))} disabled={startEmpty.processing} className={`${btn.ghost} px-2`}>
                                 <Plus className="h-4 w-4" aria-hidden />
                                 Start empty workout
                             </button>
@@ -158,7 +169,7 @@ export default function ProfileShow({
 
                     <Card>
                         <div className="flex items-center justify-between">
-                            <h2 className="font-bold">Volume lifted per week (kg)</h2>
+                            <h2 className="font-bold">Volume lifted per week ({weightUnit(system)})</h2>
                             <Link href={route('statistics.index')} className={linkCls}>
                                 All statistics
                             </Link>
@@ -170,7 +181,7 @@ export default function ProfileShow({
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                         <StatCard label="Workouts" value={overview.total_workouts} />
-                        <StatCard label="Volume" value={`${formatNumber(overview.total_volume_kg)} kg`} />
+                        <StatCard label="Volume" value={formatWeight(overview.total_volume_kg, system)} />
                         <StatCard label="Sets" value={overview.total_sets} />
                         <StatCard label="Streak" value={`${overview.current_streak_days}d`} />
                     </div>
@@ -188,7 +199,7 @@ export default function ProfileShow({
                         <div className="flex items-center justify-between">
                             <h2 className="font-bold">Recent PRs</h2>
                             <Link href={route('records.index')} className={linkCls}>
-                                All
+                                All records
                             </Link>
                         </div>
                         {recentPrs.length === 0 && (
@@ -198,8 +209,7 @@ export default function ProfileShow({
                             <div key={pr.id} className="mt-2 text-sm">
                                 <p className="font-bold">{pr.exercise.name}</p>
                                 <p className="text-zinc-500 dark:text-zinc-400">
-                                    {pr.record_type_label}: {formatNumber(pr.value_primary)}
-                                    {pr.value_reps ? ` × ${pr.value_reps}` : ''}
+                                    {pr.record_type_label}: {formatRecord(pr, system)}
                                 </p>
                             </div>
                         ))}

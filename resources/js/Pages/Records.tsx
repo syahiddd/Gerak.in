@@ -1,12 +1,13 @@
 import { EmptyState, Pagination } from '@/Components/ui';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { formatNumber } from '@/lib/units';
+import { formatRecord, useUnitSystem } from '@/lib/units';
 import { Paginated, PersonalRecord } from '@/types';
 import { Head } from '@inertiajs/react';
 
 export default function Records({ records }: { records: Paginated<PersonalRecord> }) {
+    const system = useUnitSystem();
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Personal Records</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Personal records</h1>}>
             <Head title="Records" />
 
             {records.data.length === 0 ? (
@@ -18,11 +19,10 @@ export default function Records({ records }: { records: Paginated<PersonalRecord
                             <p className="font-bold">{pr.exercise.name}</p>
                             <p className="text-xs text-zinc-500 dark:text-zinc-400">{pr.record_type_label}</p>
                             <p className="mt-1 text-xl font-extrabold tabular-nums">
-                                {formatNumber(pr.value_primary)}
-                                {pr.value_reps ? ` × ${pr.value_reps}` : ''}
+                                {formatRecord(pr, system)}
                             </p>
                             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                                {pr.achieved_at ? new Date(pr.achieved_at).toLocaleDateString() : ''}
+                                {pr.achieved_at ? new Date(pr.achieved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                             </p>
                         </div>
                     ))}

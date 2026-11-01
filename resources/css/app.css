@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    /* Keyboard focus never lands under the sticky rest timer or the mobile bottom bar. */
+    html {
+        scroll-padding-top: 5.5rem;
+    }
+
+    @media (max-width: 639px) {
+        html {
+            scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+        }
+    }
+}

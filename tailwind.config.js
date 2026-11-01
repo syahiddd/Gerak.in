@@ -4,6 +4,8 @@ import forms from '@tailwindcss/forms';
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: 'class',
+    // hover: styles only on devices that can hover, so a tap never leaves a stuck hover state.
+    future: { hoverOnlyWhenSupported: true },
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',

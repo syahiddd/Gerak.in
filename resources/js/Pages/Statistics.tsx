@@ -1,7 +1,7 @@
 import { Card, MuscleBars } from '@/Components/ui';
 import VolumeChart, { formatPeriod } from '@/Components/VolumeChart';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { formatNumber } from '@/lib/units';
+import { formatNumber, formatWeight, kgToUnit, useUnitSystem, weightUnit } from '@/lib/units';
 import { Head, Link } from '@inertiajs/react';
 import { CalendarDays, Dumbbell, Flame, Layers, LucideIcon, Repeat, Target, Trophy } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
@@ -45,7 +45,9 @@ function useCountUp(target: number, ms = 900): number {
 
 export default function Statistics({ overview, weekly, monthly, muscles }: Props) {
     const streak = overview.current_streak_days;
-    const volume = useCountUp(Number(overview.total_volume_kg) || 0);
+    const system = useUnitSystem();
+    const unit = weightUnit(system);
+    const volume = useCountUp(kgToUnit(overview.total_volume_kg, system) ?? 0);
 
     const totals: { label: string; value: string; Icon: LucideIcon; accent?: boolean }[] = [
         { label: 'Workouts', value: formatNumber(overview.total_workouts), Icon: Dumbbell },
@@ -72,7 +74,7 @@ export default function Statistics({ overview, weekly, monthly, muscles }: Props
             Icon: CalendarDays,
             text: (
                 <>
-                    Best week: <strong>{formatPeriod(weekly.labels[bestWeekIndex], 'week')}</strong> · {formatNumber(weekly.volumes[bestWeekIndex])} kg
+                    Best week: <strong>{formatPeriod(weekly.labels[bestWeekIndex], 'week')}</strong> · {formatWeight(weekly.volumes[bestWeekIndex], system)}
                 </>
             ),
         });
@@ -95,8 +97,8 @@ export default function Statistics({ overview, weekly, monthly, muscles }: Props
             {/* Total volume is the headline number; the other totals support it. */}
             <Card>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">Total volume lifted</p>
-                <p className="mt-1 text-4xl font-extrabold tabular-nums sm:text-5xl" aria-label={`${formatNumber(overview.total_volume_kg)} kg`}>
-                    {formatNumber(Math.round(volume))} <span className="text-2xl font-bold text-zinc-500 dark:text-zinc-400">kg</span>
+                <p className="mt-1 text-4xl font-extrabold tabular-nums sm:text-5xl" aria-label={formatWeight(overview.total_volume_kg, system)}>
+                    {formatNumber(Math.round(volume))} <span className="text-2xl font-bold text-zinc-500 dark:text-zinc-400">{unit}</span>
                 </p>
                 <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-zinc-200 pt-4 sm:grid-cols-4 dark:border-zinc-800">
                     {totals.map(({ label, value, Icon, accent }) => (
@@ -127,12 +129,12 @@ export default function Statistics({ overview, weekly, monthly, muscles }: Props
 
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 <Card>
-                    <h2 className="font-bold">Volume lifted per week (kg)</h2>
+                    <h2 className="font-bold">Volume lifted per week ({unit})</h2>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">Last 12 weeks, by week starting</p>
                     <VolumeChart labels={weekly.labels} volumes={weekly.volumes} period="week" className="mt-3 h-56" />
                 </Card>
                 <Card>
-                    <h2 className="font-bold">Volume lifted per month (kg)</h2>
+                    <h2 className="font-bold">Volume lifted per month ({unit})</h2>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">Last 12 months</p>
                     <VolumeChart labels={monthly.labels} volumes={monthly.volumes} period="month" className="mt-3 h-56" />
                 </Card>

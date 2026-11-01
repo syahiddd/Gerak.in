@@ -18,7 +18,7 @@ export function PostHeader({ post }: { post: FeedPost }) {
 
     return (
         <div className="flex items-center gap-3">
-            <Link href={route('users.show', post.user.username)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400">
+            <Link href={route('users.show', post.user.username)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400">
                 <Avatar user={post.user} />
             </Link>
             <div className="min-w-0 flex-1">
@@ -32,7 +32,8 @@ export function PostHeader({ post }: { post: FeedPost }) {
                         {timeAgo(post.ended_at)}
                     </time>
                     <span aria-hidden>·</span>
-                    <VisIcon className="h-3.5 w-3.5" aria-label={`Visible to: ${VISIBILITY_LABEL[post.visibility]}`} />
+                    <VisIcon className="h-3.5 w-3.5" aria-hidden />
+                    <span className="sr-only">Visible to {VISIBILITY_LABEL[post.visibility]}</span>
                 </p>
             </div>
         </div>
@@ -53,7 +54,7 @@ export function PostStats({ post }: { post: FeedPost }) {
         items.push({
             label: 'Records',
             value: (
-                <span className="inline-flex items-center gap-1 text-amber-500">
+                <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400">
                     <Trophy className="h-4 w-4" aria-hidden />
                     {post.records_count}
                 </span>
@@ -122,8 +123,8 @@ export default function WorkoutPostCard({ post }: { post: FeedPost }) {
 
             <div className="flex items-center gap-1 border-t border-zinc-100 px-3 py-1.5 dark:border-zinc-800">
                 <LikeButton workoutId={post.id} liked={post.liked_by_me} count={post.likes_count} />
-                <Link href={`${href}#comments`} className={actionCls} aria-label={`${comments} comments`}>
-                    <MessageCircle className="h-5 w-5" />
+                <Link href={`${href}#comments`} className={actionCls} aria-label={`${comments} ${comments === 1 ? 'comment' : 'comments'}`}>
+                    <MessageCircle className="h-5 w-5" aria-hidden />
                     <span className="tabular-nums">{comments}</span>
                 </Link>
                 {post.visibility === 'public' && <ShareButton url={href} title={post.title} />}
@@ -135,7 +136,7 @@ export default function WorkoutPostCard({ post }: { post: FeedPost }) {
 }
 
 const actionCls =
-    'inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white';
+    'inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white';
 
 /** Native share sheet on phones; copies the link where that isn't available. */
 function ShareButton({ url, title }: { url: string; title: string }) {
@@ -159,7 +160,9 @@ function ShareButton({ url, title }: { url: string; title: string }) {
     return (
         <button type="button" onClick={share} className={`${actionCls} ms-auto`} aria-label="Share workout">
             <Share2 className="h-5 w-5" aria-hidden />
-            {copied && <span role="status">Link copied</span>}
+            <span role="status" className={copied ? '' : 'sr-only'}>
+                {copied ? 'Link copied' : ''}
+            </span>
         </button>
     );
 }
@@ -206,13 +209,17 @@ function QuickComment({ postId, onPosted }: { postId: number; onPosted: () => vo
                     onChange={(e) => setBody(e.target.value)}
                     maxLength={1000}
                     placeholder="Write a comment…"
-                    className="h-11 min-w-0 flex-1 rounded-xl border-zinc-200 bg-zinc-50 text-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800"
+                    className="h-11 min-w-0 flex-1 rounded-xl border-zinc-500 bg-zinc-50 text-base sm:text-sm focus:border-lime-600 focus:ring-lime-600 dark:border-zinc-500 dark:bg-zinc-800 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                 />
                 <button type="submit" disabled={busy || !body.trim()} className={`${btn.ghost} px-3`}>
                     {busy ? 'Posting…' : 'Post'}
                 </button>
             </div>
-            {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && (
+                <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+                    {error}
+                </p>
+            )}
         </form>
     );
 }

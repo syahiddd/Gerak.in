@@ -5,18 +5,13 @@ import { CheckCircle2, Dumbbell, Eye, EyeOff } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 export default function Welcome({
-    canLogin,
     canRegister,
     canResetPassword,
     status,
 }: {
-    auth: { user: { name: string } | null };
-    canLogin: boolean;
     canRegister: boolean;
     canResetPassword: boolean;
     status?: string;
-    laravelVersion: string;
-    phpVersion: string;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -33,7 +28,7 @@ export default function Welcome({
     };
 
     const inputClass =
-        'w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-[15px] text-zinc-100 placeholder-zinc-400 outline-none transition focus:border-lime-400/70 focus:ring-2 focus:ring-lime-400/20';
+        'w-full rounded-xl border border-zinc-600 bg-zinc-900 px-4 py-3 text-base text-zinc-100 placeholder-zinc-400 outline-none transition-colors focus:border-lime-400 focus:ring-2 focus:ring-lime-400';
 
     return (
         <>
@@ -49,12 +44,12 @@ export default function Welcome({
                     <div className="flex flex-1 items-center justify-center py-10">
                         <div className="w-full max-w-sm">
                             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Welcome back</h1>
-                            <p className="mt-2 text-[15px] text-zinc-400">
+                            <p className="mt-2 text-base text-zinc-400">
                                 Log in to continue training with intent.
                             </p>
 
                             {status && (
-                                <div className="mt-6 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm font-medium text-lime-300">
+                                <div role="status" className="mt-6 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm font-medium text-lime-300">
                                     {status}
                                 </div>
                             )}
@@ -75,7 +70,7 @@ export default function Welcome({
                                         onChange={(e) => setData('email', e.target.value)}
                                         className={inputClass}
                                     />
-                                    <InputError message={errors.email} className="mt-2" />
+                                    <InputError htmlFor="email" message={errors.email} className="mt-2" />
                                 </div>
 
                                 <div>
@@ -106,13 +101,15 @@ export default function Welcome({
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword((v) => !v)}
-                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 hover:text-zinc-200"
+                                            aria-label="Show password"
+                                            aria-pressed={showPassword}
+                                            aria-controls="password"
+                                            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-zinc-400 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lime-400"
                                         >
-                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
                                         </button>
                                     </div>
-                                    <InputError message={errors.password} className="mt-2" />
+                                    <InputError htmlFor="password" message={errors.password} className="mt-2" />
                                 </div>
 
                                 <label className="flex cursor-pointer items-center gap-2.5 text-sm text-zinc-400">
@@ -121,7 +118,7 @@ export default function Welcome({
                                         name="remember"
                                         checked={data.remember}
                                         onChange={(e) => setData('remember', e.target.checked)}
-                                        className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-lime-400"
+                                        className="h-4 w-4 rounded border-zinc-500 bg-zinc-900 text-lime-400 focus:ring-lime-400 focus:ring-offset-zinc-950"
                                     />
                                     Remember me on this device
                                 </label>
@@ -129,7 +126,7 @@ export default function Welcome({
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full rounded-xl bg-lime-400 py-3 text-[15px] font-bold text-zinc-950 transition hover:bg-lime-300 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="min-h-11 w-full rounded-xl bg-lime-400 py-3 text-base font-bold text-zinc-950 transition-[background-color,transform] duration-150 ease-out hover:bg-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 motion-safe:enabled:active:scale-[0.96]"
                                 >
                                     {processing ? 'Logging in…' : 'Log in'}
                                 </button>

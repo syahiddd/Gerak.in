@@ -19,7 +19,7 @@ export default function PersonList({ people }: { people: PersonRow[] }) {
                         </div>
                     </Link>
                     {p.is_me ? (
-                        <span className="text-xs font-semibold text-zinc-400">You</span>
+                        <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">You</span>
                     ) : (
                         <FollowButton username={p.username} isFollowing={p.is_following} />
                     )}

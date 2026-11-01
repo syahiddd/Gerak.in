@@ -45,7 +45,7 @@ export default function WorkoutIndex({ workouts, active, filters }: Props) {
                         </p>
                     </div>
                     {!active && (
-                        <button onClick={() => startEmpty.post(route('workouts.start-empty'))} disabled={startEmpty.processing} className={btn.primary}>
+                        <button type="button" onClick={() => startEmpty.post(route('workouts.start-empty'))} disabled={startEmpty.processing} className={btn.primary}>
                             <Plus className="h-4 w-4" aria-hidden />
                             Start empty workout
                         </button>
@@ -61,7 +61,7 @@ export default function WorkoutIndex({ workouts, active, filters }: Props) {
                         <p className="font-extrabold">
                             {active.status === 'paused' ? 'Paused' : 'In progress'}: {active.name}
                         </p>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(active.started_at).toLocaleString()}</p>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Started {new Date(active.started_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
                     </div>
                     <Link href={route('workouts.show', active.id)} className={btn.primary}>
                         <Play className="h-4 w-4" aria-hidden />
@@ -72,12 +72,12 @@ export default function WorkoutIndex({ workouts, active, filters }: Props) {
 
             <form onSubmit={applyFilter} className="flex flex-wrap items-end gap-3">
                 <label className="text-sm">
-                    <span className="mb-1 block font-semibold text-zinc-600 dark:text-zinc-300">From</span>
-                    <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
+                    <span className="mb-1 block font-semibold text-zinc-700 dark:text-zinc-300">From</span>
+                    <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-11 rounded-xl border-zinc-500 text-base sm:text-sm dark:border-zinc-500 dark:bg-zinc-800 focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400" />
                 </label>
                 <label className="text-sm">
-                    <span className="mb-1 block font-semibold text-zinc-600 dark:text-zinc-300">To</span>
-                    <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800" />
+                    <span className="mb-1 block font-semibold text-zinc-700 dark:text-zinc-300">To</span>
+                    <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-11 rounded-xl border-zinc-500 text-base sm:text-sm dark:border-zinc-500 dark:bg-zinc-800 focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400" />
                 </label>
                 <button className={btn.secondary}>Filter</button>
                 {filtered && (
@@ -90,14 +90,30 @@ export default function WorkoutIndex({ workouts, active, filters }: Props) {
             <div className="mt-6 space-y-8">
                 {workouts.data.length === 0 &&
                     (filtered ? (
-                        <EmptyState title="No workouts in this range" hint="Try a wider date range, or clear the filter to see everything." />
+                        <EmptyState
+                            title="No workouts in this range"
+                            hint="Try a wider date range, or clear the filter to see everything."
+                            action={
+                                <Link href={route('workouts.index')} className={btn.secondary}>
+                                    Clear filter
+                                </Link>
+                            }
+                        />
                     ) : (
-                        <EmptyState title="No workouts yet" hint="Finished workouts land here, newest first. Start one from a routine or from scratch." />
+                        <EmptyState
+                            title="No workouts yet"
+                            hint="Finished workouts land here, newest first. Start one from a routine or from scratch."
+                            action={
+                                <Link href={route('routines.index')} className={btn.secondary}>
+                                    Pick a routine
+                                </Link>
+                            }
+                        />
                     ))}
 
                 {months.map((month) => (
                     <section key={month.label} aria-label={month.label}>
-                        <h2 className="mb-2 text-sm font-bold text-zinc-500 dark:text-zinc-400">{month.label}</h2>
+                        <h2 className="mb-2 text-sm font-bold text-zinc-600 dark:text-zinc-400">{month.label}</h2>
                         <ul className="divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
                             {month.rows.map((w) => (
                                 <li key={w.id}>

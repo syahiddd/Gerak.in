@@ -15,14 +15,14 @@ export default function People({ q, people }: { q: string; people: PersonRow[] }
 
                 <div className="mt-5">
                     {q === '' ? (
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Search by name or @username to find training partners.</p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">Search by name or @username to find training partners.</p>
                     ) : people.length === 0 ? (
-                        <p className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                        <p className="rounded-2xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
                             No one matches “{q}”. Check the spelling or try part of their name.
                         </p>
                     ) : (
                         <>
-                            <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+                            <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
                                 {people.length} {people.length === 1 ? 'result' : 'results'} for “{q}”
                             </p>
                             <PersonList people={people} />

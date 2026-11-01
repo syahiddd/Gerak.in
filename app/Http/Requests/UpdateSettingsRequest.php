@@ -26,7 +26,7 @@ class UpdateSettingsRequest extends FormRequest
             'default_rest_seconds' => ['required', 'integer', 'min:0', 'max:3600'],
             'default_sets' => ['required', 'integer', 'min:1', 'max:20'],
             'week_starts_on' => ['required', 'in:mon,sun'],
-            'timezone' => ['required', 'string', 'max:64'],
+            'timezone' => ['required', 'string', 'max:64', 'timezone:all_with_bc'],
             'default_workout_visibility' => ['sometimes', 'in:public,followers,private'],
         ];
     }

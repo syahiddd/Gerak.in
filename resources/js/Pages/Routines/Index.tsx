@@ -28,7 +28,7 @@ export default function RoutineIndex({ folders, ungrouped }: { folders: RoutineF
                 </aside>
 
                 <div className="min-w-0 space-y-6 lg:order-1">
-                    <Section title="My Routines" count={ungrouped.length}>
+                    <Section title="My routines" count={ungrouped.length}>
                         {ungrouped.length === 0 ? (
                             <EmptyCard
                                 text={folders.length ? 'Every routine is in a folder.' : 'No routines yet. Build one once and start it in a tap every time you train.'}
@@ -50,7 +50,7 @@ export default function RoutineIndex({ folders, ungrouped }: { folders: RoutineF
                                     <MenuAction
                                         danger
                                         onClick={async () => {
-                                            if (await confirmAction({ title: `Delete "${folder.name}"?`, body: "Its routines move to My Routines.", confirmLabel: "Delete folder" })) {
+                                            if (await confirmAction({ title: `Delete "${folder.name}"?`, body: `Its ${folder.routines.length} ${folder.routines.length === 1 ? 'routine moves' : 'routines move'} to My routines. No routine is deleted.`, confirmLabel: "Delete folder" })) {
                                                 router.delete(route('folders.destroy', folder.id), { preserveScroll: true });
                                             }
                                         }}
@@ -81,19 +81,21 @@ function Section({ title, count, menu, children }: { title: string; count: numbe
     return (
         <section>
             <div className="flex items-center justify-between">
+                <h2>
                 <button
                     type="button"
                     onClick={() => setOpen((o) => !o)}
                     aria-expanded={open}
-                    className="-ml-1 flex items-center gap-3 rounded-lg px-1 py-1 text-zinc-500 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:text-white"
+                    className="-ml-1 flex min-h-11 items-center gap-3 rounded-lg px-1 text-zinc-700 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 dark:text-zinc-400 dark:hover:text-white"
                 >
-                    <svg viewBox="0 0 20 20" className={`h-4 w-4 transition-transform motion-reduce:transition-none ${open ? '' : '-rotate-90'}`} fill="none" stroke="currentColor" strokeWidth={2}>
+                    <svg viewBox="0 0 20 20" aria-hidden className={`h-4 w-4 transition-transform motion-reduce:transition-none ${open ? '' : '-rotate-90'}`} fill="none" stroke="currentColor" strokeWidth={2}>
                         <path d="M5 7.5l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span className="text-base">
+                    <span className="text-base font-bold">
                         {title} ({count})
                     </span>
                 </button>
+                </h2>
                 {menu}
             </div>
             {open && <div className="mt-3 space-y-3">{children}</div>}
@@ -112,7 +114,7 @@ function RoutineCard({ routine }: { routine: Routine }) {
                     {/* Stretched link: the whole card opens the routine, the menu stays clickable above it. */}
                     <Link
                         href={route('routines.show', routine.id)}
-                        className="rounded after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-lime-400"
+                        className="rounded after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-zinc-900 dark:focus-visible:after:ring-lime-400"
                     >
                         {routine.name}
                     </Link>
@@ -124,7 +126,7 @@ function RoutineCard({ routine }: { routine: Routine }) {
                         <MenuAction
                             danger
                             onClick={async () => {
-                                if (await confirmAction({ title: `Delete "${routine.name}"?`, body: "This can’t be undone.", confirmLabel: "Delete routine" })) {
+                                if (await confirmAction({ title: `Delete "${routine.name}"?`, body: "The template and its target sets are deleted. Workouts you already logged from it stay in your history.", confirmLabel: "Delete routine" })) {
                                     router.delete(route('routines.destroy', routine.id), { preserveScroll: true });
                                 }
                             }}
@@ -134,9 +136,13 @@ function RoutineCard({ routine }: { routine: Routine }) {
                     </KebabMenu>
                 </div>
             </div>
-            <p className="mt-2 truncate text-[15px] text-zinc-500 dark:text-zinc-400" title={summary}>
-                {summary}
-            </p>
+            <p className="mt-2 line-clamp-2 text-[15px] text-zinc-500 dark:text-zinc-400">{summary}</p>
+            {/* Starting is why people open this list, so it sits on the card; z-10 lifts it above the stretched link. */}
+            <div className="relative z-10 mt-4">
+                <Link href={route('workouts.start-routine', routine.id)} method="post" as="button" className={btn.secondary} aria-label={`Start workout: ${routine.name}`}>
+                    Start workout
+                </Link>
+            </div>
         </article>
     );
 }
@@ -146,9 +152,9 @@ function KebabMenu({ label, children }: { label: string; children: ReactNode }) 
         <Menu as="div" className="relative">
             <MenuButton
                 aria-label={label}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
             >
-                <svg viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
+                <svg viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor" aria-hidden>
                     <circle cx="4" cy="10" r="1.6" />
                     <circle cx="10" cy="10" r="1.6" />
                     <circle cx="16" cy="10" r="1.6" />
@@ -187,13 +193,13 @@ function ActionRow({ href, onClick, icon, label }: { href?: string; onClick?: ()
                 {icon}
             </span>
             <span className="flex-1 text-left font-bold">{label}</span>
-            <svg viewBox="0 0 20 20" className="h-5 w-5 text-zinc-400 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeWidth={2}>
+            <svg viewBox="0 0 20 20" aria-hidden className="h-5 w-5 text-zinc-500 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M7.5 5l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
         </>
     );
     const cls =
-        'group flex w-full items-center gap-5 rounded-xl px-4 py-4 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:hover:bg-zinc-800/60';
+        'group flex w-full items-center gap-5 rounded-xl px-4 py-4 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 dark:hover:bg-zinc-800/60';
 
     return href ? (
         <Link href={href} className={cls}>
@@ -209,7 +215,7 @@ function ActionRow({ href, onClick, icon, label }: { href?: string; onClick?: ()
 function EmptyCard({ text, showCta = false }: { text: string; showCta?: boolean }) {
     return (
         <div className="rounded-2xl border border-dashed border-zinc-300 px-6 py-8 text-center dark:border-zinc-700">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{text}</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{text}</p>
             {showCta && (
                 <Link href={route('routines.create')} className={`${btn.primary} mt-4`}>
                     New routine
@@ -250,7 +256,7 @@ function FolderModal({ dialog, onClose }: { dialog: FolderDialog; onClose: () =>
         <Modal show={dialog !== null} onClose={close} maxWidth="sm">
             <form onSubmit={submit} className="p-6 dark:bg-zinc-900">
                 <h2 className="text-lg font-bold dark:text-white">{renaming ? 'Rename folder' : 'New folder'}</h2>
-                <label htmlFor="folder-name" className="mt-4 block text-sm text-zinc-500 dark:text-zinc-400">
+                <label htmlFor="folder-name" className="mt-4 block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                     Folder name
                 </label>
                 <input
@@ -260,10 +266,10 @@ function FolderModal({ dialog, onClose }: { dialog: FolderDialog; onClose: () =>
                     maxLength={80}
                     value={form.data.name}
                     onChange={(e) => form.setData('name', e.target.value)}
-                    placeholder="e.g. Push Pull Legs"
-                    className="mt-1 block w-full rounded-xl border-zinc-300 focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    placeholder="Push pull legs"
+                    className="mt-1 block w-full rounded-xl border-zinc-500 dark:border-zinc-500 dark:bg-zinc-800 dark:text-white focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                 />
-                <InputError message={form.errors.name} className="mt-2" />
+                <InputError htmlFor="folder-name" message={form.errors.name} className="mt-2" />
                 <div className="mt-6 flex justify-end gap-2">
                     <button type="button" onClick={close} className={btn.ghost}>
                         Cancel
@@ -279,7 +285,7 @@ function FolderModal({ dialog, onClose }: { dialog: FolderDialog; onClose: () =>
 
 function ClipboardIcon() {
     return (
-        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" aria-hidden className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
             <rect x="5" y="4" width="14" height="17" rx="2.5" />
             <path d="M9 4.5h6V3H9zM9 10h6M9 14h6M9 18h3" />
         </svg>
@@ -288,7 +294,7 @@ function ClipboardIcon() {
 
 function FolderPlusIcon() {
     return (
-        <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" aria-hidden className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 7.5A2.5 2.5 0 015.5 5H9l2 2h7.5A2.5 2.5 0 0121 9.5v8a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 17.5z" />
             <path d="M12 11v5M9.5 13.5h5" />
         </svg>

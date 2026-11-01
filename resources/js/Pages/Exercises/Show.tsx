@@ -1,7 +1,7 @@
 import { btn, Card, Chip, StatCard } from "@/Components/ui";
 import ExerciseMedia from "@/Components/ExerciseMedia";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { formatNumber } from "@/lib/units";
+import { formatRecord, formatWeight, kgToUnit, useUnitSystem, weightUnit } from "@/lib/units";
 import { EXERCISE_TYPE_LABELS, Exercise } from "@/types";
 import { Head, Link, usePage } from "@inertiajs/react";
 import { useMemo } from "react";
@@ -43,6 +43,7 @@ export default function ExerciseShow({
     bestSet,
     oneRm,
 }: Props) {
+    const system = useUnitSystem();
     const auth = (
         usePage().props as unknown as {
             auth: { user: { id: number; role: string } };
@@ -54,10 +55,10 @@ export default function ExerciseShow({
     const data = useMemo(
         () =>
             history.map((h) => ({
-                date: new Date(h.date).toLocaleDateString(),
-                max: Number(h.max_w ?? 0),
+                date: new Date(h.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                max: kgToUnit(h.max_w ?? 0, system) ?? 0,
             })),
-        [history],
+        [history, system],
     );
 
     return (
@@ -86,7 +87,7 @@ export default function ExerciseShow({
                         {!exercise.description && exercise.overview && (
                             <p className="mt-3 text-sm">{exercise.overview}</p>
                         )}
-                        {exercise.instructions && (
+                        {exercise.instructions && exercise.instructions !== (exercise.description ?? exercise.overview) && (
                             <p className="mt-2 whitespace-pre-line text-sm text-zinc-500 dark:text-zinc-400">
                                 {exercise.instructions}
                             </p>
@@ -139,17 +140,20 @@ export default function ExerciseShow({
                             <div className="h-48">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={data}>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.2} />
                                         <XAxis
                                             dataKey="date"
                                             tick={{ fontSize: 11 }}
                                         />
                                         <YAxis tick={{ fontSize: 11 }} />
-                                        <Tooltip />
+                                        <Tooltip
+                                            formatter={(v) => [`${v} ${weightUnit(system)}`, "Heaviest set"]}
+                                            contentStyle={{ borderRadius: 12, color: "#18181b" }}
+                                        />
                                         <Line
                                             type="monotone"
                                             dataKey="max"
-                                            stroke="#a3e635"
+                                            stroke="#65a30d"
                                             strokeWidth={2}
                                             dot={false}
                                         />
@@ -166,13 +170,13 @@ export default function ExerciseShow({
                             label="Best set"
                             value={
                                 bestSet
-                                    ? `${bestSet.weight_kg} × ${bestSet.reps}`
+                                    ? `${formatWeight(bestSet.weight_kg, system)} × ${bestSet.reps}`
                                     : "-"
                             }
                         />
                         <StatCard
                             label="1RM (est.)"
-                            value={oneRm ?? "-"}
+                            value={oneRm ? formatWeight(oneRm, system) : "-"}
                             sub="Epley, estimate only"
                         />
                     </div>
@@ -186,8 +190,7 @@ export default function ExerciseShow({
                         {prs.map((pr) => (
                             <p key={pr.id} className="mt-2 text-sm">
                                 <strong>{pr.record_type_label}</strong>:{" "}
-                                {formatNumber(pr.value_primary)}
-                                {pr.value_reps ? ` × ${pr.value_reps}` : ""}
+                                {formatRecord(pr, system)}
                             </p>
                         ))}
                     </Card>

@@ -30,7 +30,7 @@ export default function ResetPassword({
 
     return (
         <GuestLayout title="Choose a new password">
-            <Head title="Reset Password" />
+            <Head title="Reset password" />
 
             <form onSubmit={submit}>
                 <div>
@@ -44,13 +44,14 @@ export default function ResetPassword({
                         className="mt-1 block w-full"
                         autoComplete="username"
                         onChange={(e) => setData('email', e.target.value)}
+                        required
                     />
 
-                    <InputError message={errors.email} className="mt-2" />
+                    <InputError htmlFor="email" message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value="New password" />
 
                     <TextInput
                         id="password"
@@ -61,39 +62,36 @@ export default function ResetPassword({
                         autoComplete="new-password"
                         isFocused={true}
                         onChange={(e) => setData('password', e.target.value)}
+                        aria-describedby="password-hint"
+                        required
                     />
+                    <p id="password-hint" className="mt-1 text-xs text-zinc-400">
+                        Use at least 8 characters.
+                    </p>
 
-                    <InputError message={errors.password} className="mt-2" />
+                    <InputError htmlFor="password" message={errors.password} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
+                    <InputLabel htmlFor="password_confirmation" value="Confirm new password" />
 
                     <TextInput
+                        id="password_confirmation"
                         type="password"
                         name="password_confirmation"
                         value={data.password_confirmation}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
+                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        required
                     />
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
+                    <InputError htmlFor="password_confirmation" message={errors.password_confirmation} className="mt-2" />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Reset Password
-                    </PrimaryButton>
-                </div>
+                <PrimaryButton className="mt-6 w-full" disabled={processing}>
+                    {processing ? 'Saving…' : 'Save new password'}
+                </PrimaryButton>
             </form>
         </GuestLayout>
     );

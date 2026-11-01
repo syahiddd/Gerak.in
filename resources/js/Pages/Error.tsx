@@ -27,7 +27,7 @@ export default function ErrorPage({ status }: { status: Status }) {
             <Head title={`${status} · ${title}`} />
             <div className="flex min-h-screen flex-col bg-zinc-100 px-6 py-6 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 sm:px-10">
                 <header>
-                    <a href="/" className="inline-flex rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400" aria-label="Gerak.in home">
+                    <a href="/" className="inline-flex rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400" aria-label="Gerak.in home">
                         <BrandLogo />
                     </a>
                 </header>

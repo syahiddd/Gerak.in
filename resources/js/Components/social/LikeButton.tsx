@@ -23,11 +23,11 @@ export default function LikeButton({ workoutId, liked, count }: { workoutId: num
             onClick={toggle}
             aria-pressed={state.liked}
             aria-label={state.liked ? 'Unlike workout' : 'Like workout'}
-            className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 ${
-                state.liked ? 'text-rose-500' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white'
+            className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 ${
+                state.liked ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white'
             }`}
         >
-            <Heart className={`h-5 w-5 transition-transform motion-reduce:transition-none ${state.liked ? 'scale-110 fill-current' : ''}`} />
+            <Heart className={`h-5 w-5 transition-transform motion-reduce:transition-none ${state.liked ? 'scale-110 fill-current' : ''}`} aria-hidden />
             <span className="tabular-nums">{state.count}</span>
         </button>
     );

@@ -57,10 +57,10 @@ export default function ExercisePicker({
                     displayValue={(ex: ExerciseOption | null) => ex?.name ?? ''}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
-                    className="block w-full rounded-xl border-zinc-300 py-2 pl-9 pr-9 text-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="block w-full rounded-xl border-zinc-500 py-2 pl-9 pr-9 text-base sm:text-sm dark:border-zinc-500 dark:bg-zinc-800 dark:text-white focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                 />
-                <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400" aria-label="Show exercises">
-                    <ChevronDown className="h-4 w-4" />
+                <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500 dark:text-zinc-400" aria-label="Show exercises">
+                    <ChevronDown className="h-4 w-4" aria-hidden />
                 </ComboboxButton>
             </div>
 
@@ -83,12 +83,12 @@ export default function ExercisePicker({
                     >
                         <ExerciseMedia exercise={ex} variant="inline" />
                         <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm text-zinc-900 dark:text-zinc-100">{ex.name}</span>
+                            <span className="block break-words text-sm leading-snug text-zinc-900 dark:text-zinc-100">{ex.name}</span>
                             {ex.primary_muscle && <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{ex.primary_muscle.name}</span>}
                         </span>
                     </ComboboxOption>
                 ))}
-                {loading && <p className="px-3 py-2 text-xs text-zinc-400">Searching…</p>}
+                {loading && <p className="px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">Searching…</p>}
             </ComboboxOptions>
         </Combobox>
     );

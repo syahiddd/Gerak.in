@@ -1,7 +1,7 @@
 import '../css/app.css';
 
 import { applyTheme } from '@/hooks/workout';
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
@@ -23,6 +23,11 @@ createInertiaApp({
     progress: {
         color: '#a3e635',
     },
+});
+
+// After a failed submit, move focus to the first field InputError marked invalid.
+router.on('error', () => {
+    setTimeout(() => document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 50);
 });
 
 // Apply persisted theme as early as possible (server default is system).

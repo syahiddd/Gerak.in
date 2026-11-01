@@ -9,6 +9,7 @@ use App\Models\PersonalRecord;
 use App\Models\Workout;
 use App\Models\WorkoutSet;
 use App\Support\OneRmCalculator;
+use App\Support\UnitConverter;
 
 class PersonalRecordService
 {
@@ -19,8 +20,10 @@ class PersonalRecordService
      */
     public function evaluateWorkout(Workout $workout): array
     {
-        $workout->loadMissing('exercises.exercise', 'exercises.sets');
+        $workout->loadMissing('exercises.exercise', 'exercises.sets', 'user.settings');
         $events = [];
+        // Stored in kg; the celebration text follows the user's unit setting.
+        $system = $workout->user?->settings?->unit_system?->value ?? 'metric';
 
         $byExercise = [];
         foreach ($workout->exercises as $we) {
@@ -33,7 +36,7 @@ class PersonalRecordService
         }
 
         foreach ($byExercise as $exerciseId => $sets) {
-            $candidates = $this->candidates($sets);
+            $candidates = $this->candidates($sets, $system);
 
             foreach ($candidates as $typeValue => $candidate) {
                 if ($candidate === null) {
@@ -70,8 +73,14 @@ class PersonalRecordService
     }
 
     /** @param iterable<WorkoutSet> $sets */
-    private function candidates(iterable $sets): array
+    private function candidates(iterable $sets, string $system): array
     {
+        $kg = function (float $value) use ($system): string {
+            $d = UnitConverter::displayWeight($value, $system);
+
+            return "{$d['value']} {$d['unit']}";
+        };
+
         $heaviest = null;
         $bestVolume = null;
         $bestOneRm = null;
@@ -86,20 +95,20 @@ class PersonalRecordService
             $dist = $set->distance_m !== null ? (int) $set->distance_m : null;
 
             if ($w !== null && $w > 0 && ($heaviest === null || $w > $heaviest['value'])) {
-                $heaviest = ['value' => $w, 'reps' => $r, 'detail' => "{$w} kg".($r ? " × {$r}" : '')];
+                $heaviest = ['value' => $w, 'reps' => $r, 'detail' => $kg($w).($r ? " × {$r}" : '')];
             }
             if ($w !== null && $r !== null && $w > 0 && $r > 0) {
                 $vol = $w * $r;
                 if ($bestVolume === null || $vol > $bestVolume['value']) {
-                    $bestVolume = ['value' => $vol, 'reps' => $r, 'detail' => "{$w} kg × {$r} (vol {$vol} kg)"];
+                    $bestVolume = ['value' => $vol, 'reps' => $r, 'detail' => $kg($w)." × {$r} (vol ".$kg($vol).')'];
                 }
             }
             $est = OneRmCalculator::epley($w, $r);
             if ($est !== null && ($bestOneRm === null || $est > $bestOneRm['value'])) {
-                $bestOneRm = ['value' => $est, 'reps' => $r, 'detail' => "est. 1RM {$est} kg ({$w} × {$r})"];
+                $bestOneRm = ['value' => $est, 'reps' => $r, 'detail' => 'est. 1RM '.$kg($est).' ('.$kg($w)." × {$r})"];
             }
             if ($r !== null && ($mostReps === null || $r > $mostReps['value'])) {
-                $mostReps = ['value' => $r, 'reps' => $r, 'detail' => "{$r} reps".($w ? " @ {$w} kg" : '')];
+                $mostReps = ['value' => $r, 'reps' => $r, 'detail' => "{$r} reps".($w ? ' @ '.$kg($w) : '')];
             }
             // Duration/distance sets never contribute weight-volume; they get their own records.
             if ($dur !== null && $dur > 0 && ($bestDuration === null || $dur > $bestDuration['value'])) {

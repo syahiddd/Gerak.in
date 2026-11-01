@@ -21,35 +21,30 @@ export default function ConfirmPassword() {
 
     return (
         <GuestLayout title="Confirm your password">
-            <Head title="Confirm Password" />
+            <Head title="Confirm password" />
 
-            <div className="mb-4 text-sm text-gray-600 dark:text-zinc-400">
-                This is a secure area of the application. Please confirm your
-                password before continuing.
-            </div>
+            <p className="mb-6 text-sm text-zinc-400">This part of your account is protected. Enter your password to continue.</p>
 
             <form onSubmit={submit}>
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                <InputLabel htmlFor="password" value="Password" />
 
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
+                <TextInput
+                    id="password"
+                    type="password"
+                    name="password"
+                    value={data.password}
+                    className="mt-1 block w-full"
+                    autoComplete="current-password"
+                    isFocused={true}
+                    onChange={(e) => setData('password', e.target.value)}
+                    required
+                />
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
+                <InputError htmlFor="password" message={errors.password} className="mt-2" />
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Confirm
-                    </PrimaryButton>
-                </div>
+                <PrimaryButton className="mt-6 w-full" disabled={processing}>
+                    {processing ? 'Checking…' : 'Continue'}
+                </PrimaryButton>
             </form>
         </GuestLayout>
     );

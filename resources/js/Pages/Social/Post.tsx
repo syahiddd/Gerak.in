@@ -1,4 +1,5 @@
 import { confirmAction } from '@/Components/ConfirmDialog';
+import InputError from '@/Components/InputError';
 import ExerciseMedia from '@/Components/ExerciseMedia';
 import Avatar from '@/Components/social/Avatar';
 import { timeAgo } from '@/Components/social/format';
@@ -19,7 +20,7 @@ export default function Post({ post }: { post: FeedPost }) {
             <Head title={`${post.title} · ${post.user.name}`} />
 
             <div className="mx-auto max-w-2xl space-y-4">
-                <Link href={route('feed.index')} className="text-sm font-semibold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                <Link href={route('feed.index')} className="inline-flex min-h-11 items-center text-sm font-semibold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
                     ← Feed
                 </Link>
 
@@ -96,7 +97,7 @@ function ExerciseBlock({ pe }: { pe: PostExercise }) {
                     )}
                 </div>
                 {(pe.record_types?.length ?? 0) > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-400">
                         <Trophy className="h-3.5 w-3.5" aria-hidden /> PR
                     </span>
                 )}
@@ -114,7 +115,9 @@ function ExerciseBlock({ pe }: { pe: PostExercise }) {
                         {sets.map((s, i) => (
                             <tr key={s.id} className="odd:bg-zinc-50 dark:odd:bg-zinc-800/50">
                                 <td className="rounded-l-lg py-2 pl-2 font-semibold tabular-nums">
-                                    <span title={s.set_type.replace('_', ' ')}>{setLabel(sets, i)}</span>
+                                    <span title={s.set_type.replace('_', ' ')} aria-label={`Set ${setLabel(sets, i)}, ${s.set_type.replace('_', ' ')}`}>
+                                        {setLabel(sets, i)}
+                                    </span>
                                 </td>
                                 <td className="rounded-r-lg py-2 tabular-nums">{describe(s)}</td>
                             </tr>
@@ -168,15 +171,15 @@ function Comments({ post }: { post: FeedPost }) {
                             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit(e);
                         }}
                         placeholder="Write a comment…"
-                        className="block w-full resize-y rounded-xl border-zinc-300 text-sm focus:border-lime-400 focus:ring-lime-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                        className="block w-full resize-y rounded-xl border-zinc-500 text-base sm:text-sm dark:border-zinc-500 dark:bg-zinc-800 dark:text-white focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                     />
-                    {form.errors.body && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{form.errors.body}</p>}
+                    <InputError htmlFor="comment-body" message={form.errors.body} className="mt-1" />
                     <div className="mt-2 flex justify-end">
                         <button
                             disabled={form.processing || !form.data.body.trim()}
                             className={btn.primary}
                         >
-                            Post comment
+                            {form.processing ? 'Posting…' : 'Post comment'}
                         </button>
                     </div>
                 </div>
@@ -187,7 +190,7 @@ function Comments({ post }: { post: FeedPost }) {
 
 function CommentRow({ c }: { c: PostComment }) {
     const remove = async () => {
-        if (await confirmAction({ title: 'Delete this comment?', confirmLabel: 'Delete comment' })) {
+        if (await confirmAction({ title: 'Delete this comment?', body: `"${c.body.length > 80 ? `${c.body.slice(0, 80)}…` : c.body}"`, confirmLabel: 'Delete comment' })) {
             router.delete(route('posts.comments.destroy', c.id), { preserveScroll: true });
         }
     };
@@ -207,7 +210,7 @@ function CommentRow({ c }: { c: PostComment }) {
                 <p className="mt-0.5 whitespace-pre-line break-words text-sm text-zinc-700 dark:text-zinc-200">{c.body}</p>
             </div>
             {c.can_delete && (
-                <button type="button" onClick={remove} className={`${btn.danger} -my-2 self-start px-2 font-semibold`}>
+                <button type="button" onClick={remove} className={`${btn.danger} -my-2 self-start px-2 font-semibold`} aria-label={`Delete comment by ${c.user.name}`}>
                     Delete
                 </button>
             )}

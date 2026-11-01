@@ -1,8 +1,9 @@
 import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 export default function ForgotPassword({ status }: { status?: string }) {
@@ -18,39 +19,44 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
     return (
         <GuestLayout title="Reset your password">
-            <Head title="Forgot Password" />
+            <Head title="Forgot password" />
 
-            <div className="mb-4 text-sm text-gray-600 dark:text-zinc-400">
-                Forgot your password? No problem. Just let us know your email
-                address and we will email you a password reset link that will
-                allow you to choose a new one.
-            </div>
+            <p className="mb-6 text-sm text-zinc-400">Enter the email you signed up with and we'll send you a link to choose a new password.</p>
 
             {status && (
-                <div className="mb-4 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm font-medium text-lime-300">
+                <div role="status" className="mb-4 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm font-medium text-lime-300">
                     {status}
                 </div>
             )}
 
             <form onSubmit={submit}>
+                <InputLabel htmlFor="email" value="Email" />
                 <TextInput
                     id="email"
                     type="email"
                     name="email"
                     value={data.email}
                     className="mt-1 block w-full"
+                    autoComplete="email"
+                    placeholder="you@example.com"
                     isFocused={true}
                     onChange={(e) => setData('email', e.target.value)}
+                    required
                 />
 
-                <InputError message={errors.email} className="mt-2" />
+                <InputError htmlFor="email" message={errors.email} className="mt-2" />
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Email Password Reset Link
-                    </PrimaryButton>
-                </div>
+                <PrimaryButton className="mt-6 w-full" disabled={processing}>
+                    {processing ? 'Sending…' : 'Email me a reset link'}
+                </PrimaryButton>
             </form>
+
+            <p className="mt-8 text-center text-sm text-zinc-400">
+                Remembered it?{' '}
+                <Link href={route('home')} className="font-bold text-zinc-100 underline decoration-lime-400 decoration-2 underline-offset-4 hover:text-lime-300">
+                    Back to log in
+                </Link>
+            </p>
         </GuestLayout>
     );
 }

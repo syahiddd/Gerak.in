@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
+import { Announce } from '@/Components/ui';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 
@@ -51,21 +52,16 @@ export default function UpdatePasswordForm({
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Update Password
-                </h2>
+                <h2 className="text-lg font-bold">Change password</h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                    Ensure your account is using a long, random password to stay
-                    secure.
-                </p>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Use at least 8 characters. A long passphrase is easier to remember and harder to guess.</p>
             </header>
 
             <form onSubmit={updatePassword} className="mt-6 space-y-6">
                 <div>
                     <InputLabel
                         htmlFor="current_password"
-                        value="Current Password"
+                        value="Current password"
                     />
 
                     <TextInput
@@ -80,14 +76,14 @@ export default function UpdatePasswordForm({
                         autoComplete="current-password"
                     />
 
-                    <InputError
+                    <InputError htmlFor="current_password"
                         message={errors.current_password}
                         className="mt-2"
                     />
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password" value="New Password" />
+                    <InputLabel htmlFor="password" value="New password" />
 
                     <TextInput
                         id="password"
@@ -99,13 +95,13 @@ export default function UpdatePasswordForm({
                         autoComplete="new-password"
                     />
 
-                    <InputError message={errors.password} className="mt-2" />
+                    <InputError htmlFor="password" message={errors.password} className="mt-2" />
                 </div>
 
                 <div>
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value="Confirm new password"
                     />
 
                     <TextInput
@@ -119,14 +115,14 @@ export default function UpdatePasswordForm({
                         autoComplete="new-password"
                     />
 
-                    <InputError
+                    <InputError htmlFor="password_confirmation"
                         message={errors.password_confirmation}
                         className="mt-2"
                     />
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton disabled={processing}>{processing ? 'Saving…' : 'Change password'}</PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
@@ -135,10 +131,9 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600 dark:text-zinc-400">
-                            Saved.
-                        </p>
+                        <p className="text-sm font-semibold text-lime-700 dark:text-lime-400">Password changed</p>
                     </Transition>
+                    <Announce text={recentlySuccessful ? 'Password changed' : null} />
                 </div>
             </form>
         </section>

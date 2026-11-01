@@ -41,7 +41,7 @@ export default function Register() {
                         required
                     />
 
-                    <InputError message={errors.name} className="mt-2" />
+                    <InputError htmlFor="name" message={errors.name} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
@@ -58,7 +58,7 @@ export default function Register() {
                         required
                     />
 
-                    <InputError message={errors.email} className="mt-2" />
+                    <InputError htmlFor="email" message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
@@ -72,16 +72,20 @@ export default function Register() {
                         className="mt-1 block w-full"
                         autoComplete="new-password"
                         onChange={(e) => setData('password', e.target.value)}
+                        aria-describedby="password-hint"
                         required
                     />
+                    <p id="password-hint" className="mt-1 text-xs text-zinc-400">
+                        Use at least 8 characters.
+                    </p>
 
-                    <InputError message={errors.password} className="mt-2" />
+                    <InputError htmlFor="password" message={errors.password} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value="Confirm password"
                     />
 
                     <TextInput
@@ -97,14 +101,14 @@ export default function Register() {
                         required
                     />
 
-                    <InputError
+                    <InputError htmlFor="password_confirmation"
                         message={errors.password_confirmation}
                         className="mt-2"
                     />
                 </div>
 
                 <PrimaryButton className="mt-6 w-full" disabled={processing}>
-                    Create account
+                    {processing ? 'Creating account…' : 'Create account'}
                 </PrimaryButton>
             </form>
 

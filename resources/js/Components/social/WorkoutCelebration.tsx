@@ -1,9 +1,9 @@
 import { btn } from '@/Components/ui';
-import { displayWeight, formatNumber } from '@/lib/units';
-import { Celebration, FeedPost, PageProps } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { displayWeight, formatNumber, useUnitSystem } from '@/lib/units';
+import { Celebration, FeedPost } from '@/types';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Trophy } from 'lucide-react';
-import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { humanDuration } from './format';
 
 const CONFETTI_COLORS = ['bg-lime-400', 'bg-lime-300', 'bg-amber-400', 'bg-sky-400', 'bg-rose-400', 'bg-white'];
@@ -45,8 +45,7 @@ function ordinal(n: number): string {
  */
 export default function WorkoutCelebration({ celebrate, post, onClose }: { celebrate: Celebration; post: FeedPost; onClose: () => void }) {
     const animate = !usePrefersReducedMotion();
-    const unit = usePage<PageProps>().props.auth.user.settings?.unit_system ?? 'metric';
-    const cta = useRef<HTMLButtonElement>(null);
+    const unit = useUnitSystem();
 
     const vol = displayWeight(post.volume_kg ?? 0, unit);
     const volume = useCountUp(Number(vol.value) || 0, 700, animate);
@@ -72,19 +71,6 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
         [],
     );
 
-    useEffect(() => {
-        // Focus the CTA for keyboard users without scrolling the ring out of view.
-        cta.current?.focus({ preventScroll: true });
-        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-        document.addEventListener('keydown', onKey);
-        const overflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.removeEventListener('keydown', onKey);
-            document.body.style.overflow = overflow;
-        };
-    }, [onClose]);
-
     // One card per exercise; a single lift often sets several record types at once.
     const prsByExercise = Object.entries(
         (celebrate.pr_events ?? []).reduce<Record<string, Celebration['pr_events']>>((acc, pr) => {
@@ -95,12 +81,9 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
     const RING = 2 * Math.PI * 54;
 
     return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="celebration-title"
-            className="fixed inset-0 z-[70] overflow-y-auto bg-zinc-950/95 text-white backdrop-blur-sm"
-        >
+        // Headless UI Dialog: focus trap, inert background, Escape to close, scroll lock.
+        <Dialog open onClose={onClose} className="relative z-[70]">
+            <DialogPanel className="fixed inset-0 overflow-y-auto overscroll-contain bg-zinc-950/95 text-white backdrop-blur-sm">
             {/* min-h-full + flex centering keeps tall content scrollable instead of clipped at the top */}
             <div className="flex min-h-full items-center justify-center px-5 py-10">
                 <div className="relative w-full max-w-md text-center">
@@ -146,9 +129,9 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
                     <p className="mt-7 text-sm font-bold text-lime-400 motion-safe:animate-rise" style={{ animationDelay: '500ms' }}>
                         Workout #{celebrate.workout_number}
                     </p>
-                    <h2 id="celebration-title" className="mt-2 text-4xl font-black tracking-tight motion-safe:animate-rise sm:text-5xl" style={{ animationDelay: '600ms' }}>
+                    <DialogTitle className="mt-2 text-4xl font-black tracking-tight motion-safe:animate-rise sm:text-5xl" style={{ animationDelay: '600ms' }}>
                         Workout complete
-                    </h2>
+                    </DialogTitle>
                     <p className="mt-2 text-zinc-400 motion-safe:animate-rise" style={{ animationDelay: '700ms' }}>
                         That&apos;s your {ordinal(celebrate.workout_number)} workout on Gerak.in. Keep it rolling.
                     </p>
@@ -175,9 +158,9 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
                                             </span>{' '}
                                             · <span className="font-semibold">{exercise}</span>
                                         </p>
-                                        <ul className="mt-0.5 text-zinc-400">
+                                        <ul className="mt-0.5 text-zinc-300">
                                             {records.map((pr, j) => (
-                                                <li key={j} className="truncate">
+                                                <li key={j} className="break-words">
                                                     {pr.type}: {pr.detail}
                                                 </li>
                                             ))}
@@ -190,7 +173,7 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
 
                     <div className="mt-8 motion-safe:animate-rise" style={{ animationDelay: '1100ms' }}>
                         <button
-                            ref={cta}
+                            data-autofocus
                             type="button"
                             onClick={onClose}
                             className={`${btn.primary} w-full text-base`}
@@ -200,7 +183,8 @@ export default function WorkoutCelebration({ celebrate, post, onClose }: { celeb
                     </div>
                 </div>
             </div>
-        </div>
+            </DialogPanel>
+        </Dialog>
     );
 }
 

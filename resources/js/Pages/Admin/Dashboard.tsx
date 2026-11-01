@@ -23,7 +23,7 @@ export default function AdminDashboard({
     recentUsers,
 }: Props) {
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Admin Dashboard</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Admin dashboard</h1>}>
             <Head title="Admin" />
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -44,11 +44,17 @@ export default function AdminDashboard({
 
             <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 className="font-bold">Recent registrations</h2>
-                {recentUsers.map((u) => (
-                    <p key={u.id} className="mt-1 text-sm">
-                        {u.name} · {u.email}
-                    </p>
-                ))}
+                {recentUsers.length === 0 ? (
+                    <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">No one has signed up yet.</p>
+                ) : (
+                    <ul className="mt-2 space-y-1 text-sm">
+                        {recentUsers.map((u) => (
+                            <li key={u.id} className="break-all">
+                                <span className="font-semibold">{u.name}</span> · {u.email}
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
         </AuthenticatedLayout>
     );

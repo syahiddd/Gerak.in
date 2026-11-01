@@ -3,6 +3,7 @@ import ExerciseMedia from '@/Components/ExerciseMedia';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { EXERCISE_TYPE_LABELS, Exercise, Muscle, Paginated } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface Props {
@@ -44,14 +45,24 @@ export default function ExerciseIndex({ exercises, muscles = [], filters = {} }:
     };
 
     const chip = (active: boolean) =>
-        `inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 ${
+        `inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 ${
             active
                 ? 'bg-lime-400 text-zinc-950'
                 : 'border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
         }`;
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-extrabold">Exercise Library</h1>}>
+        <AuthenticatedLayout
+            header={
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h1 className="text-xl font-extrabold">Exercise library</h1>
+                    <Link href={route('exercises.create')} className={btn.secondary}>
+                        <Plus className="h-4 w-4" aria-hidden />
+                        New exercise
+                    </Link>
+                </div>
+            }
+        >
             <Head title="Exercises" />
 
             <form onSubmit={submit} role="search" className="flex flex-wrap gap-2 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -60,7 +71,7 @@ export default function ExerciseIndex({ exercises, muscles = [], filters = {} }:
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="Search exercises…"
-                    className="min-w-0 flex-1 basis-48 rounded-xl border-zinc-300 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                    className="min-w-0 flex-1 basis-48 rounded-xl border-zinc-500 text-base sm:text-sm dark:border-zinc-500 dark:bg-zinc-800 focus:border-lime-600 focus:ring-lime-600 dark:focus:border-lime-400 dark:focus:ring-lime-400"
                     aria-label="Search exercises"
                 />
                 <button disabled={processing} className={btn.secondary}>
@@ -100,7 +111,16 @@ export default function ExerciseIndex({ exercises, muscles = [], filters = {} }:
                             }
                         />
                     ) : (
-                        <EmptyState title="No exercises found" hint="Try a different search term." />
+                        <EmptyState
+                            title={filters.q ? `No exercises match “${filters.q}”` : 'No exercises found'}
+                            hint="Try a shorter search, or add it as your own exercise."
+                            action={
+                                <Link href={route('exercises.create')} className={btn.secondary}>
+                                    <Plus className="h-4 w-4" aria-hidden />
+                                    New exercise
+                                </Link>
+                            }
+                        />
                     )}
                 </div>
             ) : (
@@ -109,7 +129,7 @@ export default function ExerciseIndex({ exercises, muscles = [], filters = {} }:
                         <Link
                             key={ex.id}
                             href={route('exercises.show', ex.slug)}
-                            className="rounded-2xl border border-zinc-200 bg-white p-4 hover:border-lime-400 dark:border-zinc-800 dark:bg-zinc-900"
+                            className="rounded-2xl border border-zinc-200 bg-white p-4 transition-colors hover:border-lime-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:focus-visible:ring-lime-400"
                         >
                             <ExerciseMedia exercise={ex} variant="thumbnail" className="mb-3" playOnHover />
                             <p className="font-bold">{ex.name}</p>

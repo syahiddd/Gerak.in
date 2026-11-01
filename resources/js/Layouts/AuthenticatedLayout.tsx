@@ -42,7 +42,7 @@ const TABS = NAV.slice(0, 4);
 const MORE = NAV.slice(4);
 
 const tabClass = (active: boolean) =>
-    `flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lime-400 ${
+    `flex min-h-16 flex-col items-center justify-center gap-0.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 ${
         active ? 'font-bold text-zinc-900 dark:text-white' : 'font-medium text-zinc-500 dark:text-zinc-400'
     }`;
 // Same lime pill as the active sidebar row, sized to sit behind the icon.
@@ -98,7 +98,7 @@ export default function Authenticated({
     const menuActive = isActive([...MORE.flatMap((n) => n.match), 'admin.*']);
 
     const navLinks = (
-        <nav className="flex-1 space-y-1 px-3 py-4 text-sm font-medium">
+        <nav aria-label="Main" className="flex-1 space-y-1 px-3 py-4 text-sm font-medium">
             <UserSearchBox className="mb-3" />
 
             {NAV.map((n) => {
@@ -110,13 +110,14 @@ export default function Authenticated({
                         href={route(n.href)}
                         prefetch
                         cacheFor="30s"
-                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
+                        aria-current={active ? 'page' : undefined}
+                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 ${
                             active
                                 ? 'bg-lime-400 font-bold text-zinc-950 dark:bg-lime-400 dark:text-zinc-950'
                                 : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white'
                         }`}
                     >
-                        <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.5 : 2} />
+                        <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.5 : 2} aria-hidden />
                         {n.label}
                     </Link>
                 );
@@ -124,13 +125,14 @@ export default function Authenticated({
             {user.role === 'admin' && (
                 <Link
                     href={route('admin.dashboard')}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition ${
+                    aria-current={route().current('admin.*') ? 'page' : undefined}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 ${
                         route().current('admin.*')
                             ? 'bg-zinc-900 font-bold text-white dark:bg-white dark:text-zinc-900'
                             : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white'
                     }`}
                 >
-                    <ShieldCheck className="h-5 w-5 shrink-0" strokeWidth={2} />
+                    <ShieldCheck className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
                     Admin
                 </Link>
             )}
@@ -145,8 +147,14 @@ export default function Authenticated({
 
     return (
         <div className="min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 sm:flex">
+            <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80] focus:rounded-xl focus:bg-lime-400 focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-zinc-950"
+            >
+                Skip to content
+            </a>
             {/* ===== Sidebar Desktop (kiri, fixed) ===== */}
-            <aside className="hidden w-64 shrink-0 flex-col border-r border-zinc-200 bg-white sm:flex dark:border-zinc-800 dark:bg-zinc-900 sm:fixed sm:inset-y-0 sm:z-30">
+            <aside aria-label="Sidebar" className="hidden w-64 shrink-0 flex-col border-r border-zinc-200 bg-white sm:flex dark:border-zinc-800 dark:bg-zinc-900 sm:fixed sm:inset-y-0 sm:z-30">
                 <div className="flex h-16 items-center px-5">{logo}</div>
 
                 {navLinks}
@@ -155,24 +163,24 @@ export default function Authenticated({
                     {themeButton}
                     <Dropdown>
                         <Dropdown.Trigger>
-                            <span className="inline-flex w-full rounded-xl">
-                                <button
-                                    type="button"
-                                    className="inline-flex w-full items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                                >
-                                    <span className="truncate">{user.name}</span>
-                                    <svg className="ms-1 h-4 w-4 shrink-0 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                    </svg>
-                                </button>
-                            </span>
+                            <button
+                                type="button"
+                                title={user.name}
+                                className="inline-flex min-h-11 w-full items-center justify-between rounded-xl bg-zinc-100 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-lime-400 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                            >
+                                <span className="truncate">{user.name}</span>
+                                <svg className="ms-1 h-4 w-4 shrink-0 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden>
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
                         </Dropdown.Trigger>
                         <Dropdown.Content
                             align="top"
                             width="full"
                             contentClasses="py-1 bg-white dark:bg-zinc-800"
                         >
-                            {accountLinks.map(({ label, href, Icon, logout }) => (
+                            {/* Admin already sits in the sidebar nav above. */}
+                            {accountLinks.filter((l) => l.label !== 'Admin').map(({ label, href, Icon, logout }) => (
                                 <Dropdown.Link
                                     key={label}
                                     href={href}
@@ -227,14 +235,14 @@ export default function Authenticated({
             {/* ===== Menu sheet mobile: everything that isn't a tab ===== */}
             <Dialog open={menuOpen} onClose={closeMenu} className="relative z-50 sm:hidden">
                 <div className="fixed inset-0 bg-zinc-950/60" aria-hidden="true" />
-                <Dialog.Panel className="fixed inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] motion-safe:animate-rise dark:bg-zinc-900">
+                <Dialog.Panel className="fixed inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] motion-safe:animate-rise dark:bg-zinc-900">
                     <div className="flex items-center gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
                         <div className="min-w-0 flex-1">
                             <Dialog.Title className="truncate text-sm font-bold">{user.name}</Dialog.Title>
                             <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{user.email}</p>
                         </div>
                         <button onClick={closeMenu} className={btn.icon} aria-label="Close menu">
-                            <X className="h-5 w-5" />
+                            <X className="h-5 w-5" aria-hidden />
                         </button>
                     </div>
 
@@ -281,14 +289,14 @@ export default function Authenticated({
                     </header>
                 )}
 
-                <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+                <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8">
                     <FlashMessages flash={flash} />
                     {children}
 
                     {/* Required attribution for exercise animations (exercises-dataset / WorkoutX). */}
                     <p className="mt-10 text-center text-[11px] text-zinc-600 dark:text-zinc-400">
                         Exercise animations ©{' '}
-                        <a href="https://gymvisual.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600 dark:hover:text-zinc-400">
+                        <a href="https://gymvisual.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-900 dark:hover:text-white">
                             Gym visual
                         </a>{' '}
                         and WorkoutX.

@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import { btn } from '@/Components/ui';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
 
@@ -52,44 +53,30 @@ export default function DeleteUserForm({
     return (
         <section className={`space-y-6 ${className}`}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Delete Account
-                </h2>
+                <h2 className="text-lg font-bold">Delete account</h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                    Once your account is deleted, all of its resources and data
-                    will be permanently deleted. Before deleting your account,
-                    please download any data or information that you wish to
-                    retain.
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    Deleting your account permanently removes your workouts, routines, records, photos and posts. It can't be undone.
                 </p>
             </header>
 
-            <DangerButton onClick={confirmUserDeletion}>
-                Delete Account
-            </DangerButton>
+            <button type="button" onClick={confirmUserDeletion} className={`${btn.danger} border border-red-300 dark:border-red-800`}>
+                Delete account
+            </button>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
                 <form onSubmit={deleteUser} className="p-6">
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                        Are you sure you want to delete your account?
-                    </h2>
+                    <h2 className="text-lg font-extrabold">Delete your Gerak.in account?</h2>
 
-                    <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                        Once your account is deleted, all of its resources and
-                        data will be permanently deleted. Please enter your
-                        password to confirm you would like to permanently delete
-                        your account.
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+                        Every workout, routine, record, photo and post is deleted for good. Enter your password to confirm.
                     </p>
 
                     <div className="mt-6">
-                        <InputLabel
-                            htmlFor="password"
-                            value="Password"
-                            className="sr-only"
-                        />
+                        <InputLabel htmlFor="delete-password" value="Password" />
 
                         <TextInput
-                            id="password"
+                            id="delete-password"
                             type="password"
                             name="password"
                             ref={passwordInput}
@@ -97,24 +84,24 @@ export default function DeleteUserForm({
                             onChange={(e) =>
                                 setData('password', e.target.value)
                             }
-                            className="mt-1 block w-3/4"
+                            className="mt-1 block w-full"
+                            autoComplete="current-password"
                             isFocused
-                            placeholder="Password"
                         />
 
-                        <InputError
+                        <InputError htmlFor="delete-password"
                             message={errors.password}
                             className="mt-2"
                         />
                     </div>
 
-                    <div className="mt-6 flex justify-end">
+                    <div className="mt-6 flex flex-wrap justify-end gap-2">
                         <SecondaryButton onClick={closeModal}>
-                            Cancel
+                            Keep my account
                         </SecondaryButton>
 
-                        <DangerButton className="ms-3" disabled={processing}>
-                            Delete Account
+                        <DangerButton disabled={processing}>
+                            {processing ? 'Deleting…' : 'Delete account'}
                         </DangerButton>
                     </div>
                 </form>
